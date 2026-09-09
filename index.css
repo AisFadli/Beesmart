@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* Base styles */
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+  }
+  
+  /* Hide everything by default during print */
+  body > * {
+    display: none !important;
+  }
+
+  /* Only show the element with id="printable-area" */
+  #printable-area, #printable-area * {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  #printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Ensure mono font for a receipt feel */
+  #printable-area p, #printable-area span {
+    font-family: monospace !important;
+    font-size: 11px !important;
+  }
+}
+
+/* Html5Qrcode Scanner Responsive Framing Fixes */
+#html5-qrcode-reader-container {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  background-color: #0f172a !important;
+  border-radius: 1rem !important;
+}
+
+#html5-qrcode-reader-container video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 0.75rem !important;
+}
+
+#html5-qrcode-reader-container canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+}
+
+#html5-qrcode-reader-container div {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+#html5-qrcode-reader-container img,
+#html5-qrcode-reader-container a {
+  display: none !important;
+}

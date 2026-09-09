@@ -1,0 +1,14 @@
+# Disable directory browsing
+Options -Indexes
+
+# Prevent access to sensitive scripts directly
+<FilesMatch "^(db|install)\.php$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Prevent access to log files
+<Files "*.log">
+    Order Allow,Deny
+    Deny from all
+</Files>
