@@ -27,11 +27,11 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
 
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[220] flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-[2.5rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-blue-100 text-left space-y-5 animate-in zoom-in duration-200">
+      <div className="bg-white rounded-[2.5rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-honey-100 text-left space-y-5 animate-in zoom-in duration-200">
         
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner">
+          <div className="w-12 h-12 bg-honey-100 text-honey-600 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner">
             <i className="fas fa-[#000] fa-user-check"></i>
           </div>
           <div>
@@ -55,7 +55,7 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-500 font-medium">Email Akun:</span>
-            <span className="font-bold text-blue-600">{data.email || '-'}</span>
+            <span className="font-bold text-honey-600">{data.email || '-'}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-500 font-medium">WhatsApp:</span>
@@ -64,7 +64,7 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
           {data.barcode && (
             <div className="flex justify-between items-center">
               <span className="text-slate-500 font-medium">No. Kartu Member:</span>
-              <span className="font-mono font-bold text-indigo-600">{data.barcode}</span>
+              <span className="font-mono font-bold text-honey-600">{data.barcode}</span>
             </div>
           )}
           {data.address && (
@@ -82,7 +82,7 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
             Pernyataan Persetujuan Data (UU PDP)
           </div>
           <p className="text-[10px] text-emerald-900 leading-relaxed font-medium">
-            Dengan menekan tombol <strong className="font-black text-emerald-950">"Konfirmasi & Kirim"</strong>, Anda menyetujui pengolahan data pribadi di atas dan menyetujui seluruh <button type="button" onClick={onOpenTermsModal} className="font-black text-blue-700 underline hover:text-blue-900">Syarat & Ketentuan serta Kebijakan Privasi</button> Koperasi Syariah AIS. Dokumen resmi S&K juga akan dilampirkan ke email <span className="font-bold text-slate-900">{data.email}</span>.
+            Dengan menekan tombol <strong className="font-black text-emerald-950">"Konfirmasi & Kirim"</strong>, Anda menyetujui pengolahan data pribadi di atas dan menyetujui seluruh <button type="button" onClick={onOpenTermsModal} className="font-black text-honey-700 underline hover:text-honey-900">Syarat & Ketentuan serta Kebijakan Privasi</button> Koperasi Syariah AIS. Dokumen resmi S&K juga akan dilampirkan ke email <span className="font-bold text-slate-900">{data.email}</span>.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
               type="button"
               onClick={onOpenTermsModal}
               disabled={isLoading}
-              className="py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all border border-blue-200/60"
+              className="py-3 bg-honey-50 hover:bg-honey-100 text-honey-700 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all border border-honey-200/60"
             >
               <i className="fas fa-file-alt mr-1"></i> Baca S&K
             </button>

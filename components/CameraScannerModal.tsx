@@ -284,7 +284,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
         </button>
 
         <div className="text-center space-y-1 pr-6">
-          <div className="inline-flex p-3 bg-blue-50 text-blue-600 rounded-2xl mb-1">
+          <div className="inline-flex p-3 bg-honey-50 text-honey-600 rounded-2xl mb-1">
             <i className="fas fa-qrcode text-2xl"></i>
           </div>
           <h3 className="text-lg font-black text-slate-900">{title}</h3>
@@ -297,7 +297,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
             type="button"
             onClick={() => setAutoClose(true)}
             className={`flex-1 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-              autoClose ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              autoClose ? 'bg-honey-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <i className="fas fa-shopping-cart"></i>
@@ -307,7 +307,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
             type="button"
             onClick={() => setAutoClose(false)}
             className={`flex-1 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-              !autoClose ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              !autoClose ? 'bg-honey-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <i className="fas fa-sync"></i>
@@ -354,7 +354,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
                 }}
                 className="px-2.5 py-1.5 bg-slate-900/80 hover:bg-slate-900 text-white rounded-xl text-[10px] font-bold backdrop-blur-md border border-white/20 flex items-center gap-1.5 shadow-md transition-all active:scale-95"
               >
-                <i className="fas fa-bullseye text-blue-400"></i>
+                <i className="fas fa-bullseye text-honey-400"></i>
                 <span>Fokus</span>
               </button>
 
@@ -381,7 +381,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
           {/* Tap-to-focus prompt badge at bottom left of camera */}
           {isScanning && !errorMsg && (
             <div className="absolute bottom-3 left-3 z-20 bg-slate-900/70 backdrop-blur-sm text-white/90 text-[9px] font-bold px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-              <i className="fas fa-hand-pointer text-blue-400"></i>
+              <i className="fas fa-hand-pointer text-honey-400"></i>
               <span>Ketuk layar untuk fokus</span>
             </div>
           )}
@@ -401,7 +401,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
             </div>
           ) : !isScanning ? (
             <div className="text-center text-slate-400 text-xs font-medium space-y-2 z-10">
-              <i className="fas fa-spinner fa-spin text-2xl text-blue-500"></i>
+              <i className="fas fa-spinner fa-spin text-2xl text-honey-500"></i>
               <p>Membuka kamera HP/Device...</p>
             </div>
           ) : null}
@@ -418,7 +418,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
               stopScanner();
               onClose();
             }}
-            className="text-xs font-black text-blue-600 hover:text-blue-700 uppercase tracking-wider"
+            className="text-xs font-black text-honey-600 hover:text-honey-700 uppercase tracking-wider"
           >
             Selesai / Tutup
           </button>

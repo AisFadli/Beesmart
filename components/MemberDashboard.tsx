@@ -212,8 +212,8 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
         </p>
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 w-full text-left space-y-2 mb-8">
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detail Sesi Login:</p>
-           <p className="text-xs font-bold text-slate-700">ID: <span className="text-blue-600">{state.currentUser?.id}</span></p>
-           <p className="text-xs font-bold text-slate-700">Email: <span className="text-blue-600">{state.currentUser?.email}</span></p>
+           <p className="text-xs font-bold text-slate-700">ID: <span className="text-honey-600">{state.currentUser?.id}</span></p>
+           <p className="text-xs font-bold text-slate-700">Email: <span className="text-honey-600">{state.currentUser?.email}</span></p>
         </div>
         <button onClick={() => onRefresh()} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-95 transition-all">Muat Ulang Data</button>
       </div>
@@ -226,27 +226,27 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
         <div className="flex items-center gap-6">
           <div>
             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-               <span className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg"><i className="fas fa-user-check"></i></span>
+               <span className="p-2 bg-honey-600 text-white rounded-xl shadow-lg"><i className="fas fa-user-check"></i></span>
                Halo, {me.name}
             </h1>
-            <p className="text-slate-500 font-medium text-[10px] uppercase tracking-[0.2em] mt-1 ml-12">Dashboard Member • MinimartPro</p>
+            <p className="text-slate-500 font-medium text-[10px] uppercase tracking-[0.2em] mt-1 ml-12">Dashboard Member • BeeSmart</p>
           </div>
           <div className="hidden md:flex gap-2 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
              <button 
                onClick={() => setActiveTab('OVERVIEW')}
-               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'OVERVIEW' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400 hover:bg-slate-50'}`}
+               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'OVERVIEW' ? 'bg-honey-600 text-white shadow-lg shadow-honey-100' : 'text-slate-400 hover:bg-slate-50'}`}
              >
                Ringkasan
              </button>
              <button 
-               onClick={() => state.settings.isOpen ? setActiveTab('SHOPPING') : alert("Maaf, saat ini Minimart sedang TUTUP. Silakan akses kembali nanti.")}
-               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'SHOPPING' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : state.settings.isOpen ? 'text-slate-400 hover:bg-slate-50' : 'text-slate-300 cursor-not-allowed grayscale'}`}
+               onClick={() => state.settings.isOpen ? setActiveTab('SHOPPING') : alert("Maaf, saat ini BeeSmart sedang TUTUP. Silakan akses kembali nanti.")}
+               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'SHOPPING' ? 'bg-honey-600 text-white shadow-lg shadow-honey-100' : state.settings.isOpen ? 'text-slate-400 hover:bg-slate-50' : 'text-slate-300 cursor-not-allowed grayscale'}`}
              >
                Shopping {!state.settings.isOpen && ' (OFF)'}
              </button>
              <button 
                onClick={() => setActiveTab('CHAT')}
-               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'CHAT' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400 hover:bg-slate-50'}`}
+               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'CHAT' ? 'bg-honey-600 text-white shadow-lg shadow-honey-100' : 'text-slate-400 hover:bg-slate-50'}`}
              >
                Diskusi Koperasi
                {unreadCountMember > 0 && (
@@ -258,7 +258,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <button onClick={() => setShowCardModal(true)} className="bg-indigo-600 text-white border border-indigo-700 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95">
+          <button onClick={() => setShowCardModal(true)} className="bg-honey-600 text-white border border-honey-700 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-honey-700 transition-all shadow-md shadow-honey-200 flex items-center justify-center gap-2 active:scale-95">
              <i className="fas fa-id-card text-sm"></i> Kartu Member Digital
           </button>
           <button onClick={() => { setEditFormData({ name: me.name, whatsapp: me.whatsapp, address: me.address, image: me.image }); setShowEditProfile(true); }} className="bg-white text-slate-700 border border-slate-200 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-1">
@@ -268,7 +268,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
              <i className="fas fa-plus-circle mr-1"></i> Top Up
           </button>
           <button onClick={() => { setTermsModalTab('terms'); setShowTermsModal(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-3.5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1" title="Syarat & Ketentuan Legal">
-             <i className="fas fa-file-contract text-blue-600"></i> Syarat & Ketentuan
+             <i className="fas fa-file-contract text-honey-600"></i> Syarat & Ketentuan
           </button>
         </div>
       </div>
@@ -276,19 +276,19 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
       <div className="md:hidden flex gap-2 bg-white p-1 rounded-2xl border border-slate-100 mb-6 overflow-x-auto no-scrollbar">
           <button 
             onClick={() => setActiveTab('OVERVIEW')}
-            className={`flex-1 min-w-[75px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'OVERVIEW' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}
+            className={`flex-1 min-w-[75px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'OVERVIEW' ? 'bg-honey-600 text-white shadow-lg' : 'text-slate-400'}`}
           >
             Ringkasan
           </button>
           <button 
-            onClick={() => state.settings.isOpen ? setActiveTab('SHOPPING') : alert("Maaf, saat ini Minimart sedang TUTUP.")}
-            className={`flex-1 min-w-[75px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'SHOPPING' ? 'bg-indigo-600 text-white shadow-lg' : state.settings.isOpen ? 'text-slate-400' : 'text-slate-200'}`}
+            onClick={() => state.settings.isOpen ? setActiveTab('SHOPPING') : alert("Maaf, saat ini BeeSmart sedang TUTUP.")}
+            className={`flex-1 min-w-[75px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'SHOPPING' ? 'bg-honey-600 text-white shadow-lg' : state.settings.isOpen ? 'text-slate-400' : 'text-slate-200'}`}
           >
             Shopping
           </button>
           <button 
             onClick={() => setActiveTab('CHAT')}
-            className={`flex-1 min-w-[75px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'CHAT' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}
+            className={`flex-1 min-w-[75px] py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'CHAT' ? 'bg-honey-600 text-white shadow-lg' : 'text-slate-400'}`}
           >
             Diskusi
             {unreadCountMember > 0 && (
@@ -306,7 +306,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         <div className={`p-8 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden group transition-all ${me.status === 'SUSPENDED' ? 'bg-red-600 grayscale-[0.3]' : 'bg-indigo-600'}`}>
+         <div className={`p-8 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden group transition-all ${me.status === 'SUSPENDED' ? 'bg-red-600 grayscale-[0.3]' : 'bg-honey-600'}`}>
             <div className="relative z-10">
                <div className="flex justify-between items-start mb-2">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Saldo Deposit Anda</p>
@@ -325,14 +325,14 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
          </div>
          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Pengeluaran</p>
-            <h3 className="text-3xl font-black text-indigo-600">Rp {Number(myTransactions.reduce((s,t) => s + t.total, 0)).toLocaleString('id-ID')}</h3>
+            <h3 className="text-3xl font-black text-honey-600">Rp {Number(myTransactions.reduce((s,t) => s + t.total, 0)).toLocaleString('id-ID')}</h3>
          </div>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
          <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2">
-              <i className="fas fa-history text-indigo-600"></i> Timeline Aktivitas Belanja & Saldo
+              <i className="fas fa-history text-honey-600"></i> Timeline Aktivitas Belanja & Saldo
             </h3>
             <button 
               onClick={() => exportMemberHistoryToExcel(me, myActivity)}
@@ -368,7 +368,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                           {act.amount > 0 ? '+' : ''}Rp {Number(Math.abs(act.amount)).toLocaleString('id-ID')}
                        </td>
                        <td className="px-8 py-5 text-center">
-                          <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase ${act.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase ${act.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-600'}`}>
                              {act.status || 'APPROVED'}
                           </span>
                        </td>
@@ -389,7 +389,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                     </span>
                     <p className="text-[8px] text-slate-400 font-bold mt-1">{new Date(act.timestamp).toLocaleString()}</p>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${act.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${act.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-600'}`}>
                     {act.status || 'APPROVED'}
                   </span>
                 </div>
@@ -416,12 +416,12 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest self-start ml-2">Foto Profil Kartu Member</label>
                     <div 
                       onClick={() => profilePhotoInputRef.current?.click()} 
-                      className="w-24 h-24 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-all overflow-hidden relative shadow-inner group"
+                      className="w-24 h-24 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-honey-50 hover:border-honey-300 transition-all overflow-hidden relative shadow-inner group"
                     >
                        {editFormData.image ? (
                           <img src={editFormData.image} className="w-full h-full object-cover" alt="Member Photo" />
                        ) : (
-                          <div className="text-center p-2 text-slate-300 group-hover:text-indigo-500">
+                          <div className="text-center p-2 text-slate-300 group-hover:text-honey-500">
                              <i className="fas fa-camera text-2xl mb-1"></i>
                              <p className="text-[8px] font-black uppercase tracking-wider">Unggah Foto</p>
                           </div>
@@ -444,7 +444,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                  </div>
                  <div className="flex gap-4 pt-4">
                     <button type="button" onClick={() => setShowEditProfile(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase">Batal</button>
-                    <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl disabled:opacity-50">Simpan Profil</button>
+                    <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl disabled:opacity-50">Simpan Profil</button>
                  </div>
               </form>
            </div>
@@ -465,8 +465,8 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                 <div className="space-y-4">
                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Silakan pilih metode yang Anda inginkan:</p>
                    <div className="grid grid-cols-1 gap-3">
-                      <button onClick={() => { setTopUpMethod('TRANSFER'); setTopUpStep('DETAILS'); }} className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-indigo-300 hover:bg-indigo-50 transition-all group">
-                         <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all"><i className="fas fa-university text-xl"></i></div>
+                      <button onClick={() => { setTopUpMethod('TRANSFER'); setTopUpStep('DETAILS'); }} className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-honey-300 hover:bg-honey-50 transition-all group">
+                         <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-honey-600 shadow-sm group-hover:bg-honey-600 group-hover:text-white transition-all"><i className="fas fa-university text-xl"></i></div>
                          <div className="text-left">
                             <p className="text-xs font-black text-slate-800 uppercase">Transfer Bank</p>
                             <p className="text-[9px] text-slate-400 font-bold italic">Manual Verification • 24 Jam</p>
@@ -483,7 +483,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600 shadow-sm group-hover:bg-amber-600 group-hover:text-white transition-all"><i className="fas fa-money-bill-wave text-xl"></i></div>
                          <div className="text-left">
                             <p className="text-xs font-black text-slate-800 uppercase">Tunai di Kasir</p>
-                            <p className="text-[9px] text-slate-400 font-bold italic">Datang Langsung Ke Minimart</p>
+                            <p className="text-[9px] text-slate-400 font-bold italic">Datang Langsung Ke BeeSmart</p>
                          </div>
                       </button>
                    </div>
@@ -494,7 +494,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                       <div className="p-6 bg-amber-50 rounded-3xl border border-amber-100 text-center">
                          <i className="fas fa-store-alt text-4xl text-amber-500 mb-4"></i>
                          <h4 className="text-sm font-black text-slate-800 uppercase mb-2">Titip Tunai di Toko</h4>
-                         <p className="text-xs text-slate-600 leading-relaxed font-medium">Silakan hubungi kasir atau staf di Minimart untuk melakukan pengisian saldo secara tunai. Beritahukan Member ID Anda yaitu <span className="font-black text-indigo-600">{me.id}</span>.</p>
+                         <p className="text-xs text-slate-600 leading-relaxed font-medium">Silakan hubungi kasir atau staf di BeeSmart untuk melakukan pengisian saldo secara tunai. Beritahukan Member ID Anda yaitu <span className="font-black text-honey-600">{me.id}</span>.</p>
                       </div>
                    ) : (
                       <>
@@ -509,7 +509,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                                    <img src={state.settings.qrisImage} className="w-48 h-48 object-contain" />
                                    <a 
                                      href={state.settings.qrisImage} 
-                                     download="QRIS-MinimartPro.png" 
+                                     download="QRIS-BeeSmart.png" 
                                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-[10px] uppercase text-center transition-all"
                                    >
                                       <i className="fas fa-download mr-2"></i> Download QRIS
@@ -526,7 +526,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                               <div className="grid grid-cols-1 gap-3 mt-1">
                                  <div>
                                     <label className="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">1. Masukkan Nominal (Rp)</label>
-                                    <input type="number" placeholder="0" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-2xl text-indigo-600 outline-none" value={topUpAmount} onChange={e => setTopUpAmount(Number(e.target.value))} />
+                                    <input type="number" placeholder="0" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-2xl text-honey-600 outline-none" value={topUpAmount} onChange={e => setTopUpAmount(Number(e.target.value))} />
                                  </div>
                                  <div className="relative">
                                     <label className="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">2. Upload Bukti Transaksi</label>
@@ -544,7 +544,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                    <div className="flex gap-4 pt-4 sticky bottom-0 bg-white pb-2">
                       <button onClick={() => setTopUpStep('METHOD')} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase hover:bg-slate-200 transition-colors">Ganti Metode</button>
                       {topUpMethod !== 'CASH' && (
-                        <button onClick={submitTopUpRequest} disabled={isSubmitting || topUpAmount < 1000 || !topUpProof} className="flex-2 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-indigo-200 active:scale-95 disabled:opacity-50 transition-all">
+                        <button onClick={submitTopUpRequest} disabled={isSubmitting || topUpAmount < 1000 || !topUpProof} className="flex-2 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-honey-200 active:scale-95 disabled:opacity-50 transition-all">
                            {isSubmitting ? 'Memproses...' : 'Kirim Bukti Pembayaran'}
                         </button>
                       )}

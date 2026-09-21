@@ -1,4 +1,10 @@
 <?php
+// KEAMANAN: Blokir akses langsung file ini via HTTP (db.php hanya boleh di-include oleh endpoint lain)
+if (isset($_SERVER['REQUEST_METHOD']) && ($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit('Forbidden');
+}
 ob_start();
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
@@ -11,7 +17,13 @@ date_default_timezone_set('Asia/Jakarta');
 $allowed_origins = [
     "https://ais-dev-f272xshwuqznj6tit6uhtj-81653062735.asia-east1.run.app",
     "https://ais-pre-f272xshwuqznj6tit6uhtj-81653062735.asia-east1.run.app",
-    "https://admin.aiskoperasi.store"
+    "https://admin.aiskoperasi.store",
+    "https://beesmart.id",
+    "https://www.beesmart.id",
+    "http://localhost",
+    "http://localhost:3000",
+    "http://127.0.0.1",
+    "http://127.0.0.1:3000"
 ];
 
 if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
@@ -26,10 +38,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$host = 'localhost'; 
-$db_name = 'Kasir_db'; 
-$username = 'Kasir_user';     
-$password = 'MASUKKAN_PASSWORD_DB_ANDA_DISINI'; 
+// Kredensial database dimuat dari db_config.php (tidak ikut git)
+$dbConfigPath = __DIR__ . '/db_config.php';
+if (!file_exists($dbConfigPath)) {
+    ob_clean();
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "File api/db_config.php belum dibuat. Buat dari db_config.php dan isi kredensial MySQL Anda."]);
+    exit;
+}
+$dbConfig = require $dbConfigPath;
+$host = $dbConfig['host'] ?? 'localhost';
+$db_name = $dbConfig['dbname'] ?? '';
+$username = $dbConfig['username'] ?? '';
+$password = $dbConfig['password'] ?? ''; 
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8mb4", $username, $password, [

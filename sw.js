@@ -1,11 +1,8 @@
 
-const CACHE_NAME = 'minimartpro-v5';
+const CACHE_NAME = 'beesmart-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './index.css',
-  './manifest.json',
-  'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 

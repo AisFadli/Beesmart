@@ -479,7 +479,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg"><i className="fas fa-truck-loading"></i></span>
+            <span className="p-2 bg-honey-600 text-white rounded-xl shadow-lg"><i className="fas fa-truck-loading"></i></span>
             Supply Chain & Audit
           </h1>
           <p className="text-slate-500 font-medium text-sm">Monitor pengadaan barang dan mutasi stok fisik</p>
@@ -502,7 +502,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                 <input 
                   type="text" 
                   placeholder="ID Transaksi / Staff / Member..." 
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-honey-500/10 transition-all"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
@@ -528,7 +528,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
       {activeSubTab === 'manage' ? (
         <div className="space-y-4">
           <div className="flex justify-end">
-              <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">+ Buat Pengajuan Baru</button>
+              <button onClick={() => setIsModalOpen(true)} className="bg-honey-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all">+ Buat Pengajuan Baru</button>
           </div>
           <div className="bg-white rounded-[2rem] border overflow-hidden shadow-sm hidden md:block">
              <table className="w-full text-left">
@@ -539,11 +539,11 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                    {paginatedManageOrders.map(o => (
                      <tr key={o.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-8 py-5">
-                           <p className="font-black text-blue-600 text-xs">#{o.id.toUpperCase()}</p>
+                           <p className="font-black text-honey-600 text-xs">#{o.id.toUpperCase()}</p>
                            <p className="text-[9px] text-slate-400 uppercase tracking-widest">{o.staffId} | {new Date(o.createdAt).toLocaleDateString()}</p>
                         </td>
                         <td className="px-8 py-5">
-                           <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase ${o.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : o.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-600' : o.status === 'DECLINED' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'}`}>{o.status}</span>
+                           <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase ${o.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : o.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-600' : o.status === 'DECLINED' ? 'bg-rose-100 text-rose-600' : 'bg-honey-100 text-honey-600'}`}>{o.status}</span>
                         </td>
                         <td className="px-8 py-5 text-center text-[10px] text-slate-500 uppercase">{o.notes || '-'}</td>
                         <td className="px-8 py-5 font-black text-slate-700">Rp {Number(o.totalCost).toLocaleString('id-ID')}</td>
@@ -552,7 +552,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                               <button onClick={() => { setViewingOrder(o); setIsViewOrderModalOpen(true); }} className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-all" title="Review Order"><i className="fas fa-eye"></i></button>
                               {isAdmin && o.status === 'PENDING' && (
                                 <div className="flex gap-2">
-                                  <button onClick={() => onSaveOrder({...o, status: OrderStatus.APPROVED, approvedAt: new Date().toISOString(), approvedBy: user.name})} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase shadow-md hover:bg-blue-700">Approve</button>
+                                  <button onClick={() => onSaveOrder({...o, status: OrderStatus.APPROVED, approvedAt: new Date().toISOString(), approvedBy: user.name})} className="bg-honey-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase shadow-md hover:bg-honey-700">Approve</button>
                                   <button onClick={() => { 
                                     const reason = window.prompt("Alasan penolakan:", "");
                                     if(reason !== null) onSaveOrder({...o, status: OrderStatus.DECLINED, notes: reason}); 
@@ -584,10 +584,10 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
               <div key={o.id} className="p-4 flex flex-col gap-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-black text-blue-600 text-xs">#{o.id.slice(-8).toUpperCase()}</p>
+                    <p className="font-black text-honey-600 text-xs">#{o.id.slice(-8).toUpperCase()}</p>
                     <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">{new Date(o.createdAt).toLocaleDateString()}</p>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${o.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : o.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-600' : o.status === 'DECLINED' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'}`}>
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${o.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : o.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-600' : o.status === 'DECLINED' ? 'bg-rose-100 text-rose-600' : 'bg-honey-100 text-honey-600'}`}>
                     {o.status}
                   </span>
                 </div>
@@ -597,7 +597,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                     <button onClick={() => { setViewingOrder(o); setIsViewOrderModalOpen(true); }} className="p-2 bg-slate-50 text-slate-400 rounded-lg border border-slate-200"><i className="fas fa-eye"></i></button>
                     {isAdmin && o.status === 'PENDING' && (
                       <div className="flex gap-2">
-                        <button onClick={() => onSaveOrder({...o, status: OrderStatus.APPROVED, approvedAt: new Date().toISOString(), approvedBy: user.name})} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black uppercase">Approve</button>
+                        <button onClick={() => onSaveOrder({...o, status: OrderStatus.APPROVED, approvedAt: new Date().toISOString(), approvedBy: user.name})} className="bg-honey-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black uppercase">Approve</button>
                         <button onClick={() => { 
                           const reason = window.prompt("Alasan penolakan:", "");
                           if(reason !== null) onSaveOrder({...o, status: OrderStatus.DECLINED, notes: reason}); 
@@ -638,7 +638,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                            </span>
                         </td>
                         <td className="px-8 py-5 text-slate-700 uppercase text-xs">{t.customerName || 'UMUM'}</td>
-                        <td className="px-8 py-5 font-black text-blue-600">Rp {Number(t.total).toLocaleString('id-ID')}</td>
+                        <td className="px-8 py-5 font-black text-honey-600">Rp {Number(t.total).toLocaleString('id-ID')}</td>
                         <td className="px-8 py-5 text-right">
                            <button onClick={() => { setViewingOrder(t); setIsViewOrderModalOpen(true); }} className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-all"><i className="fas fa-eye"></i></button>
                         </td>
@@ -667,7 +667,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                    </div>
                    <p className="text-xs font-black text-slate-800 uppercase">{t.customerName || 'PELANGGAN UMUM'}</p>
                    <div className="flex justify-between items-center">
-                      <p className="font-black text-blue-600 text-sm">Rp {Number(t.total).toLocaleString('id-ID')}</p>
+                      <p className="font-black text-honey-600 text-sm">Rp {Number(t.total).toLocaleString('id-ID')}</p>
                       <button onClick={() => { setViewingOrder(t); setIsViewOrderModalOpen(true); }} className="p-2 bg-slate-50 text-slate-400 rounded-lg border border-slate-200"><i className="fas fa-eye"></i></button>
                    </div>
                 </div>
@@ -704,10 +704,10 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                  .map(adj => {
                     const product = products.find(p => p.id === adj.productId);
                     return (
-                      <div key={adj.id} className="bg-white rounded-[2rem] border border-slate-200 p-6 hover:border-blue-300 transition-all shadow-sm flex flex-col relative overflow-hidden group">
+                      <div key={adj.id} className="bg-white rounded-[2rem] border border-slate-200 p-6 hover:border-honey-300 transition-all shadow-sm flex flex-col relative overflow-hidden group">
                         <div className="flex justify-between items-start mb-4">
                           <span className={`px-2.5 py-1 text-[8px] font-black rounded-lg uppercase tracking-widest ${
-                            adj.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : 
+                            adj.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 
                             adj.status === 'NORMAL' || adj.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
                           }`}>
                             {adj.status === 'PENDING' ? 'Menunggu Approval' : adj.status === 'NORMAL' || adj.status === 'APPROVED' ? 'Disetujui' : 'Dibatalkan/Ditolak'}
@@ -751,7 +751,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                             </button>
                             <button 
                               onClick={() => handleAuditAction('approve_adjustment', { ref: `ADJ-${adj.id}`, productId: adj.productId })} 
-                              className="py-3 bg-blue-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
+                              className="py-3 bg-honey-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all"
                             >
                               Setujui
                             </button>
@@ -802,7 +802,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                     <div className="p-3 border-b bg-slate-50"><input autoFocus type="text" placeholder="Ketik Nama atau SKU..." className="w-full p-2 bg-white border rounded-xl text-xs font-bold outline-none" value={auditSearchTerm} onChange={e => setAuditSearchTerm(e.target.value)} /></div>
                     <div className="max-h-60 overflow-y-auto">
                       {availableProducts.filter(p => p.name.toLowerCase().includes(auditSearchTerm.toLowerCase()) || p.sku.toLowerCase().includes(auditSearchTerm.toLowerCase())).map(p => (
-                        <div key={p.id} onClick={() => { setAuditProductId(p.id); setShowAuditDropdown(false); }} className="px-4 py-3 hover:bg-blue-50 cursor-pointer text-xs font-bold border-b last:border-0 flex justify-between uppercase">
+                        <div key={p.id} onClick={() => { setAuditProductId(p.id); setShowAuditDropdown(false); }} className="px-4 py-3 hover:bg-honey-50 cursor-pointer text-xs font-bold border-b last:border-0 flex justify-between uppercase">
                            <span>{p.name}</span>
                            <span className="text-[9px] text-slate-400">{p.sku}</span>
                         </div>
@@ -825,7 +825,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
              </div>
 
              <div className="flex items-center gap-2 w-full lg:w-auto">
-               <button onClick={onRefreshData} className="p-4 bg-white border rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm active:scale-95" title="Refresh Data">
+               <button onClick={onRefreshData} className="p-4 bg-white border rounded-2xl text-slate-400 hover:text-honey-600 transition-all shadow-sm active:scale-95" title="Refresh Data">
                  <i className="fas fa-sync-alt"></i>
                </button>
                
@@ -836,7 +836,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                )}
 
                {selectedCategory && (
-                 <button onClick={exportCategoryAuditToExcel} className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95 flex items-center gap-2" title="Export Ringkasan Kategori">
+                 <button onClick={exportCategoryAuditToExcel} className="p-4 bg-honey-50 border border-honey-100 rounded-2xl text-honey-600 hover:bg-honey-600 hover:text-white transition-all shadow-sm active:scale-95 flex items-center gap-2" title="Export Ringkasan Kategori">
                    <i className="fas fa-file-download"></i>
                    <span className="text-[10px] font-black uppercase hidden sm:inline">Export Kategori</span>
                  </button>
@@ -859,18 +859,18 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                           <th className="px-6 py-4">Aktivitas</th>
                           <th className="px-6 py-4">PIC</th>
                           <th className="px-6 py-4 text-center">Mutasi</th>
-                          <th className="px-6 py-4 text-center bg-blue-50">Saldo Akhir</th>
+                          <th className="px-6 py-4 text-center bg-honey-50">Saldo Akhir</th>
                           {isAdmin && <th className="px-6 py-4 text-right">Aksi</th>}
                         </tr>
                      </thead>
                      <tbody className="text-[11px] font-bold">
                         {isFetchingAudit ? (
-                          <tr><td colSpan={7} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]"><i className="fas fa-spinner fa-spin text-blue-600 text-2xl mb-2 block"></i>Memuat Riwayat Lengkap...</td></tr>
+                          <tr><td colSpan={7} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]"><i className="fas fa-spinner fa-spin text-honey-600 text-2xl mb-2 block"></i>Memuat Riwayat Lengkap...</td></tr>
                         ) : paginatedAuditData.map((h, i) => (
                           <tr key={i} className={`border-b last:border-0 hover:bg-slate-50 transition-colors ${h.status === 'CANCELLED' ? 'opacity-40 grayscale' : ''}`}>
                              <td className="px-6 py-4 text-slate-500 font-mono uppercase">
                                {h.date}
-                               {h.status !== 'NORMAL' && <span className={`block text-[7px] font-black mt-1 ${h.status === 'REVISED' ? 'text-blue-500' : 'text-red-500'}`}>{h.status}</span>}
+                               {h.status !== 'NORMAL' && <span className={`block text-[7px] font-black mt-1 ${h.status === 'REVISED' ? 'text-honey-500' : 'text-red-500'}`}>{h.status}</span>}
                              </td>
                              <td className="px-6 py-4">
                                 <p className="text-[9px] font-black uppercase tracking-widest">{h.type}</p>
@@ -880,7 +880,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                              <td className={`px-6 py-4 text-center font-black ${h.qty > 0 ? 'text-emerald-600' : h.qty < 0 ? 'text-red-600' : 'text-slate-400'}`}>
                                 {h.qty > 0 ? `+${h.qty}` : h.qty}
                              </td>
-                             <td className="px-6 py-4 text-center bg-blue-50/30 font-black text-xs text-blue-700">{h.endingBalance}</td>
+                             <td className="px-6 py-4 text-center bg-honey-50/30 font-black text-xs text-honey-700">{h.endingBalance}</td>
                              {isAdmin && (
                                <td className="px-6 py-4 text-right">
                                  {h.status === 'PENDING' ? (
@@ -889,7 +889,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                                    </button>
                                  ) : h.status !== 'CANCELLED' && (
                                    <div className="flex justify-end gap-2">
-                                     <button onClick={() => { setEditingAuditItem(h); setEditAuditDate(h.timestamp.split(' ')[0]); setEditAuditQty(h.qty); setIsAuditEditModalOpen(true); }} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><i className="fas fa-edit"></i></button>
+                                     <button onClick={() => { setEditingAuditItem(h); setEditAuditDate(h.timestamp.split(' ')[0]); setEditAuditQty(h.qty); setIsAuditEditModalOpen(true); }} className="p-2 bg-honey-50 text-honey-600 rounded-lg hover:bg-honey-600 hover:text-white transition-all"><i className="fas fa-edit"></i></button>
                                      <button onClick={() => handleAuditAction('cancel', h)} className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all"><i className="fas fa-trash-alt"></i></button>
                                    </div>
                                  )}
@@ -904,13 +904,13 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                 {/* Mobile Card View for Audit */}
                 <div className="md:hidden divide-y divide-slate-100">
                   {isFetchingAudit ? (
-                    <div className="py-20 text-center"><i className="fas fa-spinner fa-spin text-blue-600 text-2xl mb-2 block"></i><span className="text-[10px] text-slate-400 uppercase font-black uppercase tracking-widest font-bold">Memuat Riwayat Lengkap...</span></div>
+                    <div className="py-20 text-center"><i className="fas fa-spinner fa-spin text-honey-600 text-2xl mb-2 block"></i><span className="text-[10px] text-slate-400 uppercase font-black uppercase tracking-widest font-bold">Memuat Riwayat Lengkap...</span></div>
                   ) : paginatedAuditData.map((h, i) => (
                     <div key={i} className={`p-4 flex flex-col gap-2 ${h.status === 'CANCELLED' ? 'opacity-40 grayscale bg-slate-50' : ''}`}>
                       <div className="flex justify-between items-start">
                         <div className="flex flex-col">
                           <span className="text-[8px] font-mono text-slate-400 uppercase">{h.date}</span>
-                          {h.status !== 'NORMAL' && <span className={`text-[7px] font-black uppercase ${h.status === 'REVISED' ? 'text-blue-500' : 'text-red-500'}`}>{h.status}</span>}
+                          {h.status !== 'NORMAL' && <span className={`text-[7px] font-black uppercase ${h.status === 'REVISED' ? 'text-honey-500' : 'text-red-500'}`}>{h.status}</span>}
                         </div>
                         <span className={`text-[10px] font-black ${h.qty > 0 ? 'text-emerald-600' : h.qty < 0 ? 'text-red-600' : 'text-slate-400'}`}>
                           {h.qty > 0 ? `+${h.qty}` : h.qty}
@@ -923,7 +923,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                         </div>
                         <div className="text-right">
                           <p className="text-[8px] font-black text-slate-400 uppercase">Saldo</p>
-                          <p className="text-xs font-black text-blue-700">{h.endingBalance}</p>
+                          <p className="text-xs font-black text-honey-700">{h.endingBalance}</p>
                         </div>
                       </div>
                       {isAdmin && h.status === 'PENDING' && (
@@ -933,7 +933,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                       )}
                       {isAdmin && h.status !== 'CANCELLED' && h.status !== 'PENDING' && (
                         <div className="flex gap-2 mt-2 pt-2 border-t border-slate-50">
-                          <button onClick={() => { setEditingAuditItem(h); setEditAuditDate(h.timestamp.split(' ')[0]); setEditAuditQty(h.qty); setIsAuditEditModalOpen(true); }} className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg font-black text-[8px] uppercase">Edit</button>
+                          <button onClick={() => { setEditingAuditItem(h); setEditAuditDate(h.timestamp.split(' ')[0]); setEditAuditQty(h.qty); setIsAuditEditModalOpen(true); }} className="flex-1 py-2 bg-honey-50 text-honey-600 rounded-lg font-black text-[8px] uppercase">Edit</button>
                           <button onClick={() => handleAuditAction('cancel', h)} className="flex-1 py-2 bg-rose-50 text-rose-600 rounded-lg font-black text-[8px] uppercase">Batal</button>
                         </div>
                       )}
@@ -945,13 +945,13 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                 {/* Audit Pagination */}
                 {totalAuditPages > 1 && (
                   <div className="p-4 bg-slate-50 border-t flex items-center justify-center gap-2">
-                    <button disabled={auditPage === 1} onClick={() => setAuditPage(p => p - 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 disabled:opacity-30"><i className="fas fa-chevron-left"></i></button>
+                    <button disabled={auditPage === 1} onClick={() => setAuditPage(p => p - 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-honey-600 disabled:opacity-30"><i className="fas fa-chevron-left"></i></button>
                     <div className="flex gap-1">
                        {[...Array(totalAuditPages)].map((_, i) => (
-                         <button key={i} onClick={() => setAuditPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${auditPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100'}`}>{i + 1}</button>
+                         <button key={i} onClick={() => setAuditPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${auditPage === i + 1 ? 'bg-honey-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100'}`}>{i + 1}</button>
                        )).slice(Math.max(0, auditPage - 3), Math.min(totalAuditPages, auditPage + 2))}
                     </div>
-                    <button disabled={auditPage === totalAuditPages} onClick={() => setAuditPage(p => p + 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 disabled:opacity-30"><i className="fas fa-chevron-right"></i></button>
+                    <button disabled={auditPage === totalAuditPages} onClick={() => setAuditPage(p => p + 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-honey-600 disabled:opacity-30"><i className="fas fa-chevron-right"></i></button>
                   </div>
                 )}
              </div>
@@ -1003,14 +1003,14 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
             
             <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
               {viewingOrder.id.startsWith('ORD-') && (
-                <div className="p-6 bg-blue-50 border border-blue-200 rounded-[2rem] space-y-4">
+                <div className="p-6 bg-honey-50 border border-honey-200 rounded-[2rem] space-y-4">
                   <div className="flex justify-between items-center mb-2">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Update Progres & Validasi</p>
+                    <p className="text-[10px] font-black text-honey-600 uppercase tracking-widest">Update Progres & Validasi</p>
                     <div className="flex items-center gap-2">
                        <input 
                          type="checkbox" 
                          id="pay_confirm" 
-                         className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                         className="w-4 h-4 rounded text-honey-600 focus:ring-honey-500"
                          checked={memberPayConfirm || viewingOrder.paymentStatus === 'PAID'}
                          disabled={viewingOrder.paymentStatus === 'PAID'}
                          onChange={(e) => setMemberPayConfirm(e.target.checked)}
@@ -1026,7 +1026,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                       <label className="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">Tanggal Update</label>
                       <input 
                         type="date" 
-                        className="w-full p-3 bg-white border border-blue-100 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-blue-500/20" 
+                        className="w-full p-3 bg-white border border-honey-100 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-honey-500/20" 
                         value={memberUpdateDate} 
                         onChange={e => setMemberUpdateDate(e.target.value)} 
                       />
@@ -1043,7 +1043,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                               handleUpdateMemberOrder(s);
                             }}
                             disabled={isUpdatingMemberStatus}
-                            className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase transition-all flex-1 ${viewingOrder.orderStatus === s ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100 hover:border-blue-300'}`}
+                            className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase transition-all flex-1 ${viewingOrder.orderStatus === s ? 'bg-honey-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100 hover:border-honey-300'}`}
                           >
                             {s}
                           </button>
@@ -1056,13 +1056,13 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                      <label className="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">Catatan Progres</label>
                      <textarea 
                        placeholder="Contoh: Barang sedang dikemas atau Pesanan sudah di kurir..." 
-                       className="w-full p-4 bg-white border border-blue-100 rounded-2xl font-bold text-xs outline-none focus:ring-2 focus:ring-blue-500/20 resize-none h-20"
+                       className="w-full p-4 bg-white border border-honey-100 rounded-2xl font-bold text-xs outline-none focus:ring-2 focus:ring-honey-500/20 resize-none h-20"
                        value={memberUpdateNotes}
                        onChange={e => setMemberUpdateNotes(e.target.value)}
                      />
                   </div>
                   
-                  <p className="text-[8px] text-blue-400 font-bold italic">* Klik salah satu status di atas untuk menyimpan pembaruan.</p>
+                  <p className="text-[8px] text-honey-400 font-bold italic">* Klik salah satu status di atas untuk menyimpan pembaruan.</p>
                 </div>
               )}
               
@@ -1074,7 +1074,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                 </div>
                 <div className="p-4 bg-slate-50 rounded-2xl border">
                   <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Status</p>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${viewingOrder.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : viewingOrder.status === 'RECEIVED' || viewingOrder.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-600' : viewingOrder.status === 'DECLINED' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'}`}>
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${viewingOrder.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : viewingOrder.status === 'RECEIVED' || viewingOrder.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-600' : viewingOrder.status === 'DECLINED' ? 'bg-rose-100 text-rose-600' : 'bg-honey-100 text-honey-600'}`}>
                     {viewingOrder.status || viewingOrder.paymentStatus}
                   </span>
                 </div>
@@ -1101,7 +1101,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                           <p className="text-[7px] text-slate-400">{item.sku}</p>
                         </td>
                         <td className="px-4 py-3 text-center font-black">{product?.stock || 0}</td>
-                        <td className="px-4 py-3 text-center text-blue-600 font-black">{product?.avgMonthlySales || 0}</td>
+                        <td className="px-4 py-3 text-center text-honey-600 font-black">{product?.avgMonthlySales || 0}</td>
                         <td className="px-4 py-3 text-center">{item.quantity}</td>
                         <td className="px-4 py-3 text-right font-black">Rp {Number(item.subtotal).toLocaleString('id-ID')}</td>
                       </tr>
@@ -1110,7 +1110,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                   <tfoot className="bg-slate-100 font-black text-[10px]">
                     <tr>
                       <td colSpan={4} className="px-4 py-3 text-right uppercase">Total {viewingOrder.totalCost ? 'Biaya' : 'Pesanan'}</td>
-                      <td className="px-4 py-3 text-right text-blue-600">Rp {Number(viewingOrder.totalCost || viewingOrder.total).toLocaleString('id-ID')}</td>
+                      <td className="px-4 py-3 text-right text-honey-600">Rp {Number(viewingOrder.totalCost || viewingOrder.total).toLocaleString('id-ID')}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -1176,12 +1176,12 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                         <div className="p-3 border-b bg-slate-50"><input autoFocus type="text" placeholder="Ketik Nama atau SKU..." className="w-full p-2 bg-white border rounded-xl text-xs font-bold outline-none" value={orderSearchTerm} onChange={e => setOrderSearchTerm(e.target.value)} /></div>
                         <div className="max-h-60 overflow-y-auto">
                           {filteredOrderProducts.map(p => (
-                            <div key={p.id} onClick={() => { setSelectedProductId(p.id); setOrderCost(p.costPrice); setShowOrderDropdown(false); setOrderSearchTerm(''); }} className="px-4 py-3 hover:bg-blue-50 cursor-pointer text-xs font-bold border-b last:border-0 flex justify-between items-center group">
+                            <div key={p.id} onClick={() => { setSelectedProductId(p.id); setOrderCost(p.costPrice); setShowOrderDropdown(false); setOrderSearchTerm(''); }} className="px-4 py-3 hover:bg-honey-50 cursor-pointer text-xs font-bold border-b last:border-0 flex justify-between items-center group">
                                <div className="flex flex-col">
                                  <span className="text-xs font-black text-slate-800 uppercase">{p.name}</span>
                                  <span className="text-[9px] text-slate-400 font-bold uppercase">{p.sku} | Stok: {p.stock} | Avg: {p.avgMonthlySales || 0}/Bln</span>
                                </div>
-                               <i className="fas fa-plus text-slate-300 group-hover:text-blue-500 transition-colors"></i>
+                               <i className="fas fa-plus text-slate-300 group-hover:text-honey-500 transition-colors"></i>
                             </div>
                           ))}
                         </div>
@@ -1216,7 +1216,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                    }
                    setIsModalOpen(false); 
                    setOrderItems([]); 
-                 }} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-blue-100">Kirim Pengajuan</button>
+                 }} className="flex-1 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-honey-100">Kirim Pengajuan</button>
               </div>
            </div>
         </div>
@@ -1225,7 +1225,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
       {isAuditEditModalOpen && editingAuditItem && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl animate-in zoom-in duration-200">
-            <h3 className="text-xl font-black mb-6 uppercase tracking-tight text-blue-600">Edit Mutasi Stok</h3>
+            <h3 className="text-xl font-black mb-6 uppercase tracking-tight text-honey-600">Edit Mutasi Stok</h3>
             <div className="space-y-5">
               <div>
                 <label className="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1 block">Tanggal Transaksi</label>
@@ -1238,15 +1238,15 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                   <span className="text-[10px] font-black text-slate-400 uppercase w-20 leading-tight">Gunakan (-) untuk pengurangan</span>
                 </div>
               </div>
-              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                <p className="text-[9px] font-black text-blue-600 uppercase mb-1">Info Transaksi</p>
+              <div className="p-4 bg-honey-50 rounded-2xl border border-honey-100">
+                <p className="text-[9px] font-black text-honey-600 uppercase mb-1">Info Transaksi</p>
                 <p className="text-[10px] font-bold text-slate-600 uppercase">{editingAuditItem.type}</p>
                 <p className="text-[8px] text-slate-400 mt-1">REF: #{editingAuditItem.ref.toUpperCase()}</p>
               </div>
             </div>
             <div className="flex gap-4 mt-8">
               <button disabled={isAuditProcessing} onClick={() => setIsAuditEditModalOpen(false)} className="flex-1 py-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase text-slate-500 disabled:opacity-50">Batal</button>
-              <button disabled={isAuditProcessing} onClick={() => handleAuditAction('edit', editingAuditItem)} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2">
+              <button disabled={isAuditProcessing} onClick={() => handleAuditAction('edit', editingAuditItem)} className="flex-1 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-honey-100 disabled:opacity-50 flex items-center justify-center gap-2">
                 {isAuditProcessing && <i className="fas fa-spinner fa-spin"></i>}
                 <span>Simpan Perubahan</span>
               </button>

@@ -64,7 +64,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         id: userId.toString(),
         email: data.email,
         role: rawRole as UserRole,
-        name: data.name || 'User Minimart'
+        name: data.name || 'User BeeSmart'
       };
       onLogin(normalizedUser);
     } catch (err: any) {
@@ -158,10 +158,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
         <div className="p-10">
           <div className="text-center mb-10">
-             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl text-white text-3xl mb-4 shadow-xl shadow-blue-900/40 transform -rotate-6">
-                <Icons.POS />
+             <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl p-2 mb-4 shadow-xl shadow-slate-200 border border-slate-100 transform -rotate-6">
+                <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-full h-full object-contain" />
              </div>
-             <h2 className="text-2xl font-black text-slate-900">MinimartPro ERP</h2>
+             <h2 className="text-2xl font-black text-slate-900">BeeSmart ERP</h2>
              <p className="text-slate-400 mt-1 text-[9px] font-black uppercase tracking-[0.2em]">Sistem Manajemen Cerdas</p>
           </div>
 
@@ -172,13 +172,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             <form onSubmit={handleSignIn} className="space-y-5">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email / Username</label>
-                <input type="text" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-sm" placeholder="admin@minimart.com" />
+                <input type="text" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-sm" placeholder="user@beesmart.store" />
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                  <button type="button" onClick={() => setView('forgot_password')} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors">Lupa Password?</button>
+                  <button type="button" onClick={() => setView('forgot_password')} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-honey-600 transition-colors">Lupa Password?</button>
                 </div>
                 <div className="relative">
                   <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-5 py-4 pr-14 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-sm" placeholder="••••••••" />
@@ -188,12 +188,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 </div>
               </div>
 
-              <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest">
+              <button type="submit" disabled={isLoading} className="w-full bg-honey-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest">
                 {isLoading ? 'Loading...' : 'Masuk Dashboard'}
               </button>
 
               <div className="text-center mt-6">
-                <button type="button" onClick={() => setView('register')} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors">Belum punya akun? Daftar Member</button>
+                <button type="button" onClick={() => setView('register')} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-honey-600 transition-colors">Belum punya akun? Daftar Member</button>
               </div>
             </form>
           )}
@@ -247,7 +247,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                          setTermsModalTab('terms');
                          setShowTermsModal(true);
                        }}
-                       className="font-bold text-blue-600 hover:underline"
+                       className="font-bold text-honey-600 hover:underline"
                      >
                        Syarat & Ketentuan
                      </button>{' '}
@@ -287,7 +287,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="block w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-sm" placeholder="member@email.com" />
               </div>
 
-              <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest">
+              <button type="submit" disabled={isLoading} className="w-full bg-honey-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest">
                 {isLoading ? 'Mengirim...' : 'Kirim Link Konfirmasi'}
               </button>
 
@@ -320,7 +320,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 </div>
               </div>
 
-              <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest">
+              <button type="submit" disabled={isLoading} className="w-full bg-honey-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest">
                 {isLoading ? 'Menyimpan...' : 'Konfirmasi & Hash Password'}
               </button>
             </form>
@@ -334,7 +334,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 setTermsModalTab('terms');
                 setShowTermsModal(true);
               }}
-              className="text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-blue-600 transition-colors flex items-center justify-center gap-1.5 mx-auto"
+              className="text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-honey-600 transition-colors flex items-center justify-center gap-1.5 mx-auto"
             >
               <i className="fas fa-balance-scale"></i>
               Syarat & Ketentuan & Kebijakan Privasi Data

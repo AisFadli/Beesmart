@@ -302,11 +302,11 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-3">
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-4">
-             <span className="p-3 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100"><i className="fas fa-id-card"></i></span>
+             <span className="p-3 bg-honey-600 text-white rounded-2xl shadow-xl shadow-honey-100"><i className="fas fa-id-card"></i></span>
              Management Membership & Deposit
           </h1>
           <div className="flex flex-wrap gap-2">
-             <button onClick={() => setActiveTab('approved')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${activeTab === 'approved' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-indigo-200'}`}>Member Aktif</button>
+             <button onClick={() => setActiveTab('approved')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${activeTab === 'approved' ? 'bg-honey-600 border-honey-600 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-honey-200'}`}>Member Aktif</button>
              <button onClick={() => setActiveTab('pending')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all relative ${activeTab === 'pending' ? 'bg-amber-500 border-amber-500 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-amber-200'}`}>
                 Persetujuan Member
                 {state.members.filter(m => m.status === 'PENDING').length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[7px] flex items-center justify-center rounded-full animate-pulse font-black border border-white">{state.members.filter(m => m.status === 'PENDING').length}</span>}
@@ -327,7 +327,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
             }}
             className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-200 flex items-center gap-2 transition-all"
           >
-            <i className="fas fa-file-contract text-blue-600"></i> Syarat & Ketentuan Legal
+            <i className="fas fa-file-contract text-honey-600"></i> Syarat & Ketentuan Legal
           </button>
           <button onClick={() => { 
             setSelectedMember(null); 
@@ -336,7 +336,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               barcode: generateNewMemberBarcode()
             }); 
             setIsModalOpen(true); 
-          }} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center gap-2 active:scale-95 transition-all">
+          }} className="bg-honey-600 hover:bg-honey-700 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-honey-100 flex items-center gap-2 active:scale-95 transition-all">
             <i className="fas fa-user-plus"></i> Tambah Member
           </button>
         </div>
@@ -376,8 +376,8 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
           <>
             <div className="p-8 border-b border-slate-100 bg-slate-50/40">
               <div className="relative group max-w-2xl">
-                 <span className="absolute inset-y-0 left-0 pl-6 flex items-center text-slate-400 group-focus-within:text-indigo-600 transition-colors"><Icons.Search /></span>
-                 <input type="text" placeholder="Cari Nama atau WhatsApp Member..." className="w-full pl-14 pr-8 py-3.5 rounded-2xl border border-transparent outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 font-bold transition-all bg-white shadow-inner" value={search} onChange={e => setSearch(e.target.value)} />
+                 <span className="absolute inset-y-0 left-0 pl-6 flex items-center text-slate-400 group-focus-within:text-honey-600 transition-colors"><Icons.Search /></span>
+                 <input type="text" placeholder="Cari Nama atau WhatsApp Member..." className="w-full pl-14 pr-8 py-3.5 rounded-2xl border border-transparent outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 font-bold transition-all bg-white shadow-inner" value={search} onChange={e => setSearch(e.target.value)} />
               </div>
             </div>
             <div className="overflow-x-auto hidden md:block">
@@ -395,7 +395,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                     <tr key={m.id} className="hover:bg-slate-50/80 transition-all group">
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-xs uppercase shadow-sm">
+                            <div className="w-10 h-10 rounded-xl bg-honey-50 border border-honey-100 flex items-center justify-center text-honey-600 font-black text-xs uppercase shadow-sm">
                                {m.name.slice(0, 2)}
                             </div>
                             <div className="min-w-0">
@@ -407,13 +407,13 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                       <td className="px-8 py-6">
                          <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
                            m.status === 'SUSPENDED' ? 'bg-red-100 text-red-600 font-bold' : 
-                           m.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600 font-bold' : 'bg-amber-100 text-amber-600 font-bold'
+                           m.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600 font-bold' : 'bg-yellow-100 text-yellow-700 font-bold'
                          }`}>
                            {m.status}
                          </span>
                       </td>
                       <td className="px-8 py-6 text-right">
-                         <p className="text-sm font-black text-indigo-600 leading-none mb-1">Rp {Number(m.depositBalance).toLocaleString('id-ID')}</p>
+                         <p className="text-sm font-black text-honey-600 leading-none mb-1">Rp {Number(m.depositBalance).toLocaleString('id-ID')}</p>
                          {m.status !== 'PENDING' && (
                            <button onClick={() => { setSelectedMember(m); setTopUpAmount(0); setTopUpProof(undefined); setIsTopUpModalOpen(true); }} className="text-[8px] font-black text-emerald-600 uppercase tracking-widest hover:bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">Top Up</button>
                          )}
@@ -424,8 +424,8 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                                <button onClick={async() => { await apiService.approveMember(m.id); onRefreshData(); }} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Verify & Approve</button>
                             ) : (
                                <>
-                                 <button onClick={() => { setSelectedMember(m); setIsHistoryModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl border border-slate-100" title="History"><i className="fas fa-history"></i></button>
-                                 <button onClick={() => { setCardMember(m); setIsCardModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl border border-slate-100" title="Cetak Kartu Member ID"><i className="fas fa-id-card text-indigo-600"></i></button>
+                                 <button onClick={() => { setSelectedMember(m); setIsHistoryModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-honey-600 hover:bg-honey-50 rounded-xl border border-slate-100" title="History"><i className="fas fa-history"></i></button>
+                                 <button onClick={() => { setCardMember(m); setIsCardModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-honey-600 hover:bg-honey-50 rounded-xl border border-slate-100" title="Cetak Kartu Member ID"><i className="fas fa-id-card text-honey-600"></i></button>
                                  
                                  {isAdmin && (
                                    <button onClick={() => handleToggleSuspend(m)} className={`p-2.5 rounded-xl border transition-all ${m.status === 'SUSPENDED' ? 'text-emerald-600 border-emerald-100 bg-emerald-50' : 'text-amber-600 border-amber-100 bg-amber-50'}`} title={m.status === 'SUSPENDED' ? 'Aktifkan' : 'Suspend'}>
@@ -433,8 +433,8 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                                    </button>
                                  )}
                                  
-                                 <button onClick={() => { setSelectedMember(m); setFormData({...m}); setIsModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl border border-slate-100" title="Edit"><i className="fas fa-edit"></i></button>
-                                 <button onClick={() => onOpenChat(m.id)} className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl border border-slate-100" title="Kirim Pesan (Chat)"><i className="fas fa-comments text-indigo-500 shadow-sm"></i></button>
+                                 <button onClick={() => { setSelectedMember(m); setFormData({...m}); setIsModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-honey-600 hover:bg-honey-50 rounded-xl border border-slate-100" title="Edit"><i className="fas fa-edit"></i></button>
+                                 <button onClick={() => onOpenChat(m.id)} className="p-2.5 text-slate-400 hover:text-honey-600 hover:bg-honey-50 rounded-xl border border-slate-100" title="Kirim Pesan (Chat)"><i className="fas fa-comments text-honey-500 shadow-sm"></i></button>
                                </>
                             )}
                          </div>
@@ -460,7 +460,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                        <button 
                          key={i} 
                          onClick={() => setCurrentPage(i + 1)}
-                         className={`w-8 h-8 rounded-lg text-[9px] font-black transition-all ${currentPage === i + 1 ? 'bg-indigo-600 text-white shadow-md' : 'bg-white border text-slate-400 hover:bg-slate-50'}`}
+                         className={`w-8 h-8 rounded-lg text-[9px] font-black transition-all ${currentPage === i + 1 ? 'bg-honey-600 text-white shadow-md' : 'bg-white border text-slate-400 hover:bg-slate-50'}`}
                        >
                          {i + 1}
                        </button>
@@ -482,7 +482,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               {paginatedMembers.map(m => (
                 <div key={m.id} className="p-4 flex flex-col gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-xs uppercase shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-honey-50 border border-honey-100 flex items-center justify-center text-honey-600 font-black text-xs uppercase shadow-sm">
                       {m.name.slice(0, 2)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -491,14 +491,14 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                       <div className="mt-1">
                         <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
                           m.status === 'SUSPENDED' ? 'bg-red-100 text-red-600' : 
-                          m.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
+                          m.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-yellow-100 text-yellow-700'
                         }`}>
                           {m.status}
                         </span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-indigo-600">Rp {Number(m.depositBalance).toLocaleString('id-ID')}</p>
+                      <p className="text-sm font-black text-honey-600">Rp {Number(m.depositBalance).toLocaleString('id-ID')}</p>
                       {m.status !== 'PENDING' && (
                         <button onClick={() => { setSelectedMember(m); setTopUpAmount(0); setTopUpProof(undefined); setIsTopUpModalOpen(true); }} className="text-[8px] font-black text-emerald-600 uppercase mt-1">Top Up</button>
                       )}
@@ -509,11 +509,11 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                       <button onClick={async() => { await apiService.approveMember(m.id); onRefreshData(); }} className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest">Approve</button>
                     ) : (
                       <>
-                        <button onClick={() => { setCardMember(m); setIsCardModalOpen(true); }} className="flex-1 py-2 bg-indigo-600 text-white rounded-xl font-black text-[9px] uppercase tracking-wider shadow-sm flex items-center justify-center gap-1">
+                        <button onClick={() => { setCardMember(m); setIsCardModalOpen(true); }} className="flex-1 py-2 bg-honey-600 text-white rounded-xl font-black text-[9px] uppercase tracking-wider shadow-sm flex items-center justify-center gap-1">
                           <i className="fas fa-id-card text-[10px]"></i> Kartu
                         </button>
                         <button onClick={() => { setSelectedMember(m); setIsHistoryModalOpen(true); }} className="flex-1 py-2 bg-slate-50 text-slate-600 rounded-xl font-black text-[9px] uppercase border border-slate-200">History</button>
-                        <button onClick={() => { setSelectedMember(m); setFormData({...m}); setIsModalOpen(true); }} className="flex-1 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-black text-[9px] uppercase border border-indigo-200">Edit</button>
+                        <button onClick={() => { setSelectedMember(m); setFormData({...m}); setIsModalOpen(true); }} className="flex-1 py-2 bg-honey-50 text-honey-600 rounded-xl font-black text-[9px] uppercase border border-honey-200">Edit</button>
                         {isAdmin && (
                           <button onClick={() => handleToggleSuspend(m)} className={`flex-1 py-2 rounded-xl font-black text-[9px] uppercase border ${m.status === 'SUSPENDED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
                             {m.status === 'SUSPENDED' ? 'Aktif' : 'Suspend'}
@@ -541,19 +541,19 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               <div className="space-y-5 overflow-y-auto custom-scrollbar flex-1 pr-2">
                  <div>
                     <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nominal Saldo (Rp)</label>
-                    <input type="number" placeholder="0" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-2xl text-indigo-600 outline-none focus:ring-4 focus:ring-indigo-500/10 shadow-inner" value={topUpAmount} onChange={e => setTopUpAmount(Number(e.target.value))} />
+                    <input type="number" placeholder="0" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-2xl text-honey-600 outline-none focus:ring-4 focus:ring-honey-500/10 shadow-inner" value={topUpAmount} onChange={e => setTopUpAmount(Number(e.target.value))} />
                  </div>
                  
                  <div>
                     <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Bukti Transfer (Upload)</label>
-                    <div onClick={() => fileInputRef.current?.click()} className="mt-1 w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-all">
+                    <div onClick={() => fileInputRef.current?.click()} className="mt-1 w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:bg-honey-50 hover:border-honey-300 transition-all">
                        {topUpProof ? <img src={topUpProof} className="w-full h-full object-cover" /> : <div className="text-center text-slate-300"><i className="fas fa-cloud-upload-alt text-2xl mb-1"></i><p className="text-[8px] font-black uppercase">Klik Untuk Ambil Gambar Bukti</p></div>}
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleProofUpload} className="hidden" />
                  </div>
                  
-                 <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                    <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest leading-relaxed text-center">
+                 <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-200">
+                    <p className="text-[9px] font-black text-yellow-800 uppercase tracking-widest leading-relaxed text-center">
                        {isAdmin ? 'ADMIN: Saldo langsung bertambah.' : 'STAFF/MEMBER: Perlu persetujuan Admin.'}
                     </p>
                  </div>
@@ -561,7 +561,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               
               <div className="flex gap-4 pt-6 border-t mt-4 shrink-0">
                  <button onClick={() => setIsTopUpModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500">Batal</button>
-                 <button onClick={async () => { await onTopUp(selectedMember.id, topUpAmount, topUpProof); setIsTopUpModalOpen(false); }} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-indigo-100">Kirim Ajuan</button>
+                 <button onClick={async () => { await onTopUp(selectedMember.id, topUpAmount, topUpProof); setIsTopUpModalOpen(false); }} className="flex-1 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-honey-100">Kirim Ajuan</button>
               </div>
            </div>
         </div>
@@ -600,7 +600,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                                 {item.amount > 0 ? '+' : ''} Rp {Number(Math.abs(item.amount)).toLocaleString('id-ID')}
                              </td>
                              <td className="px-8 py-5 text-center">
-                                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${item.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${item.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-600'}`}>
                                    {item.status || 'APPROVED'}
                                 </span>
                              </td>
@@ -626,12 +626,12 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest self-start ml-2">Foto Member (Kartu Member)</label>
                     <div 
                       onClick={() => profilePhotoInputRef.current?.click()} 
-                      className="w-24 h-24 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-all overflow-hidden relative shadow-inner group"
+                      className="w-24 h-24 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-honey-50 hover:border-honey-300 transition-all overflow-hidden relative shadow-inner group"
                     >
                        {formData.image ? (
                           <img src={formData.image} className="w-full h-full object-cover" alt="Member Photo" />
                        ) : (
-                          <div className="text-center p-2 text-slate-300 group-hover:text-indigo-500">
+                          <div className="text-center p-2 text-slate-300 group-hover:text-honey-500">
                              <i className="fas fa-camera text-2xl mb-1"></i>
                              <p className="text-[8px] font-black uppercase tracking-wider">Foto Profil</p>
                           </div>
@@ -696,7 +696,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
 
                  <div className="flex gap-4 mt-8 pt-6 border-t">
                     <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500">Batal</button>
-                    <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-100">Simpan Member</button>
+                    <button type="submit" className="flex-1 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-honey-100">Simpan Member</button>
                  </div>
               </form>
            </div>
@@ -714,7 +714,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
             <div className="space-y-1.5">
               <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">Ganti Barcode Member?</h3>
               <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Member ini sudah memiliki kode barcode: <span className="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{formData.barcode}</span>. 
+                Member ini sudah memiliki kode barcode: <span className="font-mono font-bold text-yellow-800 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">{formData.barcode}</span>. 
                 Jika Anda membuat barcode baru, kode barcode lama akan terhapus dan tidak berlaku lagi di kartu fisik.
               </p>
             </div>

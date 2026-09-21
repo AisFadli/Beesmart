@@ -5,9 +5,9 @@ const getApiBaseUrl = () => {
   const origin = window.location.origin;
   const path = window.location.pathname;
   
-  // Jika path mengandung /minimartpro, gunakan subfolder tersebut
-  if (path.includes('/minimartpro')) {
-    return `${origin}/minimartpro/api`;
+  // Jika path berada di subfolder /app, gunakan subfolder tersebut
+  if (path === '/app' || path.startsWith('/app/')) {
+    return `${origin}/app/api`;
   }
   
   // Default untuk environment ini adalah /api di root
@@ -34,7 +34,7 @@ export class ApiService {
         data = JSON.parse(text);
       } catch (e) {
         console.error("Invalid JSON response from " + url, text);
-        throw new Error("Respon server tidak valid. Pastikan folder /minimartpro/api/ tersedia.");
+        throw new Error("Respon server tidak valid. Pastikan folder /app/api/ tersedia.");
       }
       
       if (data.status === 'error') throw new Error(data.message);

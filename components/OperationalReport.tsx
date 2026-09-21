@@ -237,7 +237,7 @@ const OperationalReport: React.FC<OperationalReportProps> = ({ state, onRefreshD
         </div>
         <div className="bg-white p-6 rounded-[2rem] border shadow-sm">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Gross Profit</p>
-          <p className="text-2xl font-black text-blue-600">Rp {Number(stats.grossProfit).toLocaleString('id-ID')}</p>
+          <p className="text-2xl font-black text-honey-600">Rp {Number(stats.grossProfit).toLocaleString('id-ID')}</p>
           <p className="text-[10px] font-bold text-slate-400 mt-2">Margin: {stats.omzet > 0 ? ((stats.grossProfit / stats.omzet) * 100).toFixed(1) : 0}%</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border shadow-sm">
@@ -288,7 +288,7 @@ const OperationalReport: React.FC<OperationalReportProps> = ({ state, onRefreshD
                     {paginatedExpenses.map(e => (
                       <tr key={e.id} className={`hover:bg-slate-50 transition-colors ${e.status === 'CANCELLED' ? 'opacity-40 grayscale' : ''}`}>
                         <td className="px-6 py-4">
-                          <p className="text-blue-600 font-black">#{e.id}</p>
+                          <p className="text-honey-600 font-black">#{e.id}</p>
                           <p className="text-[9px] text-slate-400 uppercase">{e.date}</p>
                         </td>
                         <td className="px-6 py-4 text-slate-700 uppercase">{e.description}</td>
@@ -299,7 +299,7 @@ const OperationalReport: React.FC<OperationalReportProps> = ({ state, onRefreshD
                         <td className="px-6 py-4 text-right">
                           {isAdmin && e.status !== 'CANCELLED' && (
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => { setEditingExpense(e); setFormData(e); setIsModalOpen(true); }} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><i className="fas fa-edit"></i></button>
+                              <button onClick={() => { setEditingExpense(e); setFormData(e); setIsModalOpen(true); }} className="p-2 bg-honey-50 text-honey-600 rounded-lg hover:bg-honey-600 hover:text-white transition-all"><i className="fas fa-edit"></i></button>
                               <button onClick={() => handleCancelExpense(e.id)} className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all"><i className="fas fa-trash-alt"></i></button>
                             </div>
                           )}
@@ -346,7 +346,7 @@ const OperationalReport: React.FC<OperationalReportProps> = ({ state, onRefreshD
                       <th className="px-6 py-4 text-right">Omzet</th>
                       <th className="px-6 py-4 text-right">Gross Profit</th>
                       <th className="px-6 py-4 text-right">Biaya Operasional</th>
-                      <th className="px-6 py-4 text-right bg-blue-50">Net Profit</th>
+                      <th className="px-6 py-4 text-right bg-honey-50">Net Profit</th>
                     </tr>
                   </thead>
                   <tbody className="text-[11px] font-bold divide-y">
@@ -358,9 +358,9 @@ const OperationalReport: React.FC<OperationalReportProps> = ({ state, onRefreshD
                         <tr key={cat} className="hover:bg-slate-50 transition-colors">
                           <td className="px-6 py-4 uppercase font-black">{cat}</td>
                           <td className="px-6 py-4 text-right">Rp {s.revenue.toLocaleString()}</td>
-                          <td className="px-6 py-4 text-right text-blue-600">Rp {gp.toLocaleString()}</td>
+                          <td className="px-6 py-4 text-right text-honey-600">Rp {gp.toLocaleString()}</td>
                           <td className="px-6 py-4 text-right text-rose-600">Rp {s.expenses.toLocaleString()}</td>
-                          <td className={`px-6 py-4 text-right bg-blue-50/30 font-black ${np >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>Rp {np.toLocaleString()}</td>
+                          <td className={`px-6 py-4 text-right bg-honey-50/30 font-black ${np >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>Rp {np.toLocaleString()}</td>
                         </tr>
                       );
                     })}

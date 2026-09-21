@@ -3,9 +3,9 @@ import React from 'react';
 
 export const COLORS = {
   primary: '#0f172a', // Slate 900
-  secondary: '#3b82f6', // Blue 500
+  secondary: '#f59e0b', // Honey 500
   accent: '#10b981', // Emerald 500
-  warning: '#f59e0b', // Amber 500
+  warning: '#eab308', // Yellow 500
   danger: '#ef4444', // Red 500
 };
 

@@ -1,6 +1,6 @@
 {
-  "name": "MinimartPro ERP",
-  "description": "Enterprise-grade Minimart Management System with POS, Inventory, and Multi-Tenant Isolation.",
+  "name": "BeeSmart ERP",
+  "description": "Enterprise-grade BeeSmart Management System with POS, Inventory, and Multi-Tenant Isolation.",
   "requestFramePermissions": [
     "camera",
     "bluetooth",

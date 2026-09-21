@@ -80,18 +80,18 @@ if ($method === 'POST') {
         if (!$before) {
             $to = $data['email'];
             $subject = "Selamat Bergabung & Lampiran Syarat & Ketentuan - Koperasi Syariah AIS";
-            $loginLink = "https://admin.aiskoperasi.store/minimartpro/";
+            $loginLink = "https://beesmart.id/app/";
             
             $statusMsg = "Pendaftaran member Anda telah berhasil dan akun Anda sudah aktif.";
             $loginMsg = "Silakan login menggunakan email: " . $data['email'];
 
             $termsText = "--------------------------------------------------\n" .
                          "LAMPIRAN DOKUMEN LEGAL & REGULASI DATA PRIBADI\n" .
-                         "KOPERASI SYARIAH AIS & MINIMARTPRO ERP\n" .
+                         "KOPERASI SYARIAH AIS & BEESMART ERP\n" .
                          "--------------------------------------------------\n\n" .
                          "I. SYARAT & KETENTUAN PENGGUNAAN (TERMS OF SERVICE):\n" .
                          "1. Member bertanggung jawab penuh atas kerahasiaan password dan akun pribadi.\n" .
-                         "2. Saldo deposit dikelola sesuai prinsip transaksi Syariah tanpa bunga (bebas riba) untuk kebutuhan belanja di Minimart Koperasi.\n" .
+                         "2. Saldo deposit dikelola sesuai prinsip transaksi Syariah tanpa bunga (bebas riba) untuk kebutuhan belanja di BeeSmart Koperasi.\n" .
                          "3. Setiap transaksi akan mencatat nota digital (e-receipt) serta riwayat audit secara aman.\n" .
                          "4. Pengelola berhak menangguhkan akun apabila ditemukan manipulasi data atau tindakan merugikan.\n\n" .
                          "II. KEBIJAKAN PRIVASI & PERLINDUNGAN DATA PRIBADI (UU PDP NO. 27/2022):\n" .
@@ -112,8 +112,11 @@ if ($method === 'POST') {
                       "WhatsApp: +62 881-0257-23947 (Bpk. Teguh)\n\n" .
                       "Hormat kami,\nTim Koperasi Syariah AIS";
             
-            // Mengirim email menggunakan helper backend
-            sendNoReplyEmail($to, $subject, $message);
+            // Mengirim email menggunakan helper backend (gagal kirim tidak menggagalkan simpan data)
+            $emailSent = sendNoReplyEmail($to, $subject, $message);
+            if (!$emailSent) {
+                error_log("Members: Email notifikasi gagal dikirim ke $to (data member tetap tersimpan).");
+            }
         }
 
         if ($before) {

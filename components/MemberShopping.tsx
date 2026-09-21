@@ -259,7 +259,7 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
   if (checkoutMode) {
     return (
       <div className="space-y-6">
-        <button onClick={() => setCheckoutMode(false)} className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase">
+        <button onClick={() => setCheckoutMode(false)} className="flex items-center gap-2 text-honey-600 font-black text-[10px] uppercase">
           <i className="fas fa-arrow-left"></i> Kembali Belanja
         </button>
 
@@ -270,14 +270,14 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                <div className="grid grid-cols-2 gap-4">
                   <button 
                     onClick={() => setDeliveryType('PICKUP')}
-                    className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${deliveryType === 'PICKUP' ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-lg' : 'border-slate-100 text-slate-400 group hover:border-indigo-200'}`}
+                    className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${deliveryType === 'PICKUP' ? 'border-honey-600 bg-honey-50 text-honey-600 shadow-lg' : 'border-slate-100 text-slate-400 group hover:border-honey-200'}`}
                   >
                     <i className="fas fa-store text-2xl group-hover:scale-110 transition-transform"></i>
                     <span className="text-[10px] font-black uppercase tracking-widest">Ambil Sendiri</span>
                   </button>
                   <button 
                     onClick={() => setDeliveryType('DELIVERY')}
-                    className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${deliveryType === 'DELIVERY' ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-lg' : 'border-slate-100 text-slate-400 group hover:border-indigo-200'}`}
+                    className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${deliveryType === 'DELIVERY' ? 'border-honey-600 bg-honey-50 text-honey-600 shadow-lg' : 'border-slate-100 text-slate-400 group hover:border-honey-200'}`}
                   >
                     <i className="fas fa-truck text-2xl group-hover:scale-110 transition-transform"></i>
                     <span className="text-[10px] font-black uppercase tracking-widest">Kirim Ke Alamat</span>
@@ -287,11 +287,11 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                  <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <div className="flex justify-between items-center mb-2">
                        <span className="text-[10px] font-black text-slate-400 uppercase">Estimasi Jarak</span>
-                       <span className="text-xs font-black text-indigo-600">{distance ? `${distance.toFixed(2)} KM` : 'Menghitung...'}</span>
+                       <span className="text-xs font-black text-honey-600">{distance ? `${distance.toFixed(2)} KM` : 'Menghitung...'}</span>
                     </div>
                     <div className="flex justify-between items-center">
                        <span className="text-[10px] font-black text-slate-400 uppercase">Biaya Ongkir</span>
-                       <span className="text-xs font-black text-indigo-600">Rp {Number(shippingCost).toLocaleString('id-ID')}</span>
+                       <span className="text-xs font-black text-honey-600">Rp {Number(shippingCost).toLocaleString('id-ID')}</span>
                     </div>
                  </div>
                )}
@@ -299,35 +299,35 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
 
             <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
                <h3 className="text-sm font-black uppercase text-slate-800 mb-6 flex items-center gap-2">
-                 <i className="fas fa-wallet text-indigo-600"></i> Metode Pembayaran
+                 <i className="fas fa-wallet text-honey-600"></i> Metode Pembayaran
                </h3>
                
                {!isChoosingMethod ? (
                  <div className="grid grid-cols-2 gap-4">
                    <div 
                      onClick={() => { setPaymentMethod('CASH'); setIsChoosingMethod(true); }}
-                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'CASH' ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-indigo-200'}`}
+                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'CASH' ? 'border-honey-600 bg-honey-50 text-honey-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-honey-200'}`}
                    >
                      <i className="fas fa-money-bill-wave text-2xl"></i>
                      <span className="text-[10px] font-black uppercase tracking-widest text-center">Tunai di Toko</span>
                    </div>
                    <div 
                      onClick={() => { setPaymentMethod('TRANSFER'); setIsChoosingMethod(true); }}
-                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'TRANSFER' ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-indigo-200'}`}
+                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'TRANSFER' ? 'border-honey-600 bg-honey-50 text-honey-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-honey-200'}`}
                    >
                      <i className="fas fa-university text-2xl"></i>
                      <span className="text-[10px] font-black uppercase tracking-widest text-center">Transfer Bank</span>
                    </div>
                    <div 
                      onClick={() => { setPaymentMethod('QRIS'); setIsChoosingMethod(true); }}
-                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'QRIS' ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-indigo-200'}`}
+                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'QRIS' ? 'border-honey-600 bg-honey-50 text-honey-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-honey-200'}`}
                    >
                      <i className="fas fa-qrcode text-2xl"></i>
                      <span className="text-[10px] font-black uppercase tracking-widest text-center">QRIS Koperasi</span>
                    </div>
                    <div 
                      onClick={() => { setPaymentMethod('DEPOSIT'); setIsChoosingMethod(true); }}
-                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'DEPOSIT' ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-indigo-200'}`}
+                     className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${paymentMethod === 'DEPOSIT' ? 'border-honey-600 bg-honey-50 text-honey-600 shadow-lg' : 'border-slate-100 text-slate-400 opacity-60 hover:opacity-100 hover:border-honey-200'}`}
                    >
                      <i className="fas fa-piggy-bank text-2xl"></i>
                      <div className="flex flex-col items-center">
@@ -340,7 +340,7 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                       <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-sm">
+                         <div className="w-10 h-10 bg-honey-100 text-honey-600 rounded-xl flex items-center justify-center text-sm">
                            <i className={paymentMethod === 'CASH' ? 'fas fa-money-bill-wave' : paymentMethod === 'TRANSFER' ? 'fas fa-university' : paymentMethod === 'QRIS' ? 'fas fa-qrcode' : 'fas fa-piggy-bank'}></i>
                          </div>
                          <div>
@@ -348,7 +348,7 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                             <p className="text-xs font-black text-slate-700">{paymentMethod === 'CASH' ? 'Tunai' : paymentMethod}</p>
                          </div>
                       </div>
-                      <button onClick={() => setIsChoosingMethod(false)} className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-700">Ganti</button>
+                      <button onClick={() => setIsChoosingMethod(false)} className="text-[10px] font-black uppercase text-honey-600 hover:text-honey-700">Ganti</button>
                     </div>
 
                     {(paymentMethod === 'TRANSFER' || paymentMethod === 'QRIS') && (
@@ -361,14 +361,14 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                         )}
 
                         {paymentMethod === 'QRIS' && state.settings.qrisImage && (
-                          <div className="flex flex-col items-center gap-4 bg-indigo-50/30 p-6 rounded-3xl border border-indigo-100">
+                          <div className="flex flex-col items-center gap-4 bg-honey-50/30 p-6 rounded-3xl border border-honey-100">
                              <div className="bg-white p-4 rounded-3xl shadow-xl w-48 h-48 border border-white flex items-center justify-center overflow-hidden">
                                <img src={state.settings.qrisImage} alt="Store QRIS" className="w-full h-full object-contain" />
                              </div>
                              <a 
                                href={state.settings.qrisImage} 
                                download="QRIS-KOPERASI.png"
-                               className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2 hover:indigo-700"
+                               className="text-[10px] font-black text-honey-600 uppercase tracking-widest flex items-center gap-2 hover:honey-700"
                              >
                                <i className="fas fa-download"></i> Simpan QRIS
                              </a>
@@ -377,17 +377,17 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
 
                         <div className="space-y-3">
                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                             <i className="fas fa-cloud-upload-alt text-indigo-500"></i> Upload Bukti Bayar
+                             <i className="fas fa-cloud-upload-alt text-honey-500"></i> Upload Bukti Bayar
                            </h4>
                            <div 
                               onClick={() => fileInputRef.current?.click()}
-                              className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/5 transition-all overflow-hidden relative group"
+                              className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-honey-300 hover:shadow-xl hover:shadow-honey-500/5 transition-all overflow-hidden relative group"
                            >
                               {paymentProof ? (
                                 <img src={paymentProof.startsWith('data:') ? paymentProof : (window as any).location.origin + '/' + paymentProof} className="w-full h-full object-cover" />
                               ) : (
                                 <>
-                                  {isUploading ? <i className="fas fa-spinner fa-spin text-2xl text-indigo-600"></i> : <i className="fas fa-camera text-4xl text-slate-200 mb-3 group-hover:scale-110 transition-transform"></i>}
+                                  {isUploading ? <i className="fas fa-spinner fa-spin text-2xl text-honey-600"></i> : <i className="fas fa-camera text-4xl text-slate-200 mb-3 group-hover:scale-110 transition-transform"></i>}
                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isUploading ? 'Sedang Mengunggah...' : 'Pilih Foto / Screenshot'}</span>
                                 </>
                               )}
@@ -433,14 +433,14 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                     <div className="flex flex-col min-w-0 flex-1 mr-2">
                       <span className="opacity-70 line-clamp-2 leading-tight mb-1 break-all [overflow-wrap:anywhere] whitespace-normal">{item.name}</span>
                       <div className="flex items-center gap-2 mt-auto">
-                        <button onClick={() => updateQuantity(item.productId, -1)} className="w-5 h-5 flex items-center justify-center bg-white/10 rounded-lg hover:bg-indigo-500 transition-colors"><i className="fas fa-minus text-[8px]"></i></button>
+                        <button onClick={() => updateQuantity(item.productId, -1)} className="w-5 h-5 flex items-center justify-center bg-white/10 rounded-lg hover:bg-honey-500 transition-colors"><i className="fas fa-minus text-[8px]"></i></button>
                         <input 
                           type="number" 
                           className="w-10 bg-transparent text-center font-black focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
                           value={item.quantity} 
                           onChange={(e) => updateQuantity(item.productId, e.target.value)} 
                         />
-                        <button onClick={() => updateQuantity(item.productId, 1)} className="w-5 h-5 flex items-center justify-center bg-white/10 rounded-lg hover:bg-indigo-500 transition-colors"><i className="fas fa-plus text-[8px]"></i></button>
+                        <button onClick={() => updateQuantity(item.productId, 1)} className="w-5 h-5 flex items-center justify-center bg-white/10 rounded-lg hover:bg-honey-500 transition-colors"><i className="fas fa-plus text-[8px]"></i></button>
                       </div>
                     </div>
                     <span className="font-black">Rp {Number(item.subtotal).toLocaleString('id-ID')}</span>
@@ -458,14 +458,14 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                    <span>Rp {Number(shippingCost).toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between items-center pt-2">
-                   <span className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Total Akhir</span>
+                   <span className="text-xs font-black uppercase tracking-[0.2em] text-honey-400">Total Akhir</span>
                    <span className="text-3xl font-black text-white">Rp {Number(grandTotal).toLocaleString('id-ID')}</span>
                 </div>
              </div>
 
              {deliveryType === 'DELIVERY' && (
                 <div className="w-full mb-6 space-y-4">
-                   <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-widest border-b border-white/10 pb-2">Detail Pengiriman</h4>
+                   <h4 className="text-[10px] font-black uppercase text-honey-400 tracking-widest border-b border-white/10 pb-2">Detail Pengiriman</h4>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-[8px] font-black text-slate-500 uppercase">Nama Penerima</label>
@@ -486,14 +486,14 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
              <div className="w-full mb-4">
                 <textarea 
                   placeholder="Catatan Pengiriman (Opsional)..."
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-bold outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all shadow-inner h-20 resize-none"
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-bold outline-none focus:ring-4 focus:ring-honey-500/20 transition-all shadow-inner h-20 resize-none"
                   value={shippingNotes}
                   onChange={e => setShippingNotes(e.target.value)}
                 />
              </div>
 
-             <div className="w-full p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-8">
-                <p className="text-[9px] font-bold text-amber-200 leading-relaxed italic">
+             <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-2xl mb-8">
+                <p className="text-[9px] font-bold text-yellow-800 leading-relaxed italic">
                   <i className="fas fa-info-circle mr-2"></i>
                   Pengiriman Pesanan akan dilakukan diproses setelah pesanan dikonfirmasi (oleh staff atau admin). Jika produk tidak tersedia atau pesanan tidak dapat dilanjutkan maka staff atau admin akan menolak pesanan. Jika pesanan sudah dibayarkan maka staff atau admin akan mengirimkan bukti refund pembayaran atau mengembalikan dananya menjadi deposit member dan otomatis membatalkan transaksi.
                 </p>
@@ -502,7 +502,7 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
              <button 
                onClick={submitOrder}
                disabled={isProcessing || isUploading || cart.length === 0}
-               className="w-full bg-indigo-600 hover:bg-indigo-700 py-6 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-900/50 active:scale-95 transition-all disabled:opacity-30 disabled:scale-100"
+               className="w-full bg-honey-600 hover:bg-honey-700 py-6 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-honey-900/50 active:scale-95 transition-all disabled:opacity-30 disabled:scale-100"
              >
                 {isProcessing ? 'Mengirim Pesanan...' : 'Konfirmasi Pesanan'}
              </button>
@@ -516,20 +516,20 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <div className="relative w-full md:w-96 flex-1 group">
-           <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+           <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-honey-600 transition-colors">
               <Icons.Search />
            </span>
            <input 
              type="text" 
-             placeholder="Cari Produk Minimart..." 
-             className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-xs focus:ring-4 focus:ring-indigo-500/5 transition-all"
+             placeholder="Cari Produk BeeSmart..." 
+             className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-xs focus:ring-4 focus:ring-honey-500/5 transition-all"
              value={search}
              onChange={e => setSearch(e.target.value)}
            />
         </div>
         <button 
           onClick={() => cart.length > 0 && setCheckoutMode(true)}
-          className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center gap-3 ${cart.length > 0 ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+          className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center gap-3 ${cart.length > 0 ? 'bg-honey-600 text-white shadow-xl shadow-honey-100' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
         >
           <i className="fas fa-shopping-cart"></i>
           Keranjang ({cart.length})
@@ -538,7 +538,7 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         {filteredProducts.map(p => (
-          <div key={p.id} className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl hover:border-indigo-100 transition-all flex flex-col relative group overflow-hidden">
+          <div key={p.id} className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl hover:border-honey-100 transition-all flex flex-col relative group overflow-hidden">
              <div className="w-full aspect-square bg-slate-50 rounded-2xl mb-4 flex items-center justify-center overflow-hidden relative grayscale-[0.2] group-hover:grayscale-0 transition-all">
                 {p.image ? (
                   <img src={p.image} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
@@ -546,23 +546,23 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                   <Icons.Inventory />
                 )}
                 {p.stock <= 0 && (
-                   <div className="absolute top-2 right-2 bg-amber-600 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-lg">INDENT</div>
+                   <div className="absolute top-2 right-2 bg-yellow-600 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-lg">INDENT</div>
                 )}
              </div>
-             <p className="text-[11px] font-black text-slate-800 leading-tight uppercase mb-1 group-hover:text-indigo-600 line-clamp-2 min-h-[2.6em] break-all [overflow-wrap:anywhere] whitespace-normal">{p.name}</p>
+             <p className="text-[11px] font-black text-slate-800 leading-tight uppercase mb-1 group-hover:text-honey-600 line-clamp-2 min-h-[2.6em] break-all [overflow-wrap:anywhere] whitespace-normal">{p.name}</p>
              <div className="text-[9px] font-extrabold mb-2 text-slate-400 uppercase tracking-wider">
-                Stok: <span className={p.stock <= 0 ? "text-rose-500" : p.stock <= (p.minStock || 5) ? "text-amber-500" : "text-emerald-600"}>{p.stock}</span>
+                Stok: <span className={p.stock <= 0 ? "text-rose-500" : p.stock <= (p.minStock || 5) ? "text-yellow-600" : "text-emerald-600"}>{p.stock}</span>
              </div>
              <div className="flex justify-between items-center mt-auto">
                 <div className="flex flex-col">
                    {getDiscountedPrice(p) < p.price && (
                      <span className="text-[8px] text-rose-400 line-through font-bold">Rp {p.price.toLocaleString()}</span>
                    )}
-                   <p className="text-xs font-black text-indigo-600 tracking-tight">Rp {getDiscountedPrice(p).toLocaleString('id-ID')}</p>
+                   <p className="text-xs font-black text-honey-600 tracking-tight">Rp {getDiscountedPrice(p).toLocaleString('id-ID')}</p>
                 </div>
                 <button 
                   onClick={() => addToCart(p)}
-                  className="w-8 h-8 bg-slate-900 text-white rounded-xl flex items-center justify-center text-[10px] active:scale-90 transition-transform shadow-lg shadow-black/10 hover:bg-indigo-600"
+                  className="w-8 h-8 bg-slate-900 text-white rounded-xl flex items-center justify-center text-[10px] active:scale-90 transition-transform shadow-lg shadow-black/10 hover:bg-honey-600"
                 >
                   <i className="fas fa-plus"></i>
                 </button>
@@ -581,7 +581,7 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
              className="w-full bg-slate-900 text-white py-5 rounded-[2.5rem] shadow-2xl flex items-center justify-between px-8 group active:scale-95 transition-all animate-bounce-slow"
            >
               <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-sm"><i className="fas fa-shopping-basket"></i></div>
+                 <div className="w-10 h-10 bg-honey-600 rounded-xl flex items-center justify-center text-sm"><i className="fas fa-shopping-basket"></i></div>
                  <div className="text-left">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Siap Checkout</p>
                 <p className="text-sm font-black tracking-tight">Rp {Number(total).toLocaleString('id-ID')}</p>

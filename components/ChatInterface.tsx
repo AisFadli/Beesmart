@@ -673,7 +673,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     if (r === 'VISITOR') {
       return <span className="text-[8px] font-black px-2 py-0.5 rounded-full uppercase bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1"><i className="fas fa-eye text-[7px]"></i> Visitor</span>;
     }
-    return <span className="text-[8px] font-black px-2 py-0.5 rounded-full uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">Member</span>;
+    return <span className="text-[8px] font-black px-2 py-0.5 rounded-full uppercase bg-honey-50 text-honey-700 border border-honey-200">Member</span>;
   };
 
   return (
@@ -687,7 +687,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
           <div className="p-4 border-b border-slate-200 space-y-3 bg-white">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <i className="fas fa-comments text-indigo-600 text-sm"></i> Diskusi & Pesan
+                <i className="fas fa-comments text-honey-600 text-sm"></i> Diskusi & Pesan
               </h3>
               {isTenant && (
                 <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
@@ -705,7 +705,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             {isVisitor ? (
               <div className="bg-slate-100 p-2 rounded-xl flex items-center justify-between shadow-inner">
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                  <i className="fas fa-users-cog text-indigo-600"></i> Koordinasi Internal
+                  <i className="fas fa-users-cog text-honey-600"></i> Koordinasi Internal
                 </span>
                 <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 border border-purple-200">
                   Admin & Staff
@@ -750,7 +750,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                 <input 
                   type="text" 
                   placeholder={isTenant ? "Cari member untuk chat..." : "Cari member..."}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs font-bold border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs font-bold border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 transition-all shadow-inner"
                   value={searchMemberQuery}
                   onChange={e => setSearchMemberQuery(e.target.value)}
                 />
@@ -763,7 +763,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                 <input 
                   type="text" 
                   placeholder={isVisitor ? "Cari staf & admin..." : "Cari staf, admin, tenant..."} 
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs font-bold border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs font-bold border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 transition-all shadow-inner"
                   value={searchUserQuery}
                   onChange={e => setSearchUserQuery(e.target.value)}
                 />
@@ -788,9 +788,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                   <div 
                     key={member.id}
                     onClick={() => setSelectedMemberId(member.id)}
-                    className={`p-3.5 flex items-center gap-3 cursor-pointer hover:bg-white transition-all border-l-4 ${selectedMemberId === member.id ? 'bg-white border-l-indigo-600 shadow-sm' : 'border-l-transparent'}`}
+                    className={`p-3.5 flex items-center gap-3 cursor-pointer hover:bg-white transition-all border-l-4 ${selectedMemberId === member.id ? 'bg-white border-l-honey-600 shadow-sm' : 'border-l-transparent'}`}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 font-black flex items-center justify-center text-xs shrink-0 relative shadow-inner">
+                    <div className="w-10 h-10 rounded-xl bg-honey-50 border border-honey-100 text-honey-600 font-black flex items-center justify-center text-xs shrink-0 relative shadow-inner">
                       {member.name.slice(0, 2).toUpperCase()}
                       {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-600 text-white text-[8px] font-black flex items-center justify-center border border-white animate-pulse">
@@ -996,7 +996,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
         <div className="w-full md:w-80 border-b md:border-r border-slate-200 flex flex-col h-[260px] md:h-full bg-slate-50/50">
           <div className="p-4 border-b border-slate-200 bg-white">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <i className="fas fa-comments text-indigo-600 text-sm"></i> Layanan Bantuan & Chat
+              <i className="fas fa-comments text-honey-600 text-sm"></i> Layanan Bantuan & Chat
             </h3>
             <p className="text-[10px] text-slate-400 font-bold mt-1">Pilih saluran percakapan Anda:</p>
           </div>
@@ -1007,18 +1007,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               onClick={() => setSelectedMemberChatTarget('ADMIN')}
               className={`p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
                 selectedMemberChatTarget === 'ADMIN' 
-                  ? 'bg-indigo-600 text-white border-indigo-700 shadow-md shadow-indigo-600/20' 
+                  ? 'bg-honey-600 text-white border-honey-700 shadow-md shadow-honey-600/20' 
                   : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
               }`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
-                selectedMemberChatTarget === 'ADMIN' ? 'bg-white text-indigo-600' : 'bg-indigo-50 text-indigo-600'
+                selectedMemberChatTarget === 'ADMIN' ? 'bg-white text-honey-600' : 'bg-honey-50 text-honey-600'
               }`}>
                 <i className="fas fa-university"></i>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-black text-xs uppercase truncate">Layanan Koperasi AIS</p>
-                <p className={`text-[9px] font-bold truncate mt-0.5 ${selectedMemberChatTarget === 'ADMIN' ? 'text-indigo-100' : 'text-slate-400'}`}>
+                <p className={`text-[9px] font-bold truncate mt-0.5 ${selectedMemberChatTarget === 'ADMIN' ? 'text-honey-100' : 'text-slate-400'}`}>
                   Admin & Staf Koperasi
                 </p>
               </div>
@@ -1073,7 +1073,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
           {isMember ? (
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0 ${
-                selectedMemberChatTarget === 'ADMIN' ? 'bg-indigo-600' : 'bg-amber-500'
+                selectedMemberChatTarget === 'ADMIN' ? 'bg-honey-600' : 'bg-amber-500'
               }`}>
                 {selectedMemberChatTarget === 'ADMIN' ? <i className="fas fa-university"></i> : <i className="fas fa-store"></i>}
               </div>
@@ -1091,7 +1091,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
           ) : activeMainTab === 'MEMBERS' && !isVisitor ? (
             selectedMemberId ? (
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-honey-600 flex items-center justify-center text-white shadow-lg shrink-0">
                   <i className="fas fa-id-card"></i>
                 </div>
                 <div>
@@ -1099,7 +1099,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     <p className="font-black text-slate-900 text-sm uppercase tracking-tight">
                       {selectedMemberObj?.name || 'Member Koperasi'}
                     </p>
-                    <span className="text-[8px] font-black px-2 py-0.5 rounded uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <span className="text-[8px] font-black px-2 py-0.5 rounded uppercase bg-honey-50 text-honey-700 border border-honey-200">
                       Member #{selectedMemberObj?.id}
                     </span>
                   </div>
@@ -1112,7 +1112,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               </div>
             ) : (
               <div className="flex items-center gap-2 text-slate-500 text-xs font-black uppercase tracking-wider">
-                <i className="fas fa-hand-pointer text-indigo-500"></i> Silakan pilih member di samping
+                <i className="fas fa-hand-pointer text-honey-500"></i> Silakan pilih member di samping
               </div>
             )
           ) : (
@@ -1182,7 +1182,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             type="button"
             onClick={() => onRefreshData()} 
             title="Refresh Pesan"
-            className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-all"
+            className="p-2.5 text-slate-400 hover:text-honey-600 hover:bg-slate-100 rounded-xl transition-all"
           >
             <i className="fas fa-sync-alt"></i>
           </button>
@@ -1266,7 +1266,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     <button 
                       type="button"
                       onClick={() => setMessageInput("Terima kasih banyak telah berbelanja di tenant kami!")} 
-                      className="bg-slate-50 border hover:border-indigo-300 text-[9px] font-black text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
+                      className="bg-slate-50 border hover:border-honey-300 text-[9px] font-black text-slate-600 hover:text-honey-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
                     >
                       🙏 Terima Kasih
                     </button>
@@ -1276,7 +1276,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     <button 
                       type="button"
                       onClick={() => setMessageInput("Halo, mohon ditunggu. Kami sedang memproses pengajuan Anda.")} 
-                      className="bg-slate-50 border hover:border-indigo-300 text-[9px] font-black text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
+                      className="bg-slate-50 border hover:border-honey-300 text-[9px] font-black text-slate-600 hover:text-honey-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
                     >
                       ⏳ Sedang Diproses
                     </button>
@@ -1290,7 +1290,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     <button 
                       type="button"
                       onClick={() => setMessageInput("Halo member terhormat, ada lagi yang bisa kami bantu hari ini?")} 
-                      className="bg-slate-50 border hover:border-indigo-300 text-[9px] font-black text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
+                      className="bg-slate-50 border hover:border-honey-300 text-[9px] font-black text-slate-600 hover:text-honey-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
                     >
                       💬 Ada Lainnya?
                     </button>
@@ -1321,7 +1321,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     <button 
                       type="button"
                       onClick={() => setMessageInput("Mohon arahan dan petunjuk terkait agenda berikutnya.")} 
-                      className="bg-slate-50 border hover:border-indigo-300 text-[9px] font-black text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
+                      className="bg-slate-50 border hover:border-honey-300 text-[9px] font-black text-slate-600 hover:text-honey-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
                     >
                       💬 Mohon Petunjuk
                     </button>
@@ -1338,7 +1338,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     <button 
                       type="button"
                       onClick={() => setMessageInput("Mohon update status operasional terkini.")} 
-                      className="bg-slate-50 border hover:border-indigo-300 text-[9px] font-black text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
+                      className="bg-slate-50 border hover:border-honey-300 text-[9px] font-black text-slate-600 hover:text-honey-600 px-3 py-1.5 rounded-lg shrink-0 uppercase tracking-wider"
                     >
                       📊 Update Status
                     </button>
@@ -1367,7 +1367,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     ? (selectedInternal.roomId === 'TENANT_ROOM' ? 'Tulis pesan di Room Koordinasi Tenant...' : 'Tulis pesan di Room Koordinasi Staff...')
                     : `Tulis pesan personal untuk ${selectedPersonalUserObj?.name || 'Rekan'}...`
                 }
-                className="flex-1 px-5 py-3.5 bg-slate-50 font-bold text-xs border border-transparent rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                className="flex-1 px-5 py-3.5 bg-slate-50 font-bold text-xs border border-transparent rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 transition-all shadow-inner"
                 value={messageInput}
                 onChange={e => setMessageInput(e.target.value)}
                 disabled={isSending}
@@ -1375,7 +1375,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               <button 
                 type="submit" 
                 disabled={isSending || !messageInput.trim()}
-                className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center transition-all hover:bg-indigo-600 active:scale-95 disabled:opacity-30 shrink-0 shadow-lg shadow-slate-200"
+                className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center transition-all hover:bg-honey-600 active:scale-95 disabled:opacity-30 shrink-0 shadow-lg shadow-slate-200"
               >
                 {isSending ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-paper-plane"></i>}
               </button>

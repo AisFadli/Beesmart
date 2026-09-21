@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "minimartpro-erp",
+      "name": "beesmart-erp",
       "dependencies": {
         "@google/genai": "1.3.0",
         "@types/jsbarcode": "^3.11.4",

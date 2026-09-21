@@ -29,7 +29,7 @@ export const ScannerStatusModal: React.FC<ScannerStatusModalProps> = ({ isOpen, 
         {/* Header */}
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner ${isTestedOk ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner ${isTestedOk ? 'bg-emerald-100 text-emerald-600' : 'bg-honey-100 text-honey-600'}`}>
               <i className="fas fa-barcode"></i>
             </div>
             <div>
@@ -46,8 +46,8 @@ export const ScannerStatusModal: React.FC<ScannerStatusModalProps> = ({ isOpen, 
         <div className={`p-5 rounded-3xl border flex items-center justify-between ${isTestedOk ? 'bg-emerald-50/80 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
           <div className="flex items-center gap-3">
             <span className="relative flex h-3.5 w-3.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isTestedOk ? 'bg-emerald-400' : 'bg-blue-400'}`}></span>
-              <span className={`relative inline-flex rounded-full h-3.5 w-3.5 ${isTestedOk ? 'bg-emerald-500' : 'bg-blue-500'}`}></span>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isTestedOk ? 'bg-emerald-400' : 'bg-honey-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-3.5 w-3.5 ${isTestedOk ? 'bg-emerald-500' : 'bg-honey-500'}`}></span>
             </span>
             <div>
               <p className="text-xs font-black uppercase text-slate-800">
@@ -85,7 +85,7 @@ export const ScannerStatusModal: React.FC<ScannerStatusModalProps> = ({ isOpen, 
                   setManualInput('');
                 }
               }}
-              className="w-full p-4 pl-12 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-sm font-bold text-slate-800 outline-none focus:ring-4 focus:ring-blue-500/10 shadow-inner"
+              className="w-full p-4 pl-12 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-sm font-bold text-slate-800 outline-none focus:ring-4 focus:ring-honey-500/10 shadow-inner"
             />
             <i className="fas fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
           </div>

@@ -173,8 +173,8 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-             <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200"><Icons.Dashboard /></span>
-             Dashboard MinimartPro
+             <span className="p-2 bg-honey-600 text-white rounded-xl shadow-lg shadow-honey-200"><Icons.Dashboard /></span>
+             Dashboard BeeSmart
           </h1>
           <p className="text-slate-500 font-medium text-sm uppercase tracking-widest">Analisis Performa Penjualan</p>
         </div>
@@ -188,7 +188,7 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Selesai</span>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-slate-700 outline-none" />
           </div>
-          {isLoading && <i className="fas fa-spinner fa-spin text-blue-600 text-xs mx-2"></i>}
+          {isLoading && <i className="fas fa-spinner fa-spin text-honey-600 text-xs mx-2"></i>}
         </div>
       </div>
 
@@ -220,18 +220,18 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
         <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 flex justify-between items-center">
              <span>Penjualan per Kategori</span>
-             <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest">Klik Bar Rincian</span>
+             <span className="text-honey-600 bg-honey-50 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest">Klik Bar Rincian</span>
            </h3>
            <div className="space-y-7">
               {statsByCategory.map(([cat, val]) => (
                 <div key={cat} onClick={() => setSelectedCategory(cat)} className="group cursor-pointer">
                   <div className="flex justify-between items-end mb-2">
-                    <span className={`text-xs font-black uppercase tracking-wider transition-colors ${selectedCategory === cat ? 'text-blue-600' : 'text-slate-600 group-hover:text-blue-500'}`}>{cat}</span>
+                    <span className={`text-xs font-black uppercase tracking-wider transition-colors ${selectedCategory === cat ? 'text-honey-600' : 'text-slate-600 group-hover:text-honey-500'}`}>{cat}</span>
                     <span className="text-[11px] font-black text-slate-900">{formatCurrency(val)}</span>
                   </div>
                   <div className="h-4 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
                     <div 
-                      className={`h-full transition-all duration-1000 ease-out ${selectedCategory === cat ? 'bg-gradient-to-r from-blue-600 to-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'bg-gradient-to-r from-slate-300 to-slate-200 group-hover:from-blue-200 group-hover:to-blue-100'}`} 
+                      className={`h-full transition-all duration-1000 ease-out ${selectedCategory === cat ? 'bg-gradient-to-r from-honey-600 to-honey-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-gradient-to-r from-slate-300 to-slate-200 group-hover:from-honey-200 group-hover:to-honey-100'}`} 
                       style={{ width: `${(val / maxVal) * 100}%` }}
                     ></div>
                   </div>
@@ -259,7 +259,7 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
               {paginatedDetails.length > 0 ? (
                 <>
                   {paginatedDetails.map((item, idx) => (
-                    <div key={`${item.txId}-${idx}`} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center hover:bg-white hover:shadow-md transition-all border-l-4 border-l-transparent hover:border-l-blue-500">
+                    <div key={`${item.txId}-${idx}`} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center hover:bg-white hover:shadow-md transition-all border-l-4 border-l-transparent hover:border-l-honey-500">
                        <div className="min-w-0 flex-1">
                          <p className="font-black text-slate-800 text-[11px] truncate uppercase tracking-tight leading-tight">{item.productName}</p>
                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mt-1">
@@ -268,7 +268,7 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
                          {item.paymentStatus === 'UNPAID' && <span className="text-[8px] font-black bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded mt-1 inline-block uppercase tracking-widest">BELUM BAYAR</span>}
                        </div>
                        <div className="text-right ml-4 shrink-0">
-                         <p className="font-black text-blue-600 text-xs">Rp {Number(item.subtotal).toLocaleString('id-ID')}</p>
+                         <p className="font-black text-honey-600 text-xs">Rp {Number(item.subtotal).toLocaleString('id-ID')}</p>
                          <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest text-right">Qty: {item.qty}</p>
                        </div>
                     </div>
@@ -279,7 +279,7 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
                       <button 
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className="p-2 text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-colors"
+                        className="p-2 text-slate-400 hover:text-honey-600 disabled:opacity-30 transition-colors"
                       >
                         <i className="fas fa-chevron-left text-xs"></i>
                       </button>
@@ -289,7 +289,7 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
                       <button 
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className="p-2 text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-colors"
+                        className="p-2 text-slate-400 hover:text-honey-600 disabled:opacity-30 transition-colors"
                       >
                         <i className="fas fa-chevron-right text-xs"></i>
                       </button>
@@ -313,7 +313,7 @@ const Dashboard: React.FC<{ state: AppState }> = ({ state }) => {
 
 const StatCard: React.FC<{ icon: any, label: string, value: string, color: string, warning?: boolean, onClick?: () => void }> = ({ icon, label, value, color, warning, onClick }) => {
   const colorClasses: any = {
-    blue: "bg-blue-600 text-white shadow-blue-100",
+    blue: "bg-honey-600 text-white shadow-honey-100",
     emerald: "bg-emerald-600 text-white shadow-emerald-100",
     amber: "bg-amber-500 text-white shadow-amber-100",
     rose: "bg-rose-600 text-white shadow-rose-100",
@@ -321,7 +321,7 @@ const StatCard: React.FC<{ icon: any, label: string, value: string, color: strin
   return (
     <div 
       onClick={onClick}
-      className={`bg-white p-5 md:p-7 rounded-[2rem] md:rounded-[2.5rem] border transition-all ${onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''} ${warning ? 'border-amber-200 ring-4 ring-amber-50' : 'border-slate-200 hover:shadow-xl hover:-translate-y-1'}`}
+      className={`bg-white p-5 md:p-7 rounded-[2rem] md:rounded-[2.5rem] border transition-all ${onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''} ${warning ? 'border-yellow-200 ring-4 ring-yellow-50' : 'border-slate-200 hover:shadow-xl hover:-translate-y-1'}`}
     >
       <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center text-lg md:text-xl mb-4 md:mb-5 shadow-lg ${colorClasses[color]}`}>{icon}</div>
       <p className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] mb-1">{label}</p>

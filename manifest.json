@@ -1,21 +1,22 @@
 
 {
-  "short_name": "MinimartPro",
-  "name": "MinimartPro ERP System",
+  "short_name": "BeeSmart",
+  "name": "BeeSmart ERP System",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+      "src": "/app/logo/beesmart-icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+      "src": "/app/logo/beesmart-icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "/minimartpro/index.html",
-  "scope": "/minimartpro/",
+  "start_url": "/app/index.html",
+  "scope": "/app/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#0f172a",

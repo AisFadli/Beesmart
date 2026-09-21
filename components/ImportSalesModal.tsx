@@ -150,15 +150,15 @@ const ImportSalesModal: React.FC<ImportSalesModalProps> = ({ isOpen, onClose, us
 
         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 pr-2">
           {/* Step 1: Template */}
-          <div className="bg-blue-50 p-6 rounded-[2rem] border border-blue-100">
+          <div className="bg-honey-50 p-6 rounded-[2rem] border border-honey-100">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-blue-200">
+              <div className="w-12 h-12 bg-honey-600 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-honey-200">
                 <i className="fas fa-file-excel"></i>
               </div>
               <div className="flex-1">
-                <h4 className="font-black text-blue-900 text-sm uppercase">1. Unduh Template</h4>
-                <p className="text-[10px] text-blue-700/70 font-bold mt-1 leading-relaxed">Gunakan format Excel standar agar data terbaca sempurna oleh sistem.</p>
-                <button onClick={downloadTemplate} className="mt-4 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-blue-700 transition-all active:scale-95">
+                <h4 className="font-black text-honey-900 text-sm uppercase">1. Unduh Template</h4>
+                <p className="text-[10px] text-honey-700/70 font-bold mt-1 leading-relaxed">Gunakan format Excel standar agar data terbaca sempurna oleh sistem.</p>
+                <button onClick={downloadTemplate} className="mt-4 px-6 py-2.5 bg-honey-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-honey-700 transition-all active:scale-95">
                   Download Template .xlsx
                 </button>
               </div>
@@ -175,7 +175,7 @@ const ImportSalesModal: React.FC<ImportSalesModalProps> = ({ isOpen, onClose, us
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" checked={updateStock} onChange={() => setUpdateStock(!updateStock)} />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-honey-600"></div>
               </label>
             </div>
           </div>
@@ -201,7 +201,7 @@ const ImportSalesModal: React.FC<ImportSalesModalProps> = ({ isOpen, onClose, us
                     <span>{progress}%</span>
                   </div>
                   <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                    <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                    <div className="h-full bg-honey-600 transition-all duration-300" style={{ width: `${progress}%` }}></div>
                   </div>
                 </div>
               )}

@@ -15,7 +15,7 @@ import ChatInterface from './components/ChatInterface';
 import apiService from './services/apiService';
 
 const DEFAULT_SETTINGS: StoreSettings = {
-  name: "MinimartPro Store", address: "Jl. Raya Ciangsana Km.07 Gunung Putri, Bogor", phone: "0881-0257-23947",
+  name: "BeeSmart Store", address: "Jl. Raya Ciangsana Km.07 Gunung Putri, Bogor", phone: "0881-0257-23947",
   footer: "Terima Kasih Atas Kunjungan Anda", autoPrint: true, printerType: '58mm',
   isOpen: true
 };
@@ -79,11 +79,11 @@ const App: React.FC = () => {
     const triggerNotification = (title: string, body: string) => {
       if ("Notification" in window) {
         if (Notification.permission === "granted") {
-          new Notification(title, { body, icon: '/favicon.ico' });
+          new Notification(title, { body, icon: '/app/logo/beesmart-favicon.png' });
         } else if (Notification.permission !== "denied") {
           Notification.requestPermission().then(permission => {
             if (permission === "granted") {
-              new Notification(title, { body, icon: '/favicon.ico' });
+              new Notification(title, { body, icon: '/app/logo/beesmart-favicon.png' });
             }
           });
         }
@@ -247,7 +247,7 @@ const App: React.FC = () => {
           updatedUser = { ...prev.currentUser, ...data.member_profile };
         }
         if (updatedUser && prev.currentUser) {
-          localStorage.setItem('minimart_user', JSON.stringify(updatedUser));
+          localStorage.setItem('beesmart_user', JSON.stringify(updatedUser));
         }
         return {
           ...prev, 
@@ -283,7 +283,7 @@ const App: React.FC = () => {
           Notification.requestPermission();
         }
 
-        const savedUserStr = localStorage.getItem('minimart_user');
+        const savedUserStr = localStorage.getItem('beesmart_user');
         const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
         
         // Load data with the saved user's role immediately
@@ -345,7 +345,7 @@ const App: React.FC = () => {
   );
   if (!state.currentUser) return (
     <Auth onLogin={u => { 
-      localStorage.setItem('minimart_user', JSON.stringify(u)); 
+      localStorage.setItem('beesmart_user', JSON.stringify(u)); 
       setState(prev => ({ ...prev, currentUser: u })); 
       // Refresh data with the new user's role
       refreshData(u.role, u.id);
@@ -356,7 +356,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { localStorage.removeItem('minimart_user'); setState(prev => ({ ...prev, currentUser: null })); }} user={state.currentUser} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { localStorage.removeItem('beesmart_user'); setState(prev => ({ ...prev, currentUser: null })); }} user={state.currentUser} />
       <div className="flex-1 md:ml-64 w-full h-full overflow-hidden flex flex-col relative">
         <main className="flex-1 overflow-y-auto p-4 md:p-10 pt-20 md:pt-10 custom-scrollbar bg-slate-50">
           <div className="max-w-7xl mx-auto">

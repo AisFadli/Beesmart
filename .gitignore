@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Kredensial SMTP & konfigurasi lokal (jangan di-commit)
+api/mail_config.php
+api/app_config.php
+api/db_config.php
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

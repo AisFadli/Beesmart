@@ -467,7 +467,7 @@ export const MemberCardModal: React.FC<MemberCardModalProps> = ({
             <button
               onClick={handleDownloadPDF}
               disabled={isExporting}
-              className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
+              className="py-3 bg-honey-600 hover:bg-honey-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-honey-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
             >
               <i className="fas fa-file-pdf text-sm"></i> Download PDF
             </button>

@@ -297,7 +297,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
       <div className="lg:hidden fixed bottom-6 right-6 z-50">
         <button 
           onClick={() => setViewMode(viewMode === 'products' ? 'cart' : 'products')}
-          className="w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl active:scale-90 transition-transform border-4 border-white"
+          className="w-16 h-16 bg-honey-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl active:scale-90 transition-transform border-4 border-white"
         >
           <i className={`fas ${viewMode === 'products' ? 'fa-shopping-cart' : 'fa-th-large'}`}></i>
           {viewMode === 'products' && cart.length > 0 && (
@@ -315,7 +315,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
         {scanToast && (
           <div className={`p-3.5 rounded-2xl border text-xs font-black flex items-center justify-between shadow-lg animate-bounce ${
             scanToast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-            scanToast.type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' :
+            scanToast.type === 'info' ? 'bg-honey-50 border-honey-200 text-honey-800' :
             'bg-rose-50 border-rose-200 text-rose-800'
           }`}>
             <span className="flex items-center gap-2">
@@ -328,14 +328,14 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
 
         <div className="shrink-0 flex items-center gap-3">
           <div className="relative group flex-1">
-            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-blue-500 transition-colors">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-honey-500 transition-colors">
               <Icons.Search />
             </span>
             <input 
               type="text" 
               data-barcode-input="true"
               placeholder="Cari Produk atau Scan Barcode (SKU/Nama/Barcode)..." 
-              className="block w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-[1.25rem] outline-none shadow-sm font-bold focus:ring-4 focus:ring-blue-500/10 transition-all" 
+              className="block w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-[1.25rem] outline-none shadow-sm font-bold focus:ring-4 focus:ring-honey-500/10 transition-all" 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
             />
@@ -355,7 +355,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
                 setScannerModalDesc("Arahkan kamera ke barcode produk atau QR Code kartu member");
                 setShowCameraScanner(true);
               }}
-              className="px-4 py-3.5 bg-blue-600 text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2"
+              className="px-4 py-3.5 bg-honey-600 text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-lg shadow-honey-500/20 hover:bg-honey-700 transition-all active:scale-95 flex items-center gap-2"
               title="Scan Barcode / QR via Kamera Device / HP"
             >
               <i className="fas fa-camera text-sm"></i>
@@ -366,7 +366,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
                 const connected = await printService.connect();
                 if (connected) alert("Printer Berhasil Terhubung!");
               }}
-              className="px-4 py-3.5 bg-indigo-50 text-indigo-600 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-black hover:text-white transition-all active:scale-95 flex items-center gap-2 border border-indigo-100"
+              className="px-4 py-3.5 bg-honey-50 text-honey-600 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-black hover:text-white transition-all active:scale-95 flex items-center gap-2 border border-honey-100"
               title="Hubungkan Ulang Printer Bluetooth"
             >
               <i className="fas fa-print"></i>
@@ -386,7 +386,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
 
         <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 pb-4 custom-scrollbar">
           {paginatedProducts.map(p => (
-            <button key={p.id} onClick={() => addToCart(p)} className={`bg-white p-3 rounded-2xl border border-slate-200 text-left transition-all hover:shadow-xl hover:border-blue-300 flex flex-col h-fit active:scale-95 group relative ${p.stock <= 0 ? 'border-amber-300 bg-amber-50/10' : ''}`}>
+            <button key={p.id} onClick={() => addToCart(p)} className={`bg-white p-3 rounded-2xl border border-slate-200 text-left transition-all hover:shadow-xl hover:border-honey-300 flex flex-col h-fit active:scale-95 group relative ${p.stock <= 0 ? 'border-yellow-300 bg-yellow-50' : ''}`}>
                <div className="w-full aspect-square bg-slate-50 rounded-xl mb-2 flex items-center justify-center text-slate-200 relative overflow-hidden">
                   {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Icons.Inventory />}
                   {p.discountValue && p.discountValue > 0 && (
@@ -395,18 +395,18 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
                     </div>
                   )}
                   {p.stock <= 0 && (
-                    <div className="absolute bottom-0 inset-x-0 bg-amber-600 text-white text-[8px] font-black py-1 text-center uppercase tracking-widest">
+                    <div className="absolute bottom-0 inset-x-0 bg-yellow-600 text-white text-[8px] font-black py-1 text-center uppercase tracking-widest">
                       Indent
                     </div>
                   )}
                </div>
-               <p className="text-[10px] font-black text-slate-800 leading-tight block uppercase group-hover:text-blue-600 transition-colors line-clamp-2 mb-1 min-h-[2.4em] break-all [overflow-wrap:anywhere] whitespace-normal">{p.name}</p>
+               <p className="text-[10px] font-black text-slate-800 leading-tight block uppercase group-hover:text-honey-600 transition-colors line-clamp-2 mb-1 min-h-[2.4em] break-all [overflow-wrap:anywhere] whitespace-normal">{p.name}</p>
                <div className="flex justify-between items-end">
                  <div className="flex flex-col">
                    {p.discountValue && p.discountValue > 0 && (
                      <p className="text-[9px] text-slate-400 line-through">Rp{p.price.toLocaleString()}</p>
                    )}
-                   <p className="text-blue-600 font-black text-xs">Rp{getDiscountedPrice(p).toLocaleString()}</p>
+                   <p className="text-honey-600 font-black text-xs">Rp{getDiscountedPrice(p).toLocaleString()}</p>
                  </div>
                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${p.stock < p.minStock ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}>S: {p.stock}</span>
                </div>
@@ -417,13 +417,13 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
 
         {totalPages > 1 && (
           <div className="shrink-0 flex items-center justify-center gap-2 py-3 bg-white border rounded-2xl shadow-sm mb-2">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 disabled:opacity-30"><i className="fas fa-chevron-left"></i></button>
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-honey-600 disabled:opacity-30"><i className="fas fa-chevron-left"></i></button>
             <div className="flex gap-1">
                {[...Array(totalPages)].map((_, i) => (
-                 <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>{i + 1}</button>
+                 <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-honey-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>{i + 1}</button>
                )).slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))}
             </div>
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 disabled:opacity-30"><i className="fas fa-chevron-right"></i></button>
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-honey-600 disabled:opacity-30"><i className="fas fa-chevron-right"></i></button>
           </div>
         )}
       </div>
@@ -433,10 +433,10 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
         
         <div className="p-6 pb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <span className="text-blue-600 text-2xl"><i className="fas fa-cash-register"></i></span>
+             <span className="text-honey-600 text-2xl"><i className="fas fa-cash-register"></i></span>
              <h2 className="text-xl font-black text-slate-900">Checkout</h2>
           </div>
-          <span className="bg-blue-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-blue-100">
+          <span className="bg-honey-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-honey-100">
             {cart.length} ITEM
           </span>
         </div>
@@ -445,9 +445,9 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
           <div className="flex gap-2">
             <div className="flex-1 relative">
               {selectedMember ? (
-                <div className="w-full px-5 py-4 bg-indigo-50 border border-indigo-200 rounded-[1.25rem] font-black text-indigo-700 text-sm flex items-center justify-between shadow-sm">
+                <div className="w-full px-5 py-4 bg-honey-50 border border-honey-200 rounded-[1.25rem] font-black text-honey-700 text-sm flex items-center justify-between shadow-sm">
                    <div className="flex items-center gap-2 truncate">
-                     <i className="fas fa-id-card text-indigo-500"></i>
+                     <i className="fas fa-id-card text-honey-500"></i>
                      <span className="truncate">{selectedMember.name}</span>
                    </div>
                    <button onClick={() => setSelectedMember(null)} className="text-slate-400 hover:text-red-500 ml-2" title="Hapus Member"><i className="fas fa-times-circle"></i></button>
@@ -458,7 +458,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
                   value={customerName} 
                   onChange={(e) => setCustomerName(e.target.value)} 
                   placeholder={isTenant ? "Nama Pelanggan Umum..." : "Nama Pelanggan..."} 
-                  className="w-full px-6 py-4 bg-white border border-slate-200 rounded-[1.25rem] text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm" 
+                  className="w-full px-6 py-4 bg-white border border-slate-200 rounded-[1.25rem] text-sm font-bold outline-none focus:ring-4 focus:ring-honey-500/5 transition-all shadow-sm" 
                 />
               )}
             </div>
@@ -471,7 +471,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
                   setShowCameraScanner(true);
                 }} 
                 title="Scan Barcode / QR Kartu Member"
-                className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-[1.25rem] border border-indigo-100 flex items-center justify-center text-xl shadow-sm hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
+                className="w-14 h-14 bg-honey-50 text-honey-600 rounded-[1.25rem] border border-honey-100 flex items-center justify-center text-xl shadow-sm hover:bg-honey-600 hover:text-white transition-all active:scale-95"
               >
                 <i className="fas fa-qrcode"></i>
               </button>
@@ -480,7 +480,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
                 type="button"
                 onClick={() => setShowMemberPicker(true)} 
                 title="Cari Data Member Manual"
-                className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-[1.25rem] border border-indigo-100 flex items-center justify-center text-xl shadow-sm hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
+                className="w-14 h-14 bg-honey-50 text-honey-600 rounded-[1.25rem] border border-honey-100 flex items-center justify-center text-xl shadow-sm hover:bg-honey-600 hover:text-white transition-all active:scale-95"
               >
                 <i className="fas fa-search"></i>
               </button>
@@ -492,7 +492,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
         <div className="px-6 mb-4">
           <textarea 
             placeholder="Tambahkan catatan transaksi (opsional)..."
-            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-bold outline-none focus:ring-4 focus:ring-blue-500/5 transition-all shadow-inner h-16 resize-none"
+            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-bold outline-none focus:ring-4 focus:ring-honey-500/5 transition-all shadow-inner h-16 resize-none"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -509,8 +509,8 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
             cart.map(item => (
               <div key={item.productId} className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl hover:bg-white transition-all hover:shadow-md group">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-black text-slate-800 line-clamp-2 uppercase mb-1 leading-tight group-hover:text-blue-600 transition-colors break-all [overflow-wrap:anywhere] whitespace-normal">{item.name}</p>
-                  <p className="text-[10px] text-blue-600 font-black">Rp{Number(item.price).toLocaleString('id-ID')}</p>
+                  <p className="text-[11px] font-black text-slate-800 line-clamp-2 uppercase mb-1 leading-tight group-hover:text-honey-600 transition-colors break-all [overflow-wrap:anywhere] whitespace-normal">{item.name}</p>
+                  <p className="text-[10px] text-honey-600 font-black">Rp{Number(item.price).toLocaleString('id-ID')}</p>
                 </div>
                 <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-100">
                   <button onClick={() => updateQuantity(item.productId, -1)} className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-rose-50 text-slate-600 rounded-lg transition-colors"><i className="fas fa-minus text-[8px]"></i></button>
@@ -530,12 +530,12 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
         {/* Total & Payment Buttons Section */}
         <div className="p-6 bg-[#0f172a] text-white rounded-t-[3.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.15)]">
           <div className="flex justify-between items-center mb-8 px-2">
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400">Total Tagihan</span>
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-honey-400">Total Tagihan</span>
             <span className="text-white text-3xl font-black tracking-tighter">Rp{Number(total).toLocaleString('id-ID')}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <button disabled={cart.length === 0 || isProcessing} onClick={() => handleCheckout('CASH')} className="bg-[#2563eb] h-28 rounded-[2rem] font-black flex flex-col items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-blue-900/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30">
+            <button disabled={cart.length === 0 || isProcessing} onClick={() => handleCheckout('CASH')} className="bg-honey-500 h-28 rounded-[2rem] font-black flex flex-col items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-honey-900/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30">
               <i className="fas fa-money-bill-wave text-3xl"></i>
               <span>Tunai</span>
             </button>
@@ -543,7 +543,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
               <i className="fas fa-qrcode text-3xl"></i>
               <span>QRIS</span>
             </button>
-            <button disabled={cart.length === 0 || isProcessing} onClick={() => handleCheckout('DEPOSIT')} className="bg-[#d97706] h-28 rounded-[2rem] font-black flex flex-col items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-amber-900/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30">
+            <button disabled={cart.length === 0 || isProcessing} onClick={() => handleCheckout('DEPOSIT')} className="bg-honey-600 h-28 rounded-[2rem] font-black flex flex-col items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-amber-900/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30">
               <i className="fas fa-wallet text-3xl"></i>
               <span>Deposit</span>
             </button>
@@ -551,7 +551,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
               <i className="fas fa-file-invoice-dollar text-3xl"></i>
               <span>Piutang</span>
             </button>
-            <button disabled={cart.length === 0 || isProcessing} onClick={() => handleCheckout('TRANSFER')} className="col-span-2 bg-[#4f46e5] h-20 rounded-[2rem] font-black flex flex-row items-center justify-center gap-4 text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-900/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 mt-2">
+            <button disabled={cart.length === 0 || isProcessing} onClick={() => handleCheckout('TRANSFER')} className="col-span-2 bg-[#4f46e5] h-20 rounded-[2rem] font-black flex flex-row items-center justify-center gap-4 text-[10px] uppercase tracking-widest shadow-xl shadow-honey-900/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 mt-2">
               <i className="fas fa-exchange-alt text-2xl"></i>
               <span>Transfer Bank / Mobile</span>
             </button>
@@ -624,7 +624,7 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
 
             <div className="p-6 pt-0 shrink-0">
               <div className="flex flex-col gap-3">
-                <button onClick={() => printService.printReceipt(lastTx, settings)} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95">Cetak Struk Thermal</button>
+                <button onClick={() => printService.printReceipt(lastTx, settings)} className="w-full bg-honey-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-honey-100 hover:bg-honey-700 transition-all active:scale-95">Cetak Struk Thermal</button>
                 <button onClick={() => setShowPrintDialog(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all active:scale-95">Lanjut Kasir Baru</button>
               </div>
             </div>
@@ -668,13 +668,13 @@ const POS: React.FC<POSProps> = ({ products, members, onCompleteTransaction, use
                          (m.barcode && m.barcode.toLowerCase().includes(q)) ||
                          (m.whatsapp && m.whatsapp.includes(q));
                 }).slice(0, 50).map(m => (
-                  <button key={m.id} disabled={m.status === 'SUSPENDED'} onClick={() => { setSelectedMember(m); setShowMemberPicker(false); setMemberSearch(''); }} className={`w-full text-left p-4 rounded-2xl border transition-all ${m.status === 'SUSPENDED' ? 'opacity-40 grayscale cursor-not-allowed bg-slate-100' : 'bg-white hover:bg-indigo-50 border-slate-100 hover:border-indigo-200 shadow-sm'}`}>
+                  <button key={m.id} disabled={m.status === 'SUSPENDED'} onClick={() => { setSelectedMember(m); setShowMemberPicker(false); setMemberSearch(''); }} className={`w-full text-left p-4 rounded-2xl border transition-all ${m.status === 'SUSPENDED' ? 'opacity-40 grayscale cursor-not-allowed bg-slate-100' : 'bg-white hover:bg-honey-50 border-slate-100 hover:border-honey-200 shadow-sm'}`}>
                     <div className="flex justify-between items-center">
                        <div>
                           <p className="font-black text-sm uppercase text-slate-800">{m.name}</p>
                           <p className="text-[10px] font-bold text-slate-400">{m.whatsapp}</p>
                        </div>
-                       <p className="text-[10px] font-black text-indigo-600">Rp{Number(m.depositBalance).toLocaleString('id-ID')}</p>
+                       <p className="text-[10px] font-black text-honey-600">Rp{Number(m.depositBalance).toLocaleString('id-ID')}</p>
                     </div>
                   </button>
                 ))}

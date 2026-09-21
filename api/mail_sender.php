@@ -1,29 +1,48 @@
 <?php
 /**
- * Helper untuk pengiriman email via SMTP atau PHP Mail
+ * Helper untuk pengiriman email via SMTP (PHPMailer)
+ *
+ * Konfigurasi SMTP ada di mail_config.php (tidak ikut git).
+ * Kembalikan true jika terkirim, false jika gagal (detail dicatat di error_log).
  */
 
+require_once __DIR__ . '/libs/phpmailer/Exception.php';
+require_once __DIR__ . '/libs/phpmailer/PHPMailer.php';
+require_once __DIR__ . '/libs/phpmailer/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+
 function sendNoReplyEmail($to, $subject, $message) {
-    // --- KONFIGURASI SMTP ANDA (BACKEND ONLY) ---
-    $smtp_config = [
-        'host' => 'smtp.gmail.com',        // Ganti dengan host SMTP Anda
-        'port' => 587,                     // 587 untuk TLS, 465 untuk SSL
-        'user' => 'emailanda@gmail.com',   // Ganti dengan email SMTP Anda
-        'pass' => 'xxxx xxxx xxxx xxxx',   // Ganti dengan App Password (bukan password email)
-        'from_name' => 'MinimartPro ERP',
-        'from_email' => 'no-reply@aiskoperasi.store'
-    ];
+    $config = require __DIR__ . '/mail_config.php';
 
-    $headers = "MIME-Version: 1.0" . "\r\n";
-    $headers .= "Content-type:text/plain;charset=UTF-8" . "\r\n";
-    $headers .= "From: " . $smtp_config['from_name'] . " <" . $smtp_config['from_email'] . ">" . "\r\n";
-    $headers .= "Reply-To: " . $smtp_config['from_email'] . "\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
+    $mail = new PHPMailer(true);
 
-    // Log simulasi untuk environment bantuan AI
-    error_log("Email Sender: Mengirim email ke $to dengan subjek: $subject");
-    
-    // Perintah kirim (Jika di hosting cPanel biasanya fungsi mail() sudah cukup jika SPF/DKIM aktif)
-    // Jika ingin menggunakan PHPMailer (Lebih stabil), Anda perlu mengupload library PHPMailer ke folder /api/libs
-    return mail($to, $subject, $message, $headers);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = $config['host'];
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $config['username'];
+        $mail->Password   = $config['password'];
+        $mail->Port       = (int)$config['port'];
+        $mail->SMTPSecure = $config['secure'];
+        $mail->CharSet    = 'UTF-8';
+
+        // From harus sama dengan akun SMTP agar SPF/DKIM valid
+        $mail->setFrom($config['from_email'], $config['from_name']);
+        $mail->addAddress($to);
+        $mail->isHTML(false);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+
+        $sent = $mail->send();
+        error_log("Email Sender: Email terkirim ke $to dengan subjek: $subject");
+        return $sent;
+    } catch (PHPMailerException $e) {
+        error_log("Email Sender: GAGAL kirim ke $to (subjek: $subject). Error: " . $mail->ErrorInfo);
+        return false;
+    } catch (Throwable $e) {
+        error_log("Email Sender: GAGAL kirim ke $to (subjek: $subject). Error: " . $e->getMessage());
+        return false;
+    }
 }

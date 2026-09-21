@@ -32,31 +32,43 @@ if ($method === 'POST') {
             $stmtReset = $pdo->prepare("REPLACE INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
             $stmtReset->execute([$email, $token, $expires_at]);
 
-            // Construct reset link containing any custom subdirectory
-            $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost:3000';
-            
-            // Extract subdirectory from REQUEST_URI if api is called in a subfolder
-            $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-            $api_pos = strpos($request_uri, '/api/');
-            $subfolder = '';
-            if ($api_pos !== false) {
-                $subfolder = substr($request_uri, 0, $api_pos);
+            // Construct reset link. Gunakan base_url dari app_config.php jika tersedia,
+            // agar link email selalu mengarah ke domain publik (bukan localhost).
+            $appConfig = (file_exists(__DIR__ . '/app_config.php')) ? require __DIR__ . '/app_config.php' : [];
+            $link = null;
+
+            if (!empty($appConfig['base_url'])) {
+                $link = rtrim($appConfig['base_url'], '/') . "/?reset_token=$token";
+            } else {
+                $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost:3000';
+
+                // Extract subdirectory from REQUEST_URI if api is called in a subfolder
+                $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+                $api_pos = strpos($request_uri, '/api/');
+                $subfolder = '';
+                if ($api_pos !== false) {
+                    $subfolder = substr($request_uri, 0, $api_pos);
+                }
+
+                $link = "$protocol://$host" . $subfolder . "/?reset_token=$token";
             }
-            
-            $link = "$protocol://$host" . $subfolder . "/?reset_token=$token";
 
             // Send email
-            $subject = "Permintaan Reset Password MinimartPro";
+            $subject = "Permintaan Reset Password BeeSmart";
             $message = "Halo " . $user['name'] . ",\n\n"
-                     . "Anda menerima email ini karena kami menerima permintaan perubahan password untuk akun Anda di MinimartPro.\n\n"
+                     . "Anda menerima email ini karena kami menerima permintaan perubahan password untuk akun Anda di BeeSmart.\n\n"
                      . "Silakan klik link di bawah ini untuk merubah password Anda:\n"
                      . $link . "\n\n"
                      . "Link ini berlaku selama 1 jam. Jika Anda tidak meminta perubahan ini, abaikan email ini.\n\n"
                      . "Salam hangat,\n"
-                     . "MinimartPro Team";
+                     . "BeeSmart Team";
 
-            sendNoReplyEmail($email, $subject, $message);
+            $sent = sendNoReplyEmail($email, $subject, $message);
+
+            if (!$sent) {
+                sendResponse(["status" => "error", "message" => "Gagal mengirim link reset ke email Anda. Coba lagi atau hubungi admin."], 500);
+            }
 
             sendResponse(["status" => "success", "message" => "Link reset password telah dikirim ke email Anda."]);
         } catch (Exception $e) {
@@ -114,10 +126,10 @@ if ($method === 'POST') {
             // Send notification email
             $subject = "Notifikasi Perubahan Password Berhasil";
             $message = "Halo,\n\n"
-                     . "Kami menginfokan bahwa pada tanggal " . date('d-m-Y H:i:s') . " (WIB) akun MinimartPro Anda dengan email " . $email . " telah berhasil melakukan perubahan password.\n\n"
+                     . "Kami menginfokan bahwa pada tanggal " . date('d-m-Y H:i:s') . " (WIB) akun BeeSmart Anda dengan email " . $email . " telah berhasil melakukan perubahan password.\n\n"
                      . "Jika Anda tidak melakukan perubahan ini, segera hubungi Admin kami.\n\n"
                      . "Salam hangat,\n"
-                     . "MinimartPro Team";
+                     . "BeeSmart Team";
 
             sendNoReplyEmail($email, $subject, $message);
 

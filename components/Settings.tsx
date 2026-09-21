@@ -247,7 +247,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
       </div>
 
       {!isAdmin && (
-        <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-center gap-4 text-blue-700">
+        <div className="bg-honey-50 border border-honey-100 p-4 rounded-2xl flex items-center gap-4 text-honey-700">
           <i className="fas fa-info-circle text-xl"></i>
           <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Role Staff: Anda hanya diperbolehkan mengatur konfigurasi printer bluetooth dan auto-print.</p>
         </div>
@@ -258,7 +258,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
           <div className={`bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 space-y-4 ${!isAdmin ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-black text-slate-800 flex items-center gap-2 mb-2">
-                <i className="fas fa-store text-blue-500"></i> Informasi Toko
+                <i className="fas fa-store text-honey-500"></i> Informasi Toko
               </h2>
               {!isAdmin && <span className="text-[8px] font-black uppercase bg-slate-100 px-2 py-1 rounded">Locked</span>}
             </div>
@@ -291,7 +291,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
               </div>
               <div className="md:col-span-2">
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Footer Struk (Pesan Penutup)</label>
-                <input name="footer" value={formData.footer} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-blue-600" placeholder="Contoh: Terima Kasih Atas Kunjungan Anda" />
+                <input name="footer" value={formData.footer} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-honey-600" placeholder="Contoh: Terima Kasih Atas Kunjungan Anda" />
               </div>
               <div className="md:col-span-1">
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Latitude Lokasi Toko</label>
@@ -301,7 +301,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Longitude Lokasi Toko</label>
                 <div className="flex gap-2">
                    <input name="longitude" type="number" step="any" value={formData.longitude || ''} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold" />
-                   <button type="button" onClick={detectLocation} className="p-3 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors" title="Deteksi Lokasi"><i className="fas fa-location-arrow"></i></button>
+                   <button type="button" onClick={detectLocation} className="p-3 bg-honey-100 text-honey-600 rounded-xl hover:bg-honey-200 transition-colors" title="Deteksi Lokasi"><i className="fas fa-location-arrow"></i></button>
                 </div>
               </div>
             </div>
@@ -310,7 +310,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
 
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 space-y-4">
             <h2 className="text-lg font-black text-slate-800 flex items-center gap-2 mb-2">
-              <span className="text-blue-600"><i className="fas fa-barcode"></i></span> Alat Scanner Barcode Hardware (USB / Bluetooth)
+              <span className="text-honey-600"><i className="fas fa-barcode"></i></span> Alat Scanner Barcode Hardware (USB / Bluetooth)
             </h2>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
@@ -345,7 +345,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                   <span className="text-sm font-black text-slate-700">{btStatus}</span>
                 </div>
               </div>
-              <button type="button" onClick={handleConnectBluetooth} disabled={isConnecting} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2">
+              <button type="button" onClick={handleConnectBluetooth} disabled={isConnecting} className="bg-honey-600 text-white px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2">
                 {isConnecting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-bluetooth"></i>} 
                 Printer
               </button>
@@ -361,7 +361,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
               <div className="flex items-center gap-3 pt-6">
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" name="autoPrint" checked={formData.autoPrint} onChange={handleChange} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                  <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-honey-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
                 </label>
                 <span className="text-sm font-bold text-slate-700">Auto-Print</span>
               </div>
@@ -415,7 +415,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                       </tbody>
                    </table>
                 </div>
-                <p className="text-[9px] font-bold text-slate-400 italic bg-blue-50 p-4 rounded-2xl border border-blue-100 leading-relaxed">PENTING: Jarak dihitung berdasarkan radius KM dari koordinat toko. Jika jarak member melebihi radius terjauh yang terdaftar, maka sistem akan menganggap alamat tidak terjangkau.</p>
+                <p className="text-[9px] font-bold text-slate-400 italic bg-honey-50 p-4 rounded-2xl border border-honey-100 leading-relaxed">PENTING: Jarak dihitung berdasarkan radius KM dari koordinat toko. Jika jarak member melebihi radius terjauh yang terdaftar, maka sistem akan menganggap alamat tidak terjangkau.</p>
              </div>
           )}
 
@@ -451,7 +451,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                 <div className="flex-1">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Petunjuk:</p>
                   <p className="text-xs text-slate-500 leading-relaxed mb-4">Upload gambar QRIS statis toko Anda untuk ditampilkan pada struk digital dan fisik jika menggunakan pembayaran QRIS.</p>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">Ganti Gambar QRIS</button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[10px] font-black uppercase tracking-widest text-honey-600 hover:text-honey-700">Ganti Gambar QRIS</button>
                 </div>
                 <input ref={fileInputRef} type="file" accept="image/png" onChange={handleImageUpload} className="hidden" />
               </div>
@@ -463,14 +463,14 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                    <i className="fas fa-users-cog text-indigo-600"></i> Manajemen User, Staff & Tenant
+                    <i className="fas fa-users-cog text-honey-600"></i> Manajemen User, Staff & Tenant
                   </h2>
                   <p className="text-slate-500 font-medium text-xs mt-1">Kelola akun akses Staff & Tenant serta pembatasan kategori produk untuk Tenant</p>
                 </div>
                 <button 
                   type="button" 
                   onClick={handleOpenAddUser} 
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2 self-start sm:self-auto"
+                  className="bg-honey-600 hover:bg-honey-700 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-honey-200 transition-all active:scale-95 flex items-center gap-2 self-start sm:self-auto"
                 >
                   <i className="fas fa-user-plus"></i> Tambah User / Tenant
                 </button>
@@ -529,7 +529,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                         </td>
                         <td className="py-4 text-right pr-4">
                           <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => handleOpenEditUser(u)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit User">
+                            <button type="button" onClick={() => handleOpenEditUser(u)} className="p-2 text-honey-600 hover:bg-honey-50 rounded-lg transition-all" title="Edit User">
                               <i className="fas fa-edit"></i>
                             </button>
                             {u.role !== 'ADMIN' && (
@@ -603,7 +603,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                   required 
                   value={userForm.name} 
                   onChange={e => setUserForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-honey-500" 
                   placeholder="Contoh: Tenant Makanan A / Staff Kasir"
                 />
               </div>
@@ -615,7 +615,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                   required 
                   value={userForm.email} 
                   onChange={e => setUserForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-honey-500" 
                   placeholder="email@domain.com"
                 />
               </div>
@@ -626,7 +626,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                   <select 
                     value={userForm.role} 
                     onChange={e => setUserForm(prev => ({ ...prev, role: e.target.value as any }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-honey-500"
                   >
                     <option value="TENANT">TENANT (Akses Terbatas Kategori)</option>
                     <option value="STAFF">STAFF (Kasir / Operasional)</option>
@@ -639,7 +639,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                   <select 
                     value={userForm.status} 
                     onChange={e => setUserForm(prev => ({ ...prev, status: e.target.value as any }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-honey-500"
                   >
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="INACTIVE">INACTIVE</option>
@@ -655,7 +655,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                   type="password" 
                   value={userForm.password} 
                   onChange={e => setUserForm(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-honey-500" 
                   placeholder="******"
                 />
               </div>
@@ -695,7 +695,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
                 <button type="button" onClick={() => setShowUserModal(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">
                   Batal
                 </button>
-                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95">
+                <button type="submit" className="flex-1 py-3 bg-honey-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-honey-200 hover:bg-honey-700 transition-all active:scale-95">
                   Simpan User
                 </button>
               </div>

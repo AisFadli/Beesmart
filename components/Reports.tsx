@@ -249,7 +249,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg"><Icons.Reports /></span>
+            <span className="p-2 bg-honey-600 text-white rounded-xl shadow-lg"><Icons.Reports /></span>
             Laporan & Profit
           </h1>
         </div>
@@ -271,7 +271,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
         <div className="p-8 border-b bg-slate-50/30 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4">
             <h2 className="font-black text-slate-800 text-[10px] uppercase tracking-[0.2em]">Riwayat Transaksi</h2>
-            {isLoading && <i className="fas fa-spinner fa-spin text-blue-600 text-xs"></i>}
+            {isLoading && <i className="fas fa-spinner fa-spin text-honey-600 text-xs"></i>}
             {filterType !== 'ALL' && (
               <button 
                 onClick={() => setFilterType('ALL')} 
@@ -288,14 +288,14 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
               placeholder="Cari ID, Nama Pelanggan, Produk, atau Kategori..." 
               value={searchTerm} 
               onChange={e => setSearchTerm(e.target.value)} 
-              className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl outline-none font-bold text-xs bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" 
+              className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl outline-none font-bold text-xs bg-white focus:ring-4 focus:ring-honey-500/5 transition-all" 
             />
           </div>
           <div className="w-full md:w-48">
             <select 
               value={paymentMethod} 
               onChange={e => setPaymentMethod(e.target.value)} 
-              className="w-full p-3 border border-slate-200 rounded-2xl outline-none font-bold text-[10px] uppercase tracking-widest bg-white focus:ring-4 focus:ring-blue-500/5 transition-all"
+              className="w-full p-3 border border-slate-200 rounded-2xl outline-none font-bold text-[10px] uppercase tracking-widest bg-white focus:ring-4 focus:ring-honey-500/5 transition-all"
             >
               <option value="">Semua Metode</option>
               <option value="CASH">CASH</option>
@@ -333,14 +333,14 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                       ))}
                     </div>
                   </td>
-                  <td className="px-8 py-6 font-black text-blue-600">Rp {Number(t.total).toLocaleString('id-ID')}</td>
+                  <td className="px-8 py-6 font-black text-honey-600">Rp {Number(t.total).toLocaleString('id-ID')}</td>
                   <td className="px-8 py-6">
                     <div className="flex flex-col gap-1">
                       <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-center ${t.status === 'CANCELLED' ? 'bg-slate-100 text-slate-400 border border-slate-200' : (t.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-rose-100 text-rose-600 border border-rose-200 animate-pulse')}`}>
                         {t.status === 'CANCELLED' ? 'CANCELED' : (t.paymentStatus === 'PAID' ? 'TERBAYAR' : 'BELUM BAYAR')}
                       </span>
                       {t.transactionType === 'INDENT' && (
-                        <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-center ${t.receivedAt ? 'bg-blue-100 text-blue-600 border border-blue-200' : 'bg-amber-100 text-amber-600 border border-amber-200'}`}>
+                        <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-center ${t.receivedAt ? 'bg-honey-100 text-honey-600 border border-honey-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200'}`}>
                           {t.receivedAt ? 'INDENT SELESAI' : 'MENUNGGU STOK'}
                         </span>
                       )}
@@ -353,7 +353,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                     {t.transactionType === 'INDENT' && !t.receivedAt && canConfirm && (
                       <button onClick={() => setTxToFulfill(t)} className="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase shadow-lg shadow-rose-50 hover:bg-rose-700 transition-all">Barang Diterima</button>
                     )}
-                    <button onClick={() => setSelectedTxForPrint(t)} className="p-2.5 bg-slate-100 text-slate-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Print Struk"><i className="fas fa-print"></i></button>
+                    <button onClick={() => setSelectedTxForPrint(t)} className="p-2.5 bg-slate-100 text-slate-500 rounded-xl hover:bg-honey-600 hover:text-white transition-all shadow-sm" title="Print Struk"><i className="fas fa-print"></i></button>
                     {isAdmin && <button onClick={() => setDeletingTxId(t.id)} className="p-2.5 bg-slate-100 text-slate-500 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Hapus"><i className="fas fa-trash"></i></button>}
                   </td>
                 </tr>
@@ -388,7 +388,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                 ))}
               </div>
               <div className="flex justify-between items-center">
-                <p className="font-black text-blue-600 text-sm">Rp {Number(t.total).toLocaleString('id-ID')}</p>
+                <p className="font-black text-honey-600 text-sm">Rp {Number(t.total).toLocaleString('id-ID')}</p>
                 <div className="flex gap-2">
                   {t.paymentStatus === 'UNPAID' && canConfirm && (
                     <button onClick={() => setTxToConfirm(t)} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black uppercase">Lunas</button>
@@ -410,7 +410,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
               <button 
                 disabled={currentPage === 1 || isLoading} 
                 onClick={() => setCurrentPage(p => p - 1)}
-                className="w-10 h-10 flex items-center justify-center bg-white border rounded-xl text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"
+                className="w-10 h-10 flex items-center justify-center bg-white border rounded-xl text-slate-400 hover:text-honey-600 disabled:opacity-30 transition-all"
               >
                 <i className="fas fa-chevron-left"></i>
               </button>
@@ -419,7 +419,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                   <button 
                     key={i} 
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-white border text-slate-500 hover:bg-slate-50'}`}
+                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-honey-600 text-white shadow-lg shadow-honey-100' : 'bg-white border text-slate-500 hover:bg-slate-50'}`}
                   >
                     {i + 1}
                   </button>
@@ -428,7 +428,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
               <button 
                 disabled={currentPage === totalPages || isLoading} 
                 onClick={() => setCurrentPage(p => p + 1)}
-                className="w-10 h-10 flex items-center justify-center bg-white border rounded-xl text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"
+                className="w-10 h-10 flex items-center justify-center bg-white border rounded-xl text-slate-400 hover:text-honey-600 disabled:opacity-30 transition-all"
               >
                 <i className="fas fa-chevron-right"></i>
               </button>
@@ -454,7 +454,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                     <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-2">Tanggal Penerimaan</label>
                     <input type="date" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold shadow-inner" value={fulfillmentDate} onChange={e => setFulfillmentDate(e.target.value)} />
                  </div>
-                 <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 italic text-[9px] text-amber-700 leading-relaxed font-bold">
+                 <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-200 italic text-[9px] text-yellow-800 leading-relaxed font-bold">
                     Konfirmasi ini menandakan bahwa barang telah tersedia dan telah diserahkan kepada pelanggan.
                  </div>
               </div>
@@ -557,7 +557,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
 
               <div className="grid grid-cols-2 gap-4 shrink-0">
                  <button onClick={() => setSelectedTxForPrint(null)} className="py-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500">Tutup</button>
-                 <button onClick={() => { printService.printReceipt(selectedTxForPrint, settings); setSelectedTxForPrint(null); }} className="py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl">Cetak</button>
+                 <button onClick={() => { printService.printReceipt(selectedTxForPrint, settings); setSelectedTxForPrint(null); }} className="py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl">Cetak</button>
               </div>
            </div>
         </div>
@@ -569,10 +569,10 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
 const StatCard: React.FC<{ label: string, value: string, color: string, isProfit?: boolean, onClick?: () => void, active?: boolean }> = ({ label, value, color, isProfit, onClick, active }) => (
   <div 
     onClick={onClick}
-    className={`p-8 rounded-[2.5rem] shadow-sm border transition-all cursor-pointer hover:shadow-lg relative overflow-hidden ${active ? 'ring-4 ring-blue-500 opacity-100' : 'opacity-90 hover:opacity-100'} ${isProfit ? 'bg-slate-900 text-white shadow-xl' : 'bg-white border-slate-200'}`}
+    className={`p-8 rounded-[2.5rem] shadow-sm border transition-all cursor-pointer hover:shadow-lg relative overflow-hidden ${active ? 'ring-4 ring-honey-500 opacity-100' : 'opacity-90 hover:opacity-100'} ${isProfit ? 'bg-slate-900 text-white shadow-xl' : 'bg-white border-slate-200'}`}
   >
-    {active && <div className="absolute top-4 right-4 text-blue-500 animate-pulse"><i className="fas fa-filter"></i></div>}
-    <p className={`text-[10px] mb-3 uppercase tracking-[0.2em] font-black ${isProfit ? 'text-blue-300' : 'text-slate-400'}`}>{label}</p>
+    {active && <div className="absolute top-4 right-4 text-honey-500 animate-pulse"><i className="fas fa-filter"></i></div>}
+    <p className={`text-[10px] mb-3 uppercase tracking-[0.2em] font-black ${isProfit ? 'text-honey-300' : 'text-slate-400'}`}>{label}</p>
     <h3 className={`text-3xl font-black ${isProfit ? 'text-white' : 'text-slate-900'}`}>{value}</h3>
   </div>
 );

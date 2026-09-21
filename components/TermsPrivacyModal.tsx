@@ -31,7 +31,7 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
         <div className="p-6 md:p-8 bg-slate-900 text-white flex justify-between items-start shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="p-2 bg-blue-500/20 text-blue-400 rounded-xl text-xs font-black uppercase tracking-wider border border-blue-400/30">
+              <span className="p-2 bg-honey-500/20 text-honey-400 rounded-xl text-xs font-black uppercase tracking-wider border border-honey-400/30">
                 Dokumen Legal & Regulasi Data
               </span>
               <span className="text-[10px] text-slate-400 font-mono">v2.0 (Agustus 2026)</span>
@@ -40,7 +40,7 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
               {activeTab === 'terms' ? 'Syarat & Ketentuan Penggunaan' : 'Kebijakan Privasi & Perlindungan Data'}
             </h2>
             <p className="text-slate-400 text-xs mt-1 font-medium">
-              Koperasi Syariah AIS & MinimartPro ERP System
+              Koperasi Syariah AIS & BeeSmart ERP System
             </p>
           </div>
           <button
@@ -57,7 +57,7 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
             onClick={() => setActiveTab('terms')}
             className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2 ${
               activeTab === 'terms'
-                ? 'bg-white text-blue-600 shadow-md border border-slate-200/60'
+                ? 'bg-white text-honey-600 shadow-md border border-slate-200/60'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -68,7 +68,7 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
             onClick={() => setActiveTab('privacy')}
             className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2 ${
               activeTab === 'privacy'
-                ? 'bg-white text-blue-600 shadow-md border border-slate-200/60'
+                ? 'bg-white text-honey-600 shadow-md border border-slate-200/60'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -81,10 +81,10 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 text-slate-700 text-xs leading-relaxed custom-scrollbar bg-slate-50/50">
           {activeTab === 'terms' ? (
             <div className="space-y-6 bg-white p-6 md:p-8 rounded-3xl border border-slate-200/80 shadow-sm">
-              <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-3">
-                <i className="fas fa-info-circle text-blue-600 text-base mt-0.5"></i>
-                <p className="text-[11px] text-blue-900 font-medium leading-relaxed">
-                  Harap membaca Syarat dan Ketentuan berikut dengan cermat sebelum mendaftar sebagai Member atau menggunakan aplikasi MinimartPro Koperasi Syariah AIS. Dengan mendaftar, Anda menyatakan telah memahami dan menyetujui seluruh aturan yang berlaku.
+              <div className="p-4 bg-honey-50 border border-honey-100 rounded-2xl flex items-start gap-3">
+                <i className="fas fa-info-circle text-honey-600 text-base mt-0.5"></i>
+                <p className="text-[11px] text-honey-900 font-medium leading-relaxed">
+                  Harap membaca Syarat dan Ketentuan berikut dengan cermat sebelum mendaftar sebagai Member atau menggunakan aplikasi BeeSmart Koperasi Syariah AIS. Dengan mendaftar, Anda menyatakan telah memahami dan menyetujui seluruh aturan yang berlaku.
                 </p>
               </div>
 
@@ -131,7 +131,7 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
                   Batasan Tanggung Jawab & Hak Cipta
                 </h3>
                 <ul className="list-disc pl-5 space-y-1.5 text-slate-600 font-medium">
-                  <li>Seluruh sistem, logo, software MinimartPro, dan konten aplikasi adalah milik Koperasi Syariah AIS.</li>
+                  <li>Seluruh sistem, logo, software BeeSmart, dan konten aplikasi adalah milik Koperasi Syariah AIS.</li>
                   <li>Koperasi tidak bertanggung jawab atas kerugian yang timbul akibat kelalaian member dalam menjaga keamanan password atau barcode kartu pribadi.</li>
                 </ul>
               </section>
@@ -237,7 +237,7 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
                     if (onAccept) onAccept();
                     onClose();
                   }}
-                  className="flex-1 sm:flex-none px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none px-8 py-3 bg-honey-600 hover:bg-honey-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-honey-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <i className="fas fa-check-circle"></i>
                   Saya Setuju

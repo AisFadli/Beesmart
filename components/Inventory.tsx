@@ -493,9 +493,9 @@ const Inventory: React.FC<InventoryProps> = ({
                   <div className="font-bold text-slate-800 text-xs uppercase">{productToDelete.name}</div>
                   <div className="font-mono text-[10px] text-slate-500 uppercase mt-0.5">SKU: {productToDelete.sku}</div>
                   
-                  <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-2.5">
-                     <i className="fas fa-info-circle text-amber-500 text-xs mt-0.5"></i>
-                     <p className="text-[9px] text-amber-700 font-bold leading-normal uppercase tracking-wider">
+                  <div className="mt-4 p-3 bg-yellow-50 rounded-xl border border-yellow-200 flex items-start gap-2.5">
+                     <i className="fas fa-info-circle text-yellow-600 text-xs mt-0.5"></i>
+                     <p className="text-[9px] text-yellow-800 font-bold leading-normal uppercase tracking-wider">
                        Status produk akan menjadi <span className="font-black text-rose-600">INACTIVE</span>. Produk tidak akan muncul di aplikasi, namun SKU ini tetap tersimpan sehingga tidak bisa digunakan untuk produk baru.
                      </p>
                   </div>
@@ -524,7 +524,7 @@ const Inventory: React.FC<InventoryProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-             <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg"><Icons.Inventory /></span>
+             <span className="p-2 bg-honey-600 text-white rounded-xl shadow-lg"><Icons.Inventory /></span>
              Katalog Inventory
           </h1>
           <p className="text-slate-500 font-medium text-xs uppercase tracking-widest mt-1 ml-1">Manajemen Produk & Kategori</p>
@@ -551,7 +551,7 @@ const Inventory: React.FC<InventoryProps> = ({
           <button onClick={() => setIsCategoryModalOpen(true)} className="bg-white px-5 py-2.5 rounded-xl text-slate-700 text-[10px] font-black uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm">
             <i className="fas fa-tags mr-2"></i> Kategori
           </button>
-          <button onClick={handleOpenAdd} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
+          <button onClick={handleOpenAdd} className="bg-honey-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all">
             <i className="fas fa-plus mr-2"></i> Tambah Produk
           </button>
         </div>
@@ -578,8 +578,8 @@ const Inventory: React.FC<InventoryProps> = ({
         <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row gap-4">
             <div className="relative group flex-1">
-              <span className="absolute inset-y-0 left-0 pl-5 flex items-center text-slate-400 group-focus-within:text-blue-500 transition-all"><Icons.Search /></span>
-              <input type="text" placeholder="Cari Berdasarkan SKU atau Nama Produk..." className="w-full pl-12 pr-6 py-4 rounded-2xl border border-transparent outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-bold transition-all bg-slate-50 shadow-inner" value={search} onChange={e => setSearch(e.target.value)} />
+              <span className="absolute inset-y-0 left-0 pl-5 flex items-center text-slate-400 group-focus-within:text-honey-500 transition-all"><Icons.Search /></span>
+              <input type="text" placeholder="Cari Berdasarkan SKU atau Nama Produk..." className="w-full pl-12 pr-6 py-4 rounded-2xl border border-transparent outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 font-bold transition-all bg-slate-50 shadow-inner" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <div className="w-full md:w-64">
               <select 
@@ -620,7 +620,7 @@ const Inventory: React.FC<InventoryProps> = ({
                     <td className="px-8 py-5"><span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-slate-200">{p.category}</span></td>
                     <td className="px-8 py-5">
                        <div className="flex flex-col">
-                         <p className="text-sm font-black text-blue-600">Rp {Number(p.price).toLocaleString('id-ID')}</p>
+                         <p className="text-sm font-black text-honey-600">Rp {Number(p.price).toLocaleString('id-ID')}</p>
                          {p.discountValue && p.discountValue > 0 ? (
                            <span className="text-[8px] font-black bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded mt-0.5 inline-block w-fit">DISKON {p.discountType === 'PERCENT' ? `${p.discountValue}%` : `Rp${Number(p.discountValue).toLocaleString('id-ID')}`}</span>
                          ) : (
@@ -635,7 +635,7 @@ const Inventory: React.FC<InventoryProps> = ({
                        <div className="flex justify-end gap-1">
                          <button onClick={() => { setPreviewProduct(p); setIsPreviewPriceTagOpen(true); }} className="p-2 text-slate-400 hover:text-slate-900 rounded-xl transition-all" title="Cetak Price Tag"><i className="fas fa-print"></i></button>
                          <button onClick={() => onViewAudit?.(p.id)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all" title="Audit Stok"><i className="fas fa-history"></i></button>
-                         <button onClick={() => handleOpenEdit(p)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Edit"><i className="fas fa-edit"></i></button>
+                         <button onClick={() => handleOpenEdit(p)} className="p-2 text-honey-600 hover:bg-honey-50 rounded-xl transition-all" title="Edit"><i className="fas fa-edit"></i></button>
                          {isAdmin && <button onClick={() => setProductToDelete(p)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Hapus"><i className="fas fa-trash"></i></button>}
                        </div>
                     </td>
@@ -663,14 +663,14 @@ const Inventory: React.FC<InventoryProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-blue-600">Rp {Number(p.price).toLocaleString('id-ID')}</p>
+                    <p className="text-sm font-black text-honey-600">Rp {Number(p.price).toLocaleString('id-ID')}</p>
                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black mt-1 ${p.stock <= p.minStock ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-800'}`}>Stok: {p.stock}</span>
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <button onClick={() => { setPreviewProduct(p); setIsPreviewPriceTagOpen(true); }} className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest" title="Cetak Price Tag"><i className="fas fa-print mr-1"></i> Label</button>
                   <button onClick={() => onViewAudit?.(p.id)} className="flex-1 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Audit</button>
-                  <button onClick={() => handleOpenEdit(p)} className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Edit</button>
+                  <button onClick={() => handleOpenEdit(p)} className="flex-1 py-2 bg-honey-50 text-honey-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Edit</button>
                   {isAdmin && <button onClick={() => setProductToDelete(p)} className="flex-1 py-2 bg-red-50 text-red-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Hapus</button>}
                 </div>
               </div>
@@ -696,7 +696,7 @@ const Inventory: React.FC<InventoryProps> = ({
                       {i > 0 && arr[i-1] !== p - 1 && <span className="text-slate-300">...</span>}
                       <button 
                         onClick={() => setCurrentPage(p)}
-                        className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${currentPage === p ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500 hover:bg-slate-50'}`}
+                        className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${currentPage === p ? 'bg-honey-600 text-white shadow-md shadow-honey-200' : 'text-slate-500 hover:bg-slate-50'}`}
                       >
                         {p}
                       </button>
@@ -726,20 +726,20 @@ const Inventory: React.FC<InventoryProps> = ({
            ) : (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayProposals.map(proposal => (
-                  <div key={proposal.id} className="bg-white rounded-[2.5rem] border border-slate-200 p-6 shadow-sm flex flex-col hover:border-blue-200 transition-all group overflow-hidden">
+                  <div key={proposal.id} className="bg-white rounded-[2.5rem] border border-slate-200 p-6 shadow-sm flex flex-col hover:border-honey-200 transition-all group overflow-hidden">
                      <div className="flex items-start justify-between mb-4">
                         <div className="flex gap-2">
                           <span className={`px-2.5 py-1 text-[8px] font-black rounded-lg uppercase tracking-widest ${
                             proposal.type === 'CREATE' ? 'bg-emerald-100 text-emerald-600' : 
                             proposal.type === 'STOCK_REPORT' ? 'bg-rose-100 text-rose-600' :
-                            'bg-blue-100 text-blue-600'
+                            'bg-honey-100 text-honey-600'
                           }`}>
                             {proposal.type === 'CREATE' ? 'Produk Baru' : 
                              proposal.type === 'STOCK_REPORT' ? 'Masalah Stok' : 'Update Produk'}
                           </span>
                           {!isAdmin && (
                             <span className={`px-2.5 py-1 text-[8px] font-black rounded-lg uppercase tracking-widest ${
-                              proposal.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : 
+                              proposal.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 
                               proposal.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
                             }`}>
                               {proposal.status === 'PENDING' ? 'Menunggu' : proposal.status === 'APPROVED' ? 'Disetujui' : 'Ditolak'}
@@ -774,7 +774,7 @@ const Inventory: React.FC<InventoryProps> = ({
                         <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/50">
                            <div>
                               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{proposal.type === 'STOCK_REPORT' ? 'Tipe Masalah' : 'Harga Jual'}</p>
-                              <p className="text-[10px] font-black text-blue-600 uppercase">{proposal.type === 'STOCK_REPORT' ? proposal.data.category : `Rp ${Number(proposal.data.price || 0).toLocaleString('id-ID')}`}</p>
+                              <p className="text-[10px] font-black text-honey-600 uppercase">{proposal.type === 'STOCK_REPORT' ? proposal.data.category : `Rp ${Number(proposal.data.price || 0).toLocaleString('id-ID')}`}</p>
                            </div>
                            <div>
                               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{proposal.type === 'STOCK_REPORT' ? 'Stok Bermasalah' : 'Stok Diajukan'}</p>
@@ -812,7 +812,7 @@ const Inventory: React.FC<InventoryProps> = ({
                           </button>
                           <button 
                             onClick={() => onProcessProposal(proposal.id, 'APPROVED', '')}
-                            className="py-3 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all border border-transparent"
+                            className="py-3 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all border border-transparent"
                           >
                             Setujui
                           </button>
@@ -836,8 +836,8 @@ const Inventory: React.FC<InventoryProps> = ({
               
               <div className="flex flex-col gap-2 mb-8">
                  <div className="flex gap-2">
-                    <input type="text" placeholder="Nama Kategori Baru" className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-sm shadow-inner" value={newCatName} onChange={e => handleCatNameChange(e.target.value)} />
-                    <button onClick={handleAddCategory} className="bg-blue-600 text-white px-6 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95"><i className="fas fa-plus"></i></button>
+                    <input type="text" placeholder="Nama Kategori Baru" className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-honey-500/10 font-bold text-sm shadow-inner" value={newCatName} onChange={e => handleCatNameChange(e.target.value)} />
+                    <button onClick={handleAddCategory} className="bg-honey-600 text-white px-6 rounded-2xl shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all active:scale-95"><i className="fas fa-plus"></i></button>
                  </div>
                  {catWarning && (
                    <div className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl animate-in fade-in slide-in-from-top-1">
@@ -847,7 +847,7 @@ const Inventory: React.FC<InventoryProps> = ({
                       {suggestedCat && (
                         <button 
                           onClick={() => handleCatNameChange(suggestedCat)}
-                          className="mt-1 text-[10px] font-black text-blue-600 uppercase hover:underline"
+                          className="mt-1 text-[10px] font-black text-honey-600 uppercase hover:underline"
                         >
                           Gunakan Saran: {suggestedCat}
                         </button>
@@ -858,11 +858,11 @@ const Inventory: React.FC<InventoryProps> = ({
               
               <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 {categories.map(c => (
-                  <div key={c.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-blue-200 transition-all space-y-2.5">
+                  <div key={c.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-honey-200 transition-all space-y-2.5">
                      <div className="flex justify-between items-center">
                         {editingCatId === c.id ? (
                            <div className="flex-1 flex gap-2">
-                              <input value={editingCatValue} onChange={e => setEditingCatValue(e.target.value)} className="flex-1 p-2 font-bold border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 text-xs" autoFocus />
+                              <input value={editingCatValue} onChange={e => setEditingCatValue(e.target.value)} className="flex-1 p-2 font-bold border rounded-xl outline-none focus:ring-2 focus:ring-honey-500/30 text-xs" autoFocus />
                               <button onClick={async() => { 
                                  const name = editingCatValue.trim();
                                  if (!name) return;
@@ -880,7 +880,7 @@ const Inventory: React.FC<InventoryProps> = ({
                              <span className="font-black text-slate-700 text-xs uppercase tracking-widest">{c.name}</span>
                              {isAdmin && (
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                  <button onClick={() => { setEditingCatId(c.id); setEditingCatValue(c.name); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"><i className="fas fa-pen text-[10px]"></i></button>
+                                  <button onClick={() => { setEditingCatId(c.id); setEditingCatValue(c.name); }} className="p-2 text-honey-500 hover:bg-honey-50 rounded-lg transition-colors"><i className="fas fa-pen text-[10px]"></i></button>
                                   <button onClick={() => onDeleteCategory(c.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i className="fas fa-trash text-[10px]"></i></button>
                                 </div>
                              )}
@@ -937,7 +937,7 @@ const Inventory: React.FC<InventoryProps> = ({
                   <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight leading-none">{editingProduct ? 'Perbarui Produk' : 'Tambah Produk Baru'}</h3>
                   {!editingProduct && <p className="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-widest">ID Produk akan dibuat otomatis </p>}
                 </div>
-                {!isAdmin && <span className="bg-amber-100 text-amber-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Membutuhkan Persetujuan Admin</span>}
+                {!isAdmin && <span className="bg-yellow-100 text-yellow-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Membutuhkan Persetujuan Admin</span>}
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -946,15 +946,15 @@ const Inventory: React.FC<InventoryProps> = ({
                     <div className="space-y-6">
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Foto Produk</label>
-                          <div onClick={() => fileInputRef.current?.click()} className="w-full aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all group overflow-hidden relative shadow-inner">
-                            {formData.image ? <img src={formData.image} className="w-full h-full object-cover" alt="Preview" /> : <div className="text-center p-6 text-slate-300 group-hover:text-blue-400"><i className="fas fa-cloud-upload-alt text-4xl mb-3"></i><p className="text-[10px] font-black uppercase tracking-widest">Pilih Gambar</p></div>}
+                          <div onClick={() => fileInputRef.current?.click()} className="w-full aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-honey-50 hover:border-honey-300 transition-all group overflow-hidden relative shadow-inner">
+                            {formData.image ? <img src={formData.image} className="w-full h-full object-cover" alt="Preview" /> : <div className="text-center p-6 text-slate-300 group-hover:text-honey-400"><i className="fas fa-cloud-upload-alt text-4xl mb-3"></i><p className="text-[10px] font-black uppercase tracking-widest">Pilih Gambar</p></div>}
                           </div>
                           <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                        </div>
 
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Nama Produk</label>
-                          <input required placeholder="Contoh: Aqua 600ml" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none uppercase focus:ring-4 focus:ring-blue-500/10 shadow-inner" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                          <input required placeholder="Contoh: Aqua 600ml" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none uppercase focus:ring-4 focus:ring-honey-500/10 shadow-inner" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                        </div>
                     </div>
 
@@ -964,18 +964,18 @@ const Inventory: React.FC<InventoryProps> = ({
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">SKU Produk</label>
                             <div className="flex gap-2">
-                              <input required placeholder="SKU" className={`flex-1 p-4 bg-slate-50 border rounded-2xl font-bold outline-none text-sm shadow-inner ${skuWarning ? 'border-amber-300 ring-4 ring-amber-500/10' : 'border-slate-200'}`} value={formData.sku} onChange={e => handleSkuChange(e.target.value)} />
-                              <button type="button" onClick={generateRandomSku} className="px-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all" title="Generate SKU">
+                              <input required placeholder="SKU" className={`flex-1 p-4 bg-slate-50 border rounded-2xl font-bold outline-none text-sm shadow-inner ${skuWarning ? 'border-yellow-300 ring-4 ring-yellow-500/10' : 'border-slate-200'}`} value={formData.sku} onChange={e => handleSkuChange(e.target.value)} />
+                              <button type="button" onClick={generateRandomSku} className="px-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-honey-600 transition-all" title="Generate SKU">
                                 <i className="fas fa-random"></i>
                               </button>
                             </div>
                             {skuWarning && (
                               <div className="mt-2 space-y-1">
-                                <p className="text-[9px] font-bold text-amber-600 flex items-center gap-1">
+                                <p className="text-[9px] font-bold text-yellow-700 flex items-center gap-1">
                                   <i className="fas fa-exclamation-triangle"></i> {skuWarning}
                                 </p>
                                 {suggestedSku && (
-                                  <button type="button" onClick={() => handleSkuChange(suggestedSku)} className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:underline">
+                                  <button type="button" onClick={() => handleSkuChange(suggestedSku)} className="text-[9px] font-black text-honey-600 uppercase tracking-widest hover:underline">
                                     Pakai Saran: {suggestedSku}
                                   </button>
                                 )}
@@ -991,9 +991,9 @@ const Inventory: React.FC<InventoryProps> = ({
                        </div>
 
                        {/* Barcode Field (Kemasan Bawaan / Generated) */}
-                       <div className="space-y-2 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                       <div className="space-y-2 p-4 bg-honey-50/50 rounded-2xl border border-honey-100">
                           <div className="flex justify-between items-center">
-                            <label className="text-[10px] font-black text-blue-700 uppercase tracking-widest flex items-center gap-1.5">
+                            <label className="text-[10px] font-black text-honey-700 uppercase tracking-widest flex items-center gap-1.5">
                               <i className="fas fa-barcode"></i> Barcode Kemasan / Auto
                             </label>
                             <span className="text-[9px] font-bold text-slate-400">Barcode Bawaan Pabrik / System</span>
@@ -1001,14 +1001,14 @@ const Inventory: React.FC<InventoryProps> = ({
                           <div className="flex gap-2">
                             <input 
                               placeholder="Barcode Produk (EAN-13/UPC/Custom)" 
-                              className="flex-1 p-3.5 bg-white border border-blue-200 rounded-xl font-mono text-xs font-bold outline-none shadow-sm text-slate-800" 
+                              className="flex-1 p-3.5 bg-white border border-honey-200 rounded-xl font-mono text-xs font-bold outline-none shadow-sm text-slate-800" 
                               value={formData.barcode || ''} 
                               onChange={e => setFormData({...formData, barcode: e.target.value})} 
                             />
                             <button 
                               type="button" 
                               onClick={() => setShowBarcodeScannerModal(true)} 
-                              className="px-3.5 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase flex items-center gap-1.5 hover:bg-blue-700 transition-all shadow-md" 
+                              className="px-3.5 py-2.5 bg-honey-600 text-white rounded-xl font-black text-[10px] uppercase flex items-center gap-1.5 hover:bg-honey-700 transition-all shadow-md" 
                               title="Scan Barcode Kemasan dengan Kamera HP"
                             >
                               <i className="fas fa-camera"></i>
@@ -1038,7 +1038,7 @@ const Inventory: React.FC<InventoryProps> = ({
                           </div>
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Harga Jual</label>
-                            <input type="number" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none text-blue-600 shadow-inner" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
+                            <input type="number" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none text-honey-600 shadow-inner" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
                           </div>
                        </div>
 
@@ -1097,7 +1097,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
                  <div className="flex gap-4 mt-12">
                     <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-5 bg-slate-100 rounded-2xl font-black text-[10px] uppercase text-slate-500 tracking-widest hover:bg-slate-200 transition-all">Batal</button>
-                    <button type="submit" className="flex-1 py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-[0.98]">
+                    <button type="submit" className="flex-1 py-5 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-honey-100 hover:bg-honey-700 transition-all active:scale-[0.98]">
                       {isAdmin ? (editingProduct ? 'Perbarui Produk' : 'Tambah Produk') : (editingProduct ? 'Ajukan Perubahan' : 'Ajukan Produk Baru')}
                     </button>
                  </div>
@@ -1181,7 +1181,7 @@ const Inventory: React.FC<InventoryProps> = ({
                       await printService.printPriceTag(previewProduct, settings);
                       setIsPreviewPriceTagOpen(false);
                    }}
-                   className="py-3 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                   className="py-3 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all active:scale-95 flex items-center justify-center gap-2"
                  >
                    <i className="fas fa-print"></i> Cetak Sekarang
                  </button>

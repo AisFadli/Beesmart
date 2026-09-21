@@ -1,5 +1,12 @@
 
 <?php
+// KEAMANAN: Blokir akses langsung file ini via HTTP
+if (isset($_SERVER['REQUEST_METHOD']) && ($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit('Forbidden');
+}
+
 require_once 'db.php';
 
 try {
@@ -158,11 +165,11 @@ try {
 
     // Check if admin exists before inserting
     $checkAdmin = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
-    $checkAdmin->execute(['admin@minimart.com']);
+    $checkAdmin->execute(['user@beesmart.store']);
     if ($checkAdmin->fetchColumn() == 0) {
         $hashedPassword = password_hash('admin123', PASSWORD_BCRYPT);
         $stmt = $pdo->prepare("INSERT INTO users (id, email, name, role, password, status) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute(['admin-1', 'admin@minimart.com', 'Administrator', 'ADMIN', $hashedPassword, 'ACTIVE']);
+        $stmt->execute(['admin-1', 'user@beesmart.store', 'Administrator', 'ADMIN', $hashedPassword, 'ACTIVE']);
     }
     
     // Check if general category exists
