@@ -143,8 +143,10 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS password_resets (
         email VARCHAR(100) NOT NULL,
         token VARCHAR(100) PRIMARY KEY,
-        expires_at DATETIME NOT NULL
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    try { $pdo->exec("ALTER TABLE password_resets ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch (Exception $e) {}
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS orders (
         id VARCHAR(50) PRIMARY KEY,
@@ -476,10 +478,35 @@ try {
 }
 
 /**
+ * Redaksi field sensitif (password/token) sebelum dicatat ke log
+ */
+function redactSensitive(&$data) {
+    if (!is_array($data)) {
+        return;
+    }
+    foreach ($data as $key => &$value) {
+        if (is_array($value)) {
+            redactSensitive($value);
+        } elseif (in_array(strtolower((string)$key), ['password', 'token', 'auth_token', 'reset_token'], true)) {
+            $value = '[REDACTED]';
+        }
+    }
+    unset($value);
+}
+
+/**
  * Log activity for auditing changes/deletes
  */
 function logActivity($pdo, $staffName, $menuCategory, $actionType, $entityId, $beforeData = null, $afterData = null) {
     try {
+        if (is_array($beforeData)) {
+            $beforeData = json_decode(json_encode($beforeData), true);
+            redactSensitive($beforeData);
+        }
+        if (is_array($afterData)) {
+            $afterData = json_decode(json_encode($afterData), true);
+            redactSensitive($afterData);
+        }
         $stmt = $pdo->prepare("INSERT INTO activity_logs (staff_name, menu_category, action_type, entity_id, before_data, after_data) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $staffName, 
@@ -502,4 +529,14 @@ function sendResponse($data, $status = 200) {
     }
     echo json_encode($data);
     exit;
+}
+
+// --- API AUTHENTICATION (TERPUSAT) ---
+// Semua endpoint wajib token kecuali: login, lupa password, index.
+require_once __DIR__ . '/auth_guard.php';
+
+$selfFile = basename($_SERVER['SCRIPT_FILENAME'] ?? ($_SERVER['SCRIPT_NAME'] ?? ''));
+$publicEndpoints = ['auth.php', 'forgot_password.php', 'register.php', 'index.php'];
+if (!in_array($selfFile, $publicEndpoints, true) && $_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
+    requireAuth();
 }

@@ -285,7 +285,14 @@ const App: React.FC = () => {
 
         const savedUserStr = localStorage.getItem('beesmart_user');
         const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
-        
+
+        // Migrasi keamanan: tanpa token API, sesi lama tidak valid — paksa login ulang
+        if (savedUser && !localStorage.getItem('beesmart_token')) {
+          localStorage.removeItem('beesmart_user');
+          setState(prev => ({ ...prev, currentUser: null, isLoading: false }));
+          return;
+        }
+
         // Load data with the saved user's role immediately
         await refreshData(savedUser?.role, savedUser?.id);
         
@@ -356,7 +363,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { localStorage.removeItem('beesmart_user'); setState(prev => ({ ...prev, currentUser: null })); }} user={state.currentUser} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { apiService.setToken(''); localStorage.removeItem('beesmart_user'); setState(prev => ({ ...prev, currentUser: null })); }} user={state.currentUser} />
       <div className="flex-1 md:ml-64 w-full h-full overflow-hidden flex flex-col relative">
         <main className="flex-1 overflow-y-auto p-4 md:p-10 pt-20 md:pt-10 custom-scrollbar bg-slate-50">
           <div className="max-w-7xl mx-auto">

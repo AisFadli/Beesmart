@@ -22,6 +22,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
     $data = json_decode(file_get_contents("php://input"), true);
     try {
         foreach ($data as $key => $value) {

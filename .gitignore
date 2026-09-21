@@ -16,6 +16,12 @@ dist-ssr
 api/mail_config.php
 api/app_config.php
 api/db_config.php
+api/auth_config.php
+
+# Backup database & uploads (data sensitif / runtime)
+BeeSmart_Data.sql
+uploads/
+api/error_log
 
 # Editor directories and files
 .vscode/*

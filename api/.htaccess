@@ -2,10 +2,17 @@
 Options -Indexes
 
 # Prevent access to sensitive scripts directly
-<FilesMatch "^(db|install)\.php$">
-    Order Allow,Deny
-    Deny from all
-</FilesMatch>
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(db|install|db_config|mail_config|mail_sender|auth_config|auth_guard)\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^(db|install|db_config|mail_config|mail_sender|auth_config|auth_guard)\.php$">
+        Order Allow,Deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
 
 # Prevent access to log files
 <Files "*.log">

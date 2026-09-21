@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+requireAuth(['ADMIN', 'STAFF']);
 
 $category = $_GET['category'] ?? '';
 

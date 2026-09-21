@@ -10,6 +10,15 @@ if ($method === 'POST') {
     try {
         $pdo->beginTransaction();
 
+        // Member hanya boleh membuat transaksi untuk dirinya sendiri
+        $auth = currentAuth();
+        $authRole = strtoupper($auth['role'] ?? '');
+        $isStaff = in_array($authRole, ['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR'], true);
+        if (!$isStaff) {
+            $data['memberId'] = $auth['uid'];
+            $data['staffId'] = $auth['uid'];
+        }
+
         $paymentStatus = $data['paymentStatus'] ?? 'PAID';
         $transactionType = $data['transactionType'] ?? 'NORMAL';
 
@@ -73,6 +82,20 @@ if ($method === 'DELETE') {
         $stmtTx->execute([$id]);
         $before = $stmtTx->fetch();
 
+        if (!$before) {
+            $pdo->rollBack();
+            sendResponse(["status" => "error", "message" => "Transaksi tidak ditemukan."], 404);
+        }
+
+        // Hanya pemilik (member) atau staff/admin yang boleh membatalkan
+        $auth = currentAuth();
+        $authRole = strtoupper($auth['role'] ?? '');
+        $isStaff = in_array($authRole, ['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR'], true);
+        if (!$isStaff && ($before['memberId'] ?? '') !== $auth['uid']) {
+            $pdo->rollBack();
+            sendResponse(["status" => "error", "message" => "Akses ditolak."], 403);
+        }
+
         if ($before) {
             // Restore saldo jika pembayaran via deposit
             if ($before['paymentMethod'] === 'DEPOSIT' && !empty($before['memberId'])) {
@@ -125,6 +148,15 @@ if ($method === 'PUT') {
         $before = $stmtOld->fetch();
 
         if (!$before) throw new Error("Transaksi tidak ditemukan.");
+
+        // Hanya pemilik (member) atau staff/admin yang boleh mengubah transaksi
+        $auth = currentAuth();
+        $authRole = strtoupper($auth['role'] ?? '');
+        $isStaff = in_array($authRole, ['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR'], true);
+        if (!$isStaff && ($before['memberId'] ?? '') !== $auth['uid']) {
+            $pdo->rollBack();
+            sendResponse(["status" => "error", "message" => "Akses ditolak."], 403);
+        }
 
         // Update detail transaksi (Status Bayar, Metode Bayar, Timestamp Pelunasan, Catatan, Tanggal Terima, dan Status Pesanan)
         $stmt = $pdo->prepare("UPDATE transactions SET 

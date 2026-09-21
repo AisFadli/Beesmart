@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+requireAuth(['ADMIN', 'STAFF', 'USER']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $data = json_decode(file_get_contents('php://input'), true);

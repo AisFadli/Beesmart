@@ -74,6 +74,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   const handleRegisterFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (regData.password.length < 6) {
+      setError("Password minimal 6 karakter.");
+      return;
+    }
     if (!acceptedTerms) {
       setError("Anda wajib menyetujui Syarat & Ketentuan serta Kebijakan Privasi untuk mendaftar sebagai Member.");
       return;
@@ -95,7 +99,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         depositBalance: 0,
         status: 'APPROVED'
       };
-      await apiService.saveMember(newMember);
+      await apiService.registerMember(newMember);
       setShowConfirmModal(false);
       setSuccess("Pendaftaran berhasil! Akun Anda telah aktif & salinan Syarat & Ketentuan telah dikirim ke email " + regData.email + ". Silakan login.");
       setRegData({ name: '', whatsapp: '', address: '', email: '', password: '' });
@@ -131,6 +135,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
+    if (!resetPassword || resetPassword.length < 6) {
+      setError("Password baru minimal 6 karakter.");
+      return;
+    }
+    if (resetPassword !== resetConfirmPassword) {
+      setError("Password dan konfirmasi password tidak cocok.");
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setSuccess(null);

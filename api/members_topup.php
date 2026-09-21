@@ -4,10 +4,19 @@ require_once 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents("php://input"), true);
+
+    // Role & identitas diverifikasi dari TOKEN, bukan dari body (anti spoof/self-approve)
+    $auth = currentAuth();
+    $authRole = strtoupper($auth['role'] ?? '');
     $memberId = $data['id'] ?? '';
+    if ($authRole === 'MEMBER') {
+        $memberId = $auth['uid'];
+    } elseif (empty($memberId)) {
+        sendResponse(["status" => "error", "message" => "ID Member wajib diisi."], 400);
+    }
+
     $amount = (float)($data['amount'] ?? 0);
     $proofImage = $data['proofImage'] ?? null;
-    $role = $data['userRole'] ?? 'MEMBER';
 
     if (empty($memberId) || $amount <= 0) {
         sendResponse(["status" => "error", "message" => "ID Member dan nominal wajib valid."], 400);
@@ -16,9 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
-        // ADMIN langsung APPROVED, selain itu PENDING
-        $status = ($role === 'ADMIN') ? 'APPROVED' : 'PENDING';
-        $notes = ($role === 'ADMIN') ? "Top Up Saldo via Admin" : "Pengajuan Top Up via $role (Menunggu Persetujuan)";
+        // ADMIN langsung APPROVED, selain itu PENDING (termasuk STAFF)
+        $status = ($authRole === 'ADMIN') ? 'APPROVED' : 'PENDING';
+        $notes = ($authRole === 'ADMIN') ? "Top Up Saldo via Admin" : "Pengajuan Top Up (Menunggu Persetujuan)";
 
         // 1. Jika ADMIN, update saldo member secara real-time
         if ($status === 'APPROVED') {

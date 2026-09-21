@@ -5,8 +5,10 @@ try {
     $tables = ['products', 'categories', 'transactions', 'app_settings', 'shipping_rates', 'orders', 'members', 'member_logs', 'stock_adjustments', 'expenses', 'product_proposals', 'activity_logs'];
     $data = [];
 
-    $role = $_GET['role'] ?? 'MEMBER';
-    $userId = $_GET['userId'] ?? '';
+    // Role & userId OTORITATIF dari token, BUKAN dari parameter query (anti privilege escalation)
+    $auth = currentAuth();
+    $role = strtoupper($auth['role'] ?? '');
+    $userId = $auth['uid'] ?? '';
     
     // Normalize Member ID if it has USER- prefix from users table
     $memberSearchId = (strpos($userId, 'USER-') === 0) ? substr($userId, 5) : $userId;
@@ -55,6 +57,7 @@ try {
                 $stmt->execute([$memberSearchId, $userId]);
                 $prof = $stmt->fetch();
                 if ($prof) {
+                    unset($prof['password']);
                     $prof['depositBalance'] = (float)$prof['depositBalance'];
                     $prof['registrationDate'] = str_replace(' ', 'T', $prof['registrationDate']);
                 }
@@ -272,6 +275,7 @@ try {
                 }
 
                 foreach ($mems as &$m) {
+                    unset($m['password']);
                     $m['depositBalance'] = (float)$m['depositBalance'];
                     $m['registrationDate'] = str_replace(' ', 'T', $m['registrationDate']);
                 }
@@ -431,7 +435,16 @@ try {
                 }
                 $data['product_proposals'] = $parsedProps;
             } elseif ($table === 'activity_logs') {
-                $data['activity_logs'] = $pdo->query("SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT 100")->fetchAll();
+                $activityLogs = $pdo->query("SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT 100")->fetchAll();
+                foreach ($activityLogs as &$log) {
+                    $before = json_decode($log['before_data'] ?? 'null', true);
+                    $after = json_decode($log['after_data'] ?? 'null', true);
+                    if (is_array($before)) redactSensitive($before);
+                    if (is_array($after)) redactSensitive($after);
+                    $log['before_data'] = is_array($before) ? json_encode($before) : $log['before_data'];
+                    $log['after_data'] = is_array($after) ? json_encode($after) : $log['after_data'];
+                }
+                $data['activity_logs'] = $activityLogs;
             } elseif ($table === 'users') {
                 $userList = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
                 foreach ($userList as &$u) {

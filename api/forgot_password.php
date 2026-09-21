@@ -13,23 +13,41 @@ if ($method === 'POST') {
         if (empty($email)) {
             sendResponse(["status" => "error", "message" => "Email wajib diisi."], 400);
         }
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            // Jangan bocorkan validitas: balas generik
+            sendResponse(["status" => "success", "message" => "Jika email terdaftar, link reset telah dikirim."]);
+        }
 
         try {
-            // Check if email exists in users
-            $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ? LIMIT 1");
+            // Cari email di users (mencakup member yang sudah sinkron) lalu fallback ke members
+            $stmt = $pdo->prepare("SELECT id, name, email FROM users WHERE email = ? LIMIT 1");
             $stmt->execute([$email]);
             $user = $stmt->fetch();
-
             if (!$user) {
-                sendResponse(["status" => "error", "message" => "Email tidak terdaftar di sistem."], 404);
+                $stmtM = $pdo->prepare("SELECT id, name, email FROM members WHERE email = ? LIMIT 1");
+                $stmtM->execute([$email]);
+                $user = $stmtM->fetch();
             }
 
-            // Generate a secure token
+            // Cooldown per email (2 menit) agar tidak dipergunakan untuk spam email
+            $stmtCnt = $pdo->prepare("SELECT COUNT(*) FROM password_resets WHERE email = ? AND created_at > ?");
+            $stmtCnt->execute([$email, date('Y-m-d H:i:s', strtotime('-2 minutes'))]);
+            if ($stmtCnt->fetchColumn() > 0) {
+                // Jangan kirim email lagi; balas generik
+                sendResponse(["status" => "success", "message" => "Jika email terdaftar, link reset telah dikirim."]);
+            }
+
+            if (!$user) {
+                // Anti-enumerasi: tidak mengungkap email yang tidak terdaftar
+                sendResponse(["status" => "success", "message" => "Jika email terdaftar, link reset telah dikirim."]);
+            }
+
+            // Generate secure token & rotasi: cabut semua token lama untuk email ini
             $token = bin2hex(random_bytes(32));
             $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-            // Store in password_resets
-            $stmtReset = $pdo->prepare("REPLACE INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
+            $pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
+            $stmtReset = $pdo->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
             $stmtReset->execute([$email, $token, $expires_at]);
 
             // Construct reset link. Gunakan base_url dari app_config.php jika tersedia,
@@ -60,17 +78,17 @@ if ($method === 'POST') {
                      . "Anda menerima email ini karena kami menerima permintaan perubahan password untuk akun Anda di BeeSmart.\n\n"
                      . "Silakan klik link di bawah ini untuk merubah password Anda:\n"
                      . $link . "\n\n"
-                     . "Link ini berlaku selama 1 jam. Jika Anda tidak meminta perubahan ini, abaikan email ini.\n\n"
+                     . "Link ini berlaku selama 1 jam dan hanya dapat digunakan sekali. Jika Anda tidak meminta perubahan ini, abaikan email ini.\n\n"
                      . "Salam hangat,\n"
                      . "BeeSmart Team";
 
             $sent = sendNoReplyEmail($email, $subject, $message);
-
             if (!$sent) {
-                sendResponse(["status" => "error", "message" => "Gagal mengirim link reset ke email Anda. Coba lagi atau hubungi admin."], 500);
+                error_log("forgot_password: gagal mengirim email reset ke $email");
+                // Tetap balas sukses agar tidak membocorkan detail (user bisa coba lagi setelah cooldown)
             }
 
-            sendResponse(["status" => "success", "message" => "Link reset password telah dikirim ke email Anda."]);
+            sendResponse(["status" => "success", "message" => "Jika email terdaftar, link reset telah dikirim."]);
         } catch (Exception $e) {
             sendResponse(["status" => "error", "message" => "Gagal mengirim link reset: " . $e->getMessage()], 500);
         }
@@ -112,14 +130,20 @@ if ($method === 'POST') {
             // 1. Update users table
             $stmtUser = $pdo->prepare("UPDATE users SET password = ? WHERE email = ?");
             $stmtUser->execute([$hashed_password, $email]);
+            $usersAffected = $stmtUser->rowCount();
 
             // 2. Update members table (if they are a member)
             $stmtMember = $pdo->prepare("UPDATE members SET password = ? WHERE email = ?");
             $stmtMember->execute([$hashed_password, $email]);
+            $membersAffected = $stmtMember->rowCount();
 
-            // 3. Delete reset token
-            $stmtDelToken = $pdo->prepare("DELETE FROM password_resets WHERE token = ?");
-            $stmtDelToken->execute([$token]);
+            if ($usersAffected === 0 && $membersAffected === 0) {
+                $pdo->rollBack();
+                sendResponse(["status" => "error", "message" => "Akun tidak ditemukan."], 400);
+            }
+
+            // 3. Cabut SEMUA token aktif untuk email tersebut (one-time use)
+            $pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
 
             $pdo->commit();
 

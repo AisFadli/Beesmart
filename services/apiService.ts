@@ -17,15 +17,41 @@ const getApiBaseUrl = () => {
 const API_BASE_URL = getApiBaseUrl(); 
 
 export class ApiService {
+  private token: string = (() => {
+    try { return localStorage.getItem('beesmart_token') || ''; } catch (e) { return ''; }
+  })();
+
+  public setToken(token: string) {
+    this.token = token || '';
+    try {
+      if (this.token) localStorage.setItem('beesmart_token', this.token);
+      else localStorage.removeItem('beesmart_token');
+    } catch (e) {}
+  }
+
+  public getToken() { return this.token; }
+
+  private handleUnauthorized() {
+    this.token = '';
+    try {
+      localStorage.removeItem('beesmart_token');
+      localStorage.removeItem('beesmart_user');
+    } catch (e) {}
+    window.location.reload();
+  }
+
   // Changed from private to public so it can be accessed directly from components as needed
   public async request(endpoint: string, options: RequestInit = {}) {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${API_BASE_URL}${cleanEndpoint}`;
-    
+
+    const headers: Record<string, string> = { 'Accept': 'application/json', ...(options.headers as Record<string, string> || {}) };
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+
     try {
       const response = await fetch(url, {
         ...options,
-        headers: { 'Accept': 'application/json', ...options.headers },
+        headers,
       });
       
       const text = await response.text();
@@ -36,8 +62,17 @@ export class ApiService {
         console.error("Invalid JSON response from " + url, text);
         throw new Error("Respon server tidak valid. Pastikan folder /app/api/ tersedia.");
       }
+
+      if (response.status === 401 && this.token) {
+        this.handleUnauthorized();
+        throw new Error(data.message || "Sesi berakhir. Silakan login kembali.");
+      }
       
-      if (data.status === 'error') throw new Error(data.message);
+      if (data.status === 'error') {
+        const err: any = new Error(data.message);
+        err.status = response.status;
+        throw err;
+      }
       return data;
     } catch (error: any) {
       console.error("API Request Error:", error);
@@ -51,7 +86,9 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
-    return response.user || response;
+    const user = response.user || response;
+    if (user.token) this.setToken(user.token);
+    return user;
   }
 
   async getAppData(role?: string, userId?: string) { 
@@ -71,6 +108,14 @@ export class ApiService {
   
   async saveMember(member: Member) {
     return this.request('/members.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(member),
+    });
+  }
+
+  async registerMember(member: Member) {
+    return this.request('/register.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(member),
@@ -135,8 +180,11 @@ export class ApiService {
   async uploadFile(file: File) {
     const formData = new FormData();
     formData.append('file', file);
+    const headers: Record<string, string> = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
     const response = await fetch(`${API_BASE_URL}/upload.php`, {
       method: 'POST',
+      headers,
       body: formData
     });
     const data = await response.json();

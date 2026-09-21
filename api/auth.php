@@ -19,8 +19,9 @@ if (empty($email) || empty($password)) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT id, email, name, role, tenantCategories, password FROM users WHERE email = ? AND status = 'ACTIVE' LIMIT 1");
-    $stmt->execute([$email]);
+    $identifier = trim($email);
+    $stmt = $pdo->prepare("SELECT id, email, username, name, role, tenantCategories, password FROM users WHERE (email = ? OR username = ?) AND status = 'ACTIVE' LIMIT 1");
+    $stmt->execute([$identifier, $identifier]);
     $user = $stmt->fetch();
 
     if ($user && (password_verify($password, $user['password']) || $password === $user['password'])) {
@@ -30,9 +31,15 @@ try {
         } else {
             $user['tenantCategories'] = [];
         }
+        $token = issueAuthToken($user['id'], $user['role'] ?? 'USER', $user['email'] ?? '');
+        if ($token === null) {
+            error_log("auth.php: api/auth_config.php belum dikonfigurasi (secret kosong).");
+            sendResponse(["status" => "error", "message" => "Server autentikasi belum dikonfigurasi."], 500);
+        }
+        $user['token'] = $token;
         sendResponse($user);
     } else {
-        sendResponse(["status" => "error", "message" => "Email atau password salah."], 401);
+        sendResponse(["status" => "error", "message" => "Email/Username atau password salah."], 401);
     }
 } catch (PDOException $e) {
     sendResponse(["status" => "error", "message" => "Server Database Error."], 500);

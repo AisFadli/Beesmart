@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
 
 $startDate = $_GET['startDate'] ?? date('Y-m-d', strtotime('-30 days'));
 $endDate = $_GET['endDate'] ?? date('Y-m-d');

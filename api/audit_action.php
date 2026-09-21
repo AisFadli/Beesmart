@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+requireAuth(['ADMIN', 'STAFF']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(["status" => "error", "message" => "Method not allowed"], 405);

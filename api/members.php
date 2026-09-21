@@ -7,6 +7,20 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
     $data = json_decode(file_get_contents("php://input"), true);
+
+    // Otorisasi & anti-tamper: member hanya boleh mengubah profil dirinya sendiri,
+    // dan tidak dapat mengubah saldo/status/barcode.
+    $auth = currentAuth();
+    $authRole = strtoupper($auth['role'] ?? '');
+    $isStaff = in_array($authRole, ['ADMIN', 'STAFF'], true);
+    if (!$isStaff) {
+        if (($data['id'] ?? '') !== $auth['uid']) {
+            sendResponse(["status" => "error", "message" => "Anda hanya dapat mengubah profil Anda sendiri."], 403);
+        }
+        unset($data['depositBalance'], $data['status'], $data['registrationDate'], $data['barcode']);
+        $data['id'] = $auth['uid'];
+    }
+
     try {
         $before = null;
         if (isset($data['id'])) {
@@ -38,7 +52,10 @@ if ($method === 'POST') {
 
         // Handle password hashing if provided and changed
         $password = $data['password'] ?? ($before ? $before['password'] : null);
-        if (isset($data['password']) && (!isset($before['password']) || $data['password'] !== $before['password'])) {
+        // Proteksi double-hash: jika password yang dikirim sudah berupa hash bcrypt,
+        // simpan apa adanya; hanya hash untuk plaintext baru.
+        $isBcrypt = is_string($password) && preg_match('/^\$(2y|2a|2b|2x)\$\d{2}\$/', $password) === 1;
+        if (isset($data['password']) && !$isBcrypt && (!isset($before['password']) || $data['password'] !== $before['password'])) {
             $password = password_hash($data['password'], PASSWORD_BCRYPT);
         }
 

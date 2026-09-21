@@ -1,4 +1,11 @@
 <?php
+// Blokir akses langsung via HTTP (file ini hanya boleh di-include)
+if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit('Forbidden');
+}
+
 /**
  * Helper untuk pengiriman email via SMTP (PHPMailer)
  *
