@@ -19,9 +19,8 @@ if (empty($email) || empty($password)) {
 }
 
 try {
-    $identifier = trim($email);
-    $stmt = $pdo->prepare("SELECT id, email, username, name, role, tenantCategories, password FROM users WHERE (email = ? OR username = ?) AND status = 'ACTIVE' LIMIT 1");
-    $stmt->execute([$identifier, $identifier]);
+    $stmt = $pdo->prepare("SELECT id, email, name, role, tenantCategories, password FROM users WHERE email = ? AND status = 'ACTIVE' LIMIT 1");
+    $stmt->execute([$email]);
     $user = $stmt->fetch();
 
     if ($user && (password_verify($password, $user['password']) || $password === $user['password'])) {
@@ -39,7 +38,7 @@ try {
         $user['token'] = $token;
         sendResponse($user);
     } else {
-        sendResponse(["status" => "error", "message" => "Email/Username atau password salah."], 401);
+        sendResponse(["status" => "error", "message" => "Email atau password salah."], 401);
     }
 } catch (PDOException $e) {
     sendResponse(["status" => "error", "message" => "Server Database Error."], 500);
