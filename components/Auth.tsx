@@ -5,6 +5,7 @@ import { Icons } from '../constants';
 import apiService from '../services/apiService';
 import { TermsPrivacyModal } from './TermsPrivacyModal';
 import { RegistrationConfirmModal } from './RegistrationConfirmModal';
+import { getStoredTheme, toggleTheme } from '../theme';
 
 interface AuthProps {
   onLogin: (user: User) => void;
@@ -38,6 +39,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [themeDark, setThemeDark] = useState(getStoredTheme() === 'dark');
+
+  const handleToggleTheme = () => {
+    setThemeDark(toggleTheme() === 'dark');
+  };
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -166,11 +172,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 dark:bg-[#0d1424] px-4 relative">
+      {/* Toggle Theme (dark mode) */}
+      <button
+        type="button"
+        onClick={handleToggleTheme}
+        title={themeDark ? 'Mode Terang' : 'Mode Gelap'}
+        className="absolute top-5 right-5 w-11 h-11 rounded-2xl flex items-center justify-center text-lg shadow-lg transition-all active:scale-90 bg-white/10 text-white hover:bg-white/20 border border-white/15"
+      >
+        <i className={`fas ${themeDark ? 'fa-sun' : 'fa-moon'}`}></i>
+      </button>
       <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
         <div className="p-10">
           <div className="text-center mb-10">
-             <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl p-2 mb-4 shadow-xl shadow-slate-200 border border-slate-100 transform -rotate-6">
+             <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl p-2.5 mb-4 shadow-xl shadow-slate-200 border border-slate-100 transform -rotate-6">
                 <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-full h-full object-contain" />
              </div>
              <h2 className="text-2xl font-black text-slate-900">BeeSmart ERP</h2>

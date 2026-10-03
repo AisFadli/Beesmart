@@ -208,6 +208,19 @@ export class ApiService {
     });
   }
 
+  async deleteMessage(id: number | string, imageUrl?: string) {
+    return this.request('/messages.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id, imageUrl }),
+    });
+  }
+
+  async getMessages(lastId?: number) {
+    const q = lastId && lastId > 0 ? `?lastId=${lastId}` : '';
+    return this.request(`/get_messages.php${q}`);
+  }
+
   async markMessagesAsRead(senderId: string, receiverId: string) {
     return this.request('/messages.php', {
       method: 'POST',

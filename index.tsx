@@ -2,6 +2,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { initTheme } from './theme';
+
+// Terapkan tema tersimpan (light/dark) sebelum render pertama
+initTheme();
 
 // Registrasi Service Worker untuk PWA
 if ('serviceWorker' in navigator) {

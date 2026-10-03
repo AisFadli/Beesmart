@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-honey-50: #fffbeb;
   --color-honey-100: #fef3c7;
@@ -12,6 +14,40 @@
   --color-honey-800: #92400e;
   --color-honey-900: #78350f;
   --color-honey-950: #451a03;
+}
+
+/* ===== DARK MODE (Tailwind v4 CSS variable remap) ===== */
+.dark {
+  color-scheme: dark;
+
+  /* Latar halaman & teks terbalik agar tampilan jadi gelap */
+  --color-slate-50: #0d1424;
+  --color-slate-100: #121b2f;
+  --color-slate-200: #1a2438;
+  --color-slate-300: #26344c;
+  --color-slate-400: #6e7d99;
+  --color-slate-500: #8c98b3;
+  --color-slate-600: #aeb9cc;
+  --color-slate-700: #cbd3e0;
+  --color-slate-800: #e2e8f0;
+  --color-slate-900: #f1f5f9;
+  --color-slate-950: #ffffff;
+
+  /* Surface kartu (bg-white / bg-white/xx) dijadikan gelap */
+  --color-white: #111b2e;
+}
+
+/* Jagal: teks putih pada tombol/chip warna solid supaya tetap kontras di mode gelap */
+.dark .bg-honey-500, .dark .bg-honey-600, .dark .bg-honey-700,
+.dark .bg-amber-500, .dark .bg-amber-600,
+.dark .bg-rose-500, .dark .bg-rose-600, .dark .bg-rose-700,
+.dark .bg-emerald-500, .dark .bg-emerald-600, .dark .bg-emerald-700,
+.dark .bg-purple-500, .dark .bg-purple-600,
+.dark .bg-red-500, .dark .bg-red-600,
+.dark .bg-blue-500, .dark .bg-blue-600,
+.dark .bg-pink-500, .dark .bg-pink-600,
+.dark .bg-teal-500, .dark .bg-teal-600 {
+  color: #ffffff !important;
 }
 
 /* Base styles */

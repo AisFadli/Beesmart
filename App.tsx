@@ -24,7 +24,7 @@ import { DashboardSkeleton, Skeleton } from './components/LoadingSkeleton';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
-    currentUser: null, products: [], categories: [], members: [], transactions: [], memberLogs: [], stockAdjustments: [], orders: [], expenses: [], productProposals: [], messages: [], settings: DEFAULT_SETTINGS, isLoading: true
+    currentUser: null, products: [], categories: [], members: [], transactions: [], memberLogs: [], stockAdjustments: [], orders: [], expenses: [], productProposals: [], messages: [], users: [], chat_contacts: [], settings: DEFAULT_SETTINGS, isLoading: true
   });
   const [activeTab, setActiveTab] = useState('dashboard');
   const [auditProductId, setAuditProductId] = useState('');
@@ -263,6 +263,7 @@ const App: React.FC = () => {
           productProposals: data.product_proposals || [],
           messages: data.messages || [],
           users: data.users || [],
+          chat_contacts: data.chat_contacts || [],
           settings: { ...DEFAULT_SETTINGS, ...(data.settings || {}) },
           // @ts-ignore
           shipping_rates: data.shipping_rates || []

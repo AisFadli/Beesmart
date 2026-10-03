@@ -372,6 +372,7 @@ try {
         receiverRole VARCHAR(20) NOT NULL,
         receiverName VARCHAR(100) NOT NULL,
         message TEXT NOT NULL,
+        imageUrl VARCHAR(500) DEFAULT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         isRead INT DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -411,6 +412,9 @@ try {
             'status' => "VARCHAR(20) DEFAULT 'APPROVED'",
             'notes' => "TEXT AFTER staffId",
             'proof_image' => "LONGTEXT AFTER notes"
+        ],
+        'messages' => [
+            'imageUrl' => "VARCHAR(500) DEFAULT NULL"
         ]
     ];
 

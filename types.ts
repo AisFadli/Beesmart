@@ -202,8 +202,15 @@ export interface AppMessage {
   receiverRole: string;
   receiverName: string;
   message: string;
+  imageUrl?: string;
   timestamp: string;
   isRead: number;
+}
+
+export interface ChatContact {
+  id: string;
+  name: string;
+  role: string;
 }
 
 export interface AppState {
@@ -219,6 +226,7 @@ export interface AppState {
   productProposals: ProductProposal[];
   messages: AppMessage[];
   users?: User[];
+  chat_contacts?: Array<{ id: string; name: string; role: string }>;
   settings: StoreSettings;
   isLoading: boolean;
 }

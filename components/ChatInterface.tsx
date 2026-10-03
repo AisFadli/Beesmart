@@ -16,6 +16,48 @@ const matchIds = (id1?: string | number, id2?: string | number) => {
   return clean1 === clean2;
 };
 
+// Resolve relative upload path (uploads/xxx) ke URL absolut sesuai lokasi PWA (/app)
+const resolveMediaUrl = (url?: string | null) => {
+  if (!url) return '';
+  if (/^(https?:|data:|blob:)/i.test(url)) return url;
+  const prefix = window.location.pathname.startsWith('/app') ? '/app/' : '/';
+  return prefix + url.replace(/^\/+/, '');
+};
+
+// Kompres foto di sisi client agar ukurannya kecil saat dikirim
+const compressImage = (file: File, maxDim = 1280, quality = 0.8): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Gagal membaca file foto.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Format gambar tidak didukung.'));
+      img.onload = () => {
+        let { width, height } = img;
+        const scale = Math.min(1, maxDim / Math.max(width, height));
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Gagal memproses foto.'));
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          blob => {
+            if (!blob) return reject(new Error('Gagal mengompresi foto.'));
+            resolve(new File([blob], 'chat_photo.jpg', { type: blob.type || 'image/jpeg' }));
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 // Helper to normalize any user / member ID for consistent Map indexing
 const normalizeId = (id?: string | number): string => {
   if (id === undefined || id === null) return '';
@@ -128,6 +170,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
   const [searchMemberQuery, setSearchMemberQuery] = useState('');
   const [searchUserQuery, setSearchUserQuery] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [internalSection, setInternalSection] = useState<'ROOMS' | 'REKAN'>('ROOMS');
+  const [mobileView, setMobileView] = useState<'LIST' | 'CHAT'>('LIST');
+
+  // Polling pesan baru + notifikasi suara + foto
+  const [polledMsgs, setPolledMsgs] = useState<AppMessage[]>([]);
+  const [notificationSoundOn, setNotificationSoundOn] = useState<boolean>(() => {
+    try { return localStorage.getItem('beesmart_chat_sound') === '1'; } catch (e) { return false; }
+  });
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [photoBlob, setPhotoBlob] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastIdRef = useRef(0);
+  const notifiedMsgIdsRef = useRef<Set<number>>(new Set());
+  const soundOnRef = useRef(notificationSoundOn);
+  soundOnRef.current = notificationSoundOn;
+  const stateMessagesRef = useRef<AppMessage[]>([]);
+  stateMessagesRef.current = Array.isArray(state.messages) ? state.messages : [];
+  const audioCtxRef = useRef<any>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -136,23 +198,111 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     if (preSelectedMemberId && !isVisitor) {
       setSelectedMemberId(preSelectedMemberId);
       setActiveMainTab('MEMBERS');
+      setMobileView('CHAT');
     }
   }, [preSelectedMemberId, isVisitor]);
+
+  // On mobile: always return to list view when switching main tab
+  useEffect(() => {
+    setMobileView('LIST');
+  }, [activeMainTab]);
 
   // Scroll to bottom on conversation change
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [state.messages, selectedMemberId, selectedInternal, activeMainTab, selectedMemberChatTarget]);
 
+  // Sumber pesan gabungan: snapshot penuh (state.messages) + hasil polling (polledMsgs) + suara
+  const allMessages = useMemo(() => {
+    const map = new Map<number, AppMessage>();
+    const safe = stateMessagesRef.current;
+    for (const m of safe) if (m && m.id != null) map.set(Number(m.id), m);
+    for (const m of polledMsgs) if (m && m.id != null && !map.has(Number(m.id))) map.set(Number(m.id), m);
+    return Array.from(map.values()).sort((a, b) => Number(a.id) - Number(b.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.messages, polledMsgs]);
+
+  useEffect(() => {
+    let max = 0;
+    for (const m of stateMessagesRef.current) {
+      if (m && m.id != null && Number(m.id) > max) max = Number(m.id);
+    }
+    lastIdRef.current = max;
+  }, [state.messages]);
+
+  const playIncomingTone = () => {
+    if (!soundOnRef.current) return;
+    try {
+      if (navigator.vibrate) navigator.vibrate(120);
+      const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(1318.5, now + 0.18);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.22, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.44);
+    } catch (e) { /* nada gagal dimainkan, biarkan senyap */ }
+  };
+
+  // Polling pesan baru setiap 6 detik
+  useEffect(() => {
+    if (!currentUser) return;
+    if (!apiService.getToken()) return;
+    let stopped = false;
+
+    const runPoll = async () => {
+      if (stopped || document.hidden) return;
+      try {
+        const res = await apiService.getMessages(lastIdRef.current);
+        if (stopped) return;
+        const fresh: AppMessage[] = Array.isArray(res?.messages) ? res.messages : [];
+        if (fresh.length > 0) {
+          setPolledMsgs(prev => {
+            const map = new Map<number, AppMessage>();
+            for (const m of prev) if (m && m.id != null) map.set(Number(m.id), m);
+            for (const m of fresh) if (m && m.id != null) map.set(Number(m.id), m);
+            return Array.from(map.values());
+          });
+          const baseIds = new Set<number>();
+          for (const m of stateMessagesRef.current) if (m && m.id != null) baseIds.add(Number(m.id));
+          for (const m of fresh) {
+            if (!m || m.id == null) continue;
+            const incomingToMe = matchIds(m.receiverId, currentUser.id) && !matchIds(m.senderId, currentUser.id) && Number(m.isRead) === 0;
+            if (incomingToMe && !baseIds.has(Number(m.id)) && !notifiedMsgIdsRef.current.has(Number(m.id))) {
+              notifiedMsgIdsRef.current.add(Number(m.id));
+              playIncomingTone();
+            }
+          }
+        }
+        if (res && res.lastId) lastIdRef.current = Math.max(lastIdRef.current, Number(res.lastId));
+      } catch (e) { /* polling gagal: biarkan, coba lagi berikutnya */ }
+    };
+
+    const iv = setInterval(runPoll, 6000);
+    return () => { stopped = true; clearInterval(iv); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
   // Mark messages as read based on active conversation
   useEffect(() => {
     if (!currentUser) return;
 
     const handleMarkAsRead = async () => {
-      try {
+try {
         if (isMember) {
           if (selectedMemberChatTarget === 'ADMIN') {
-            const unread = (state.messages || []).filter(
+            const unread = allMessages.filter(
               m => m && matchIds(m.receiverId, currentUser.id) && (m.senderRole === 'ADMIN' || m.senderRole === 'STAFF') && m.isRead === 0
             );
             if (unread.length > 0) {
@@ -160,7 +310,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               onRefreshData();
             }
           } else {
-            const unread = (state.messages || []).filter(
+            const unread = allMessages.filter(
               m => m && matchIds(m.receiverId, currentUser.id) && matchIds(m.senderId, selectedMemberChatTarget) && m.isRead === 0
             );
             if (unread.length > 0) {
@@ -171,7 +321,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
         } else {
           if (activeMainTab === 'MEMBERS' && selectedMemberId && !isVisitor) {
             const targetReceiver = isTenant ? currentUser.id : 'ADMIN';
-            const unread = (state.messages || []).filter(
+            const unread = allMessages.filter(
               m => m && matchIds(m.senderId, selectedMemberId) && 
                    (isTenant ? matchIds(m.receiverId, currentUser.id) : (m.receiverId === 'ADMIN' || matchIds(m.receiverId, currentUser.id))) && 
                    m.isRead === 0
@@ -183,7 +333,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
           } else if (activeMainTab === 'INTERNAL') {
             if (selectedInternal.type === 'ROOM') {
               const roomId = selectedInternal.roomId;
-              const unread = (state.messages || []).filter(
+              const unread = allMessages.filter(
                 m => m && m.receiverId === roomId && !matchIds(m.senderId, currentUser.id) && m.isRead === 0
               );
               if (unread.length > 0) {
@@ -191,7 +341,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                 onRefreshData();
               }
             } else if (selectedInternal.type === 'USER') {
-              const unread = (state.messages || []).filter(
+              const unread = allMessages.filter(
                 m => m && matchIds(m.senderId, selectedInternal.userId) && matchIds(m.receiverId, currentUser.id) && m.isRead === 0
               );
               if (unread.length > 0) {
@@ -202,18 +352,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
           }
         }
       } catch (e) {
+
         // silent fail for mark as read
       }
     };
 
     handleMarkAsRead();
-  }, [state.messages, selectedMemberId, selectedInternal, activeMainTab, isMember, isVisitor, selectedMemberChatTarget, currentUser]);
+  }, [allMessages, selectedMemberId, selectedInternal, activeMainTab, isMember, isVisitor, selectedMemberChatTarget, currentUser]);
 
   // Messages in the active conversation
   const activeConversationMessages = useMemo(() => {
     if (!currentUser) return [];
 
-    const safeMessages = Array.isArray(state.messages) ? state.messages : [];
+    const safeMessages = allMessages;
 
     if (isMember) {
       if (selectedMemberChatTarget === 'ADMIN') {
@@ -267,7 +418,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     }
 
     return [];
-  }, [state.messages, selectedMemberId, selectedInternal, activeMainTab, isMember, isTenant, isVisitor, selectedMemberChatTarget, currentUser]);
+  }, [allMessages, selectedMemberId, selectedInternal, activeMainTab, isMember, isTenant, isVisitor, selectedMemberChatTarget, currentUser]);
 
   // List of Members for 'MEMBERS' tab
   const membersListInBox = useMemo(() => {
@@ -276,7 +427,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     const lastMsgMap = new Map<string, AppMessage>();
     const unreadCountMap = new Map<string, number>();
 
-    const safeMessages = Array.isArray(state.messages) ? state.messages : [];
+    const safeMessages = allMessages;
 
     for (const msg of safeMessages) {
       if (!msg) continue;
@@ -339,7 +490,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
         };
       })
       .filter(item => {
-        if (isTenant && !q && !item.hasHistory) {
+        // Daftar hanya menampilkan percakapan yang punya riwayat pesan;
+        // pencarian menampilkan semua member untuk memulai chat baru.
+        if (!q && !item.hasHistory) {
           return false;
         }
         if (!q) return true;
@@ -357,7 +510,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
         const bTime = safeGetTime(b.lastMessage?.timestamp);
         return bTime - aTime;
       });
-  }, [state.members, state.messages, searchMemberQuery, isMember, isTenant, isVisitor, currentUser]);
+  }, [allMessages, state.members, searchMemberQuery, isMember, isTenant, isVisitor, currentUser]);
 
   // List of Internal Users for Chat Personal
   const internalUsersList = useMemo(() => {
@@ -366,7 +519,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     const lastMsgMap = new Map<string, AppMessage>();
     const unreadCountMap = new Map<string, number>();
 
-    const safeMessages = Array.isArray(state.messages) ? state.messages : [];
+    const safeMessages = allMessages;
 
     for (const msg of safeMessages) {
       if (!msg) continue;
@@ -414,8 +567,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
       .map(u => ({
         user: u,
         lastMessage: getFromMsgMap(lastMsgMap, u.id),
-        unreadCount: getFromCountMap(unreadCountMap, u.id)
+        unreadCount: getFromCountMap(unreadCountMap, u.id),
+        hasHistory: !!getFromMsgMap(lastMsgMap, u.id)
       }))
+      .filter(item => {
+        // Hanya tampilkan rekan yang punya riwayat chat; pencarian menampilkan semua untuk memulai chat baru
+        if (!q && !item.hasHistory) return false;
+        return true;
+      })
       .sort((a, b) => {
         if (a.unreadCount !== b.unreadCount) return b.unreadCount - a.unreadCount;
         const aTime = safeGetTime(a.lastMessage?.timestamp);
@@ -423,45 +582,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
         if (aTime || bTime) return bTime - aTime;
         return (a.user.name || '').localeCompare(b.user.name || '');
       });
-  }, [internalUsers, state.messages, searchUserQuery, currentUser, isMember, isVisitor]);
+  }, [internalUsers, allMessages, searchUserQuery, currentUser, isMember, isVisitor]);
 
   // Unread badge calculations
   const unreadCountTenantRoom = useMemo(() => {
     if (isVisitor) return 0;
-    return (state.messages || []).filter(
+    return allMessages.filter(
       m => m && m.receiverId === 'TENANT_ROOM' && !matchIds(m.senderId, currentUser?.id) && m.isRead === 0
     ).length;
-  }, [state.messages, currentUser, isVisitor]);
+  }, [allMessages, currentUser, isVisitor]);
 
   const unreadCountStaffRoom = useMemo(() => {
     if (isTenant) return 0;
-    return (state.messages || []).filter(
+    return allMessages.filter(
       m => m && m.receiverId === 'INTERNAL' && !matchIds(m.senderId, currentUser?.id) && m.isRead === 0
     ).length;
-  }, [state.messages, currentUser, isTenant]);
+  }, [allMessages, currentUser, isTenant]);
 
   const unreadCountPersonalTotal = useMemo(() => {
-    return (state.messages || []).filter(
+    return allMessages.filter(
       m => m && matchIds(m.receiverId, currentUser?.id) && 
            m.senderRole !== 'MEMBER' && 
            m.receiverId !== 'INTERNAL' && 
            m.receiverId !== 'TENANT_ROOM' && 
            m.isRead === 0
     ).length;
-  }, [state.messages, currentUser]);
+  }, [allMessages, currentUser]);
 
   const unreadCountMembersTab = useMemo(() => {
     if (isMember || isVisitor) return 0;
     if (isTenant) {
-      return (state.messages || []).filter(
+      return allMessages.filter(
         m => m && m.senderRole === 'MEMBER' && matchIds(m.receiverId, currentUser?.id) && m.isRead === 0
       ).length;
     } else {
-      return (state.messages || []).filter(
+      return allMessages.filter(
         m => m && m.senderRole === 'MEMBER' && (m.receiverId === 'ADMIN' || matchIds(m.receiverId, currentUser?.id)) && m.isRead === 0
       ).length;
     }
-  }, [state.messages, isMember, isTenant, isVisitor, currentUser]);
+  }, [allMessages, isMember, isTenant, isVisitor, currentUser]);
 
   const unreadCountInternalTab = (isVisitor ? 0 : unreadCountTenantRoom) + unreadCountStaffRoom + unreadCountPersonalTotal;
 
@@ -470,7 +629,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     if (!isMember) return [];
     const tenantMap = new Map<string, { id: string; name: string; lastMsg?: AppMessage; unread: number }>();
 
-    const safeMessages = Array.isArray(state.messages) ? state.messages : [];
+    const safeMessages = allMessages;
 
     for (const msg of safeMessages) {
       if (!msg) continue;
@@ -500,15 +659,50 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     }
 
     return Array.from(tenantMap.values());
-  }, [state.messages, currentUser, isMember]);
+  }, [allMessages, currentUser, isMember]);
+
+  // Hasil pencarian kontak untuk member (Staf, Admin, Tenant) - untuk memulai chat baru
+  const memberSearchResults = useMemo(() => {
+    if (!isMember) return [];
+    const q = (searchMemberQuery || '').trim().toLowerCase();
+    if (!q) return [];
+    const contacts = Array.isArray(state.chat_contacts) ? state.chat_contacts : [];
+    return contacts
+      .filter(c => c && c.name && !matchIds(c.id, currentUser?.id))
+      .filter(c => {
+        const n = (c.name || '').toLowerCase();
+        const r = (c.role || '').toLowerCase();
+        if (n.includes(q) || r.includes(q)) return true;
+        const cleanId = normalizeId(c.id);
+        return cleanId.includes(q) || q.includes(cleanId);
+      })
+      .map(c => {
+        const role = (c.role || '').toString().toUpperCase();
+        return {
+          contact: c,
+          role,
+          // Pesan Member ke Staf/Admin menyatu ke saluran ADMIN; tenant = chat langsung
+          target: role === 'TENANT' ? c.id : 'ADMIN'
+        };
+      });
+  }, [isMember, searchMemberQuery, state.chat_contacts, currentUser]);
 
   // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageInput.trim() || !currentUser || isSending) return;
+    const hasPhoto = !!photoBlob;
+    if ((!messageInput.trim() && !hasPhoto) || !currentUser || isSending) return;
 
     setIsSending(true);
     try {
+      // Unggah foto (sudah dikompresi di sisi client) jika ada
+      let photoUrl: string | undefined;
+      if (hasPhoto && photoBlob) {
+        const up = await apiService.uploadFile(photoBlob);
+        photoUrl = up?.url;
+        if (!photoUrl) throw new Error('Gagal mengunggah foto.');
+      }
+      const finalMessage = messageInput.trim();
       if (isMember) {
         const cleanId = currentUser.id.replace('USER-', '');
         if (selectedMemberChatTarget === 'ADMIN') {
@@ -519,7 +713,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             receiverId: 'ADMIN',
             receiverRole: 'ADMIN',
             receiverName: 'Admin Koperasi',
-            message: messageInput.trim()
+            message: finalMessage,
+            imageUrl: photoUrl
           });
         } else {
           const tenantInfo = memberContactTenants.find(t => matchIds(t.id, selectedMemberChatTarget));
@@ -530,7 +725,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             receiverId: selectedMemberChatTarget,
             receiverRole: 'TENANT',
             receiverName: tenantInfo?.name || 'Tenant',
-            message: messageInput.trim()
+            message: finalMessage,
+            imageUrl: photoUrl
           });
         }
       } else {
@@ -556,7 +752,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               receiverId: selectedMemberId,
               receiverRole: 'MEMBER',
               receiverName: targetMember?.name || 'Member',
-              message: messageInput.trim()
+              message: finalMessage,
+            imageUrl: photoUrl
             });
           } else {
             // Admin / Staff sends to Member
@@ -567,7 +764,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               receiverId: selectedMemberId,
               receiverRole: 'MEMBER',
               receiverName: targetMember?.name || 'Member',
-              message: messageInput.trim()
+              message: finalMessage,
+            imageUrl: photoUrl
             });
           }
         } else {
@@ -587,7 +785,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                 receiverId: 'TENANT_ROOM',
                 receiverRole: 'TENANT_GROUP',
                 receiverName: 'Room Koordinasi Tenant',
-                message: messageInput.trim()
+                message: finalMessage,
+            imageUrl: photoUrl
               });
             } else {
               // Room Koordinasi Staff
@@ -598,7 +797,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                 receiverId: 'INTERNAL',
                 receiverRole: 'STAFF',
                 receiverName: 'Komunitas Internal Staff',
-                message: messageInput.trim()
+                message: finalMessage,
+            imageUrl: photoUrl
               });
             }
           } else {
@@ -624,12 +824,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               receiverId: targetUser.id,
               receiverRole: targetUser.role,
               receiverName: targetUser.name,
-              message: messageInput.trim()
+              message: finalMessage,
+            imageUrl: photoUrl
             });
           }
         }
       }
       setMessageInput('');
+      const oldPreview = photoPreviewUrl;
+      setPhotoBlob(null);
+      setPhotoPreviewUrl(null);
+      if (oldPreview) { try { URL.revokeObjectURL(oldPreview); } catch (err) { /* noop */ } }
       await onRefreshData();
     } catch (err: any) {
       alert("Gagal mengirim pesan: " + err.message);
@@ -647,6 +852,57 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
     } catch (e) {
       return timeStr || '';
     }
+  };
+
+  // Pilih foto: validasi ukuran (maks 10MB) lalu kompresi di sisi client
+  const handlePickPhoto = async (file: File | undefined | null) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran foto maksimal 10 MB.');
+      return;
+    }
+    try {
+      const compressed = await compressImage(file);
+      const preview = URL.createObjectURL(compressed);
+      const oldUrl = photoPreviewUrl;
+      setPhotoBlob(compressed);
+      setPhotoPreviewUrl(preview);
+      if (oldUrl) { try { URL.revokeObjectURL(oldUrl); } catch (err) { /* noop */ } }
+    } catch (err: any) {
+      alert(err.message || 'Gagal memproses foto.');
+    }
+  };
+
+  const removePhoto = () => {
+    if (photoPreviewUrl) { try { URL.revokeObjectURL(photoPreviewUrl); } catch (err) { /* noop */ } }
+    setPhotoBlob(null);
+    setPhotoPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Hapus pesan foto (seluruh pesan) - hanya pengirim atau ADMIN
+  const handleDeletePhotoMessage = async (msg: AppMessage) => {
+    if (!currentUser) return;
+    const isAdmin = String(currentUser.role || '').toUpperCase() === 'ADMIN';
+    const isSender = matchIds(msg.senderId, currentUser.id);
+    if (!isAdmin && !isSender) {
+      alert('Anda tidak berhak menghapus pesan ini.');
+      return;
+    }
+    if (!window.confirm('Hapus pesan foto ini?')) return;
+    try {
+      await apiService.deleteMessage(msg.id, msg.imageUrl);
+      await onRefreshData();
+    } catch (err: any) {
+      alert('Gagal menghapus pesan: ' + err.message);
+    }
+  };
+
+  const toggleNotificationSound = () => {
+    const next = !notificationSoundOn;
+    setNotificationSoundOn(next);
+    soundOnRef.current = next;
+    try { localStorage.setItem('beesmart_chat_sound', next ? '1' : '0'); } catch (e) { /* noop */ }
   };
 
   const selectedMemberObj = useMemo(() => {
@@ -677,11 +933,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm h-[700px] flex flex-col md:flex-row">
+    <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm h-[calc(100dvh-11rem)] md:h-[700px] flex flex-col md:flex-row">
       
       {/* LEFT SIDEBAR (MEMBER LIST, INTERNAL ROOMS & PERSONAL CHAT) */}
       {!isMember ? (
-        <div className="w-full md:w-84 border-b md:border-r border-slate-200 flex flex-col h-[320px] md:h-full bg-slate-50/50">
+        <div className={`w-full md:w-84 border-b md:border-r border-slate-200 flex-col h-full bg-slate-50/50 ${mobileView === 'CHAT' ? 'hidden md:flex' : 'flex'}`}>
           
           {/* TOP CONTROLS & SUB-TABS */}
           <div className="p-4 border-b border-slate-200 space-y-3 bg-white">
@@ -787,7 +1043,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                 {membersListInBox.map(({ member, lastMessage, unreadCount }) => (
                   <div 
                     key={member.id}
-                    onClick={() => setSelectedMemberId(member.id)}
+                    onClick={() => { setSelectedMemberId(member.id); setMobileView('CHAT'); }}
                     className={`p-3.5 flex items-center gap-3 cursor-pointer hover:bg-white transition-all border-l-4 ${selectedMemberId === member.id ? 'bg-white border-l-honey-600 shadow-sm' : 'border-l-transparent'}`}
                   >
                     <div className="w-10 h-10 rounded-xl bg-honey-50 border border-honey-100 text-honey-600 font-black flex items-center justify-center text-xs shrink-0 relative shadow-inner">
@@ -823,7 +1079,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                         <p className="text-[10px] text-slate-400 mt-1">Ketik nama atau nomor WhatsApp member pada kolom pencarian di atas untuk memulai chat baru.</p>
                       </div>
                     ) : (
-                      <p className="font-black uppercase text-[10px]">Tidak ada member ditemukan</p>
+                      <div>
+                        <p className="font-black uppercase text-[10px] text-slate-600">Belum Ada Percakapan dengan Member</p>
+                        <p className="text-[10px] text-slate-400 mt-1">Gunakan kolom pencarian di atas untuk mencari member dan memulai diskusi baru.</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -833,8 +1092,37 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             {/* VIEW B: KOORDINASI INTERNAL */}
             {activeMainTab === 'INTERNAL' && (
               <div className="space-y-3 p-2">
-                
-                {/* 1. SEKSI ROOM KOORDINASI GRUP */}
+
+                {/* SEGMENTED SWITCH: ROOM GRUP vs CHAT REKAN */}
+                <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setInternalSection('ROOMS')}
+                    className={`py-2 px-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${internalSection === 'ROOMS' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    <span>Room Grup</span>
+                    {unreadCountTenantRoom + unreadCountStaffRoom > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[8px] font-black flex items-center justify-center">
+                        {unreadCountTenantRoom + unreadCountStaffRoom}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInternalSection('REKAN')}
+                    className={`py-2 px-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${internalSection === 'REKAN' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    <span>Chat Rekan</span>
+                    {unreadCountPersonalTotal > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[8px] font-black flex items-center justify-center">
+                        {unreadCountPersonalTotal}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {internalSection === 'ROOMS' ? (
+                /* 1. SEKSI ROOM KOORDINASI GRUP */
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2.5 py-1">
                     Room Koordinasi Grup
@@ -844,7 +1132,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     {/* ROOM KOORDINASI TENANT (UNTUK TENANT, STAFF, ADMIN - TIDAK UNTUK VISITOR) */}
                     {!isVisitor && (
                       <div 
-                        onClick={() => setSelectedInternal({ type: 'ROOM', roomId: 'TENANT_ROOM' })}
+                        onClick={() => { setSelectedInternal({ type: 'ROOM', roomId: 'TENANT_ROOM' }); setMobileView('CHAT'); }}
                         className={`p-3 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
                           selectedInternal.type === 'ROOM' && selectedInternal.roomId === 'TENANT_ROOM' 
                             ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/20' 
@@ -879,7 +1167,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                     {/* ROOM KOORDINASI STAFF (ADMIN, STAFF, DAN VISITOR) */}
                     {(isAdminOrStaff || isVisitor) && (
                       <div 
-                        onClick={() => setSelectedInternal({ type: 'ROOM', roomId: 'INTERNAL' })}
+                        onClick={() => { setSelectedInternal({ type: 'ROOM', roomId: 'INTERNAL' }); setMobileView('CHAT'); }}
                         className={`p-3 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
                           selectedInternal.type === 'ROOM' && selectedInternal.roomId === 'INTERNAL' 
                             ? 'bg-emerald-600 text-white border-emerald-700 shadow-md shadow-emerald-600/20' 
@@ -913,9 +1201,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
 
                   </div>
                 </div>
-
-                {/* 2. SEKSI CHAT PERSONAL REKAN INTERNAL */}
-                <div className="pt-2">
+                ) : (
+                /* 2. SEKSI CHAT PERSONAL REKAN INTERNAL */
+                <div className="pt-1">
                   <div className="flex items-center justify-between px-2.5 py-1">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                       {isVisitor ? 'Chat Personal (Admin & Staff)' : 'Chat Personal Rekan'}
@@ -931,7 +1219,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                       return (
                         <div 
                           key={user.id}
-                          onClick={() => setSelectedInternal({ type: 'USER', userId: user.id })}
+                          onClick={() => { setSelectedInternal({ type: 'USER', userId: user.id }); setMobileView('CHAT'); }}
                           className={`p-2.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
                             isSelected 
                               ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
@@ -980,11 +1268,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
 
                     {internalUsersList.length === 0 && (
                       <div className="p-4 text-center text-slate-400 text-[10px] font-bold">
-                        {isVisitor ? 'Belum ada kontak Admin atau Staff.' : 'Tidak ada user internal ditemukan.'}
+                        {isVisitor ? 'Belum ada kontak Admin atau Staff. Gunakan pencarian di atas untuk mencari.' : 'Belum ada chat personal. Gunakan pencarian di atas untuk memulai chat dengan rekan.'}
                       </div>
                     )}
                   </div>
                 </div>
+                )}
 
               </div>
             )}
@@ -993,7 +1282,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
         </div>
       ) : (
         /* LEFT SIDEBAR FOR MEMBER */
-        <div className="w-full md:w-80 border-b md:border-r border-slate-200 flex flex-col h-[260px] md:h-full bg-slate-50/50">
+        <div className={`w-full md:w-80 border-b md:border-r border-slate-200 flex-col h-full bg-slate-50/50 ${mobileView === 'CHAT' ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b border-slate-200 bg-white">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
               <i className="fas fa-comments text-honey-600 text-sm"></i> Layanan Bantuan & Chat
@@ -1001,75 +1290,157 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             <p className="text-[10px] text-slate-400 font-bold mt-1">Pilih saluran percakapan Anda:</p>
           </div>
 
-          <div className="p-3 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
-            {/* Default Channel: Layanan Pengurus Koperasi */}
-            <div 
-              onClick={() => setSelectedMemberChatTarget('ADMIN')}
-              className={`p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
-                selectedMemberChatTarget === 'ADMIN' 
-                  ? 'bg-honey-600 text-white border-honey-700 shadow-md shadow-honey-600/20' 
-                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
-              }`}
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
-                selectedMemberChatTarget === 'ADMIN' ? 'bg-white text-honey-600' : 'bg-honey-50 text-honey-600'
-              }`}>
-                <i className="fas fa-university"></i>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-black text-xs uppercase truncate">Layanan Koperasi AIS</p>
-                <p className={`text-[9px] font-bold truncate mt-0.5 ${selectedMemberChatTarget === 'ADMIN' ? 'text-honey-100' : 'text-slate-400'}`}>
-                  Admin & Staf Koperasi
-                </p>
-              </div>
-            </div>
+          <div className="p-3 border-b border-slate-200 relative">
+            <span className="absolute inset-y-0 left-0 pl-5 flex items-center text-slate-400 pointer-events-none">
+              <i className="fas fa-search text-xs"></i>
+            </span>
+            <input
+              type="text"
+              placeholder="Cari staf, admin, tenant..."
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs font-bold border border-slate-200 rounded-xl outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 transition-all shadow-inner"
+              value={searchMemberQuery}
+              onChange={e => setSearchMemberQuery(e.target.value)}
+            />
+          </div>
 
-            {/* Tenant Channels (If tenants contacted member) */}
-            {memberContactTenants.map(t => (
-              <div 
-                key={t.id}
-                onClick={() => setSelectedMemberChatTarget(t.id)}
-                className={`p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
-                  matchIds(selectedMemberChatTarget, t.id) 
-                    ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/20' 
-                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 relative ${
-                  matchIds(selectedMemberChatTarget, t.id) ? 'bg-white text-amber-600' : 'bg-amber-50 text-amber-700'
-                }`}>
-                  <i className="fas fa-store"></i>
-                  {t.unread > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-600 text-white text-[8px] font-black flex items-center justify-center border border-white animate-pulse">
-                      {t.unread}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-black text-xs uppercase truncate">{t.name}</p>
-                    {t.lastMsg && (
-                      <span className={`text-[7px] font-extrabold uppercase shrink-0 ${matchIds(selectedMemberChatTarget, t.id) ? 'text-amber-100' : 'text-slate-400'}`}>
-                        {formatShortDate(t.lastMsg.timestamp)}
-                      </span>
-                    )}
+          <div className="p-3 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+            {(searchMemberQuery || '').trim() ? (
+              <>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center justify-between">
+                  <span>Hasil Pencarian</span>
+                  <span>{memberSearchResults.length} Kontak</span>
+                </p>
+                {memberSearchResults.map(r => {
+                  const isTenantContact = r.role === 'TENANT';
+                  const isActive = matchIds(selectedMemberChatTarget, r.target);
+                  return (
+                    <div
+                      key={r.contact.id}
+                      onClick={() => { setSelectedMemberChatTarget(r.target); setMobileView('CHAT'); }}
+                      className={`p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
+                        isActive
+                          ? (isTenantContact ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/20' : 'bg-honey-600 text-white border-honey-700 shadow-md shadow-honey-600/20')
+                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+                        isActive
+                          ? 'bg-white text-amber-600'
+                          : r.role === 'ADMIN' ? 'bg-rose-50 text-rose-600'
+                          : r.role === 'TENANT' ? 'bg-amber-50 text-amber-700'
+                          : 'bg-emerald-50 text-emerald-700'
+                      }`}>
+                        {isTenantContact ? <i className="fas fa-store"></i> : <i className="fas fa-user-tie"></i>}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="font-black text-xs uppercase truncate">{r.contact.name}</p>
+                          <span className={`text-[7px] font-black px-1.5 py-0.5 rounded uppercase ${
+                            isActive ? 'bg-white/20 text-white'
+                            : r.role === 'ADMIN' ? 'bg-rose-50 text-rose-600'
+                            : r.role === 'TENANT' ? 'bg-amber-50 text-amber-700'
+                            : 'bg-emerald-50 text-emerald-700'
+                          }`}>
+                            {r.role}
+                          </span>
+                        </div>
+                        <p className={`text-[9px] font-bold truncate mt-0.5 ${isActive ? 'text-honey-100' : 'text-slate-400'}`}>
+                          {isTenantContact ? 'Mulai chat dengan tenant...' : 'Kirim pesan ke layanan koperasi...'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+                {memberSearchResults.length === 0 && (
+                  <div className="p-4 text-center">
+                    <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-lg mb-2">
+                      <i className="fas fa-user-slash"></i>
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-slate-500">Tidak ada kontak ditemukan</p>
                   </div>
-                  <p className={`text-[9px] font-bold truncate mt-0.5 ${matchIds(selectedMemberChatTarget, t.id) ? 'text-amber-100' : 'text-slate-400'}`}>
-                    {t.lastMsg?.message || 'Tenant Toko'}
-                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Default Channel: Layanan Pengurus Koperasi */}
+                <div 
+                  onClick={() => { setSelectedMemberChatTarget('ADMIN'); setMobileView('CHAT'); }}
+                  className={`p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
+                    selectedMemberChatTarget === 'ADMIN' 
+                      ? 'bg-honey-600 text-white border-honey-700 shadow-md shadow-honey-600/20' 
+                      : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+                    selectedMemberChatTarget === 'ADMIN' ? 'bg-white text-honey-600' : 'bg-honey-50 text-honey-600'
+                  }`}>
+                    <i className="fas fa-university"></i>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-black text-xs uppercase truncate">Layanan Koperasi AIS</p>
+                    <p className={`text-[9px] font-bold truncate mt-0.5 ${selectedMemberChatTarget === 'ADMIN' ? 'text-honey-100' : 'text-slate-400'}`}>
+                      Admin & Staf Koperasi
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+
+                {/* Tenant Channels (If tenants contacted member) */}
+                {memberContactTenants.map(t => (
+                  <div 
+                    key={t.id}
+                    onClick={() => { setSelectedMemberChatTarget(t.id); setMobileView('CHAT'); }}
+                    className={`p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
+                      matchIds(selectedMemberChatTarget, t.id) 
+                        ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/20' 
+                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 relative ${
+                      matchIds(selectedMemberChatTarget, t.id) ? 'bg-white text-amber-600' : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      <i className="fas fa-store"></i>
+                      {t.unread > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-600 text-white text-[8px] font-black flex items-center justify-center border border-white animate-pulse">
+                          {t.unread}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-black text-xs uppercase truncate">{t.name}</p>
+                        {t.lastMsg && (
+                          <span className={`text-[7px] font-extrabold uppercase shrink-0 ${matchIds(selectedMemberChatTarget, t.id) ? 'text-amber-100' : 'text-slate-400'}`}>
+                            {formatShortDate(t.lastMsg.timestamp)}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-[9px] font-bold truncate mt-0.5 ${matchIds(selectedMemberChatTarget, t.id) ? 'text-amber-100' : 'text-slate-400'}`}>
+                        {t.lastMsg?.message || 'Tenant Toko'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       )}
 
       {/* RIGHT SIDE: CHAT CONVERSATION SPACE */}
-      <div className="flex-1 flex flex-col h-full bg-slate-50/40">
+      <div className={`flex-1 flex-col h-full bg-slate-50/40 ${mobileView === 'LIST' ? 'hidden md:flex' : 'flex'}`}>
         
         {/* HEADER SECTION */}
-        <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between shadow-sm shrink-0">
+        <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between gap-3 shadow-sm shrink-0">
           
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <button 
+            type="button"
+            onClick={() => setMobileView('LIST')}
+            title="Kembali ke Daftar"
+            className="md:hidden p-2.5 -ml-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all shrink-0"
+          >
+            <i className="fas fa-arrow-left"></i>
+          </button>
           {isMember ? (
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0 ${
@@ -1178,6 +1549,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             )
           )}
 
+          </div>
+
+          <button 
+            type="button"
+            onClick={toggleNotificationSound}
+            title={notificationSoundOn ? 'Nada Notifikasi: Nyala' : 'Nada Notifikasi: Mati'}
+            className={`p-2.5 rounded-xl transition-all ${notificationSoundOn ? 'text-honey-600 bg-honey-50' : 'text-slate-400 hover:text-honey-600 hover:bg-slate-100'}`}
+          >
+            <i className={`fas ${notificationSoundOn ? 'fa-volume-up' : 'fa-volume-mute'}`}></i>
+          </button>
+
           <button 
             type="button"
             onClick={() => onRefreshData()} 
@@ -1209,6 +1591,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
               {activeConversationMessages.map((msg: AppMessage) => {
                 const isMyMessage = matchIds(msg.senderId, currentUser?.id) || 
                   (!isMember && !isTenant && !isVisitor && msg.senderId === 'ADMIN');
+                const isRoomConvo = activeMainTab === 'INTERNAL' && selectedInternal.type === 'ROOM';
+                const showReadReceipt = isMyMessage && !isRoomConvo;
+                const msgImageUrl = msg.imageUrl || '';
+                const canDeletePhoto = !!msgImageUrl && (
+                  String(currentUser?.role || '').toUpperCase() === 'ADMIN' || matchIds(msg.senderId, currentUser?.id)
+                );
 
                 return (
                   <div 
@@ -1220,17 +1608,51 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
                       {renderRoleBadge(msg.senderRole)}
                     </div>
 
-                    <div className={`p-4 rounded-3xl text-xs font-bold leading-relaxed shadow-sm ${
+                    <div className={`rounded-3xl text-xs font-bold leading-relaxed shadow-sm ${
                       isMyMessage 
                         ? 'bg-slate-900 text-white rounded-tr-none' 
                         : 'bg-white text-slate-800 rounded-tl-none border border-slate-200/80 shadow-slate-100'
                     }`}>
-                      <p className="whitespace-pre-line">{msg.message}</p>
+                      {msgImageUrl ? (
+                        <div className="p-2.5">
+                          <div className="relative overflow-hidden rounded-2xl">
+                            <img
+                              src={resolveMediaUrl(msgImageUrl)}
+                              alt={msg.message || 'Foto'}
+                              onClick={() => setLightboxUrl(resolveMediaUrl(msgImageUrl))}
+                              className="w-full max-w-[240px] h-44 object-cover rounded-2xl cursor-pointer hover:opacity-90 transition-opacity border border-black/5"
+                            />
+                            {canDeletePhoto && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePhotoMessage(msg)}
+                                title="Hapus pesan foto"
+                                className="absolute top-1.5 right-1.5 w-8 h-8 rounded-xl bg-black/50 text-white hover:bg-rose-600 flex items-center justify-center text-xs transition-all backdrop-blur-sm"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            )}
+                          </div>
+                          {msg.message && <p className="whitespace-pre-line mt-2 px-1.5 pb-1">{msg.message}</p>}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-3">
+                          <p className="whitespace-pre-line">{msg.message}</p>
+                        </div>
+                      )}
                     </div>
 
-                    <span className="text-[8px] font-extrabold text-slate-400 uppercase mt-1 px-1">
-                      {formatMessageTime(msg.timestamp)}
-                    </span>
+                    <div className="flex items-center gap-1 mt-1 px-1 text-[8px] font-extrabold uppercase">
+                      <span className="text-slate-400">{formatMessageTime(msg.timestamp)}</span>
+                      {showReadReceipt && (
+                        <span
+                          className={Number(msg.isRead) === 1 ? 'text-emerald-500' : 'text-slate-400'}
+                          title={Number(msg.isRead) === 1 ? 'Dibaca' : 'Terkirim'}
+                        >
+                          {Number(msg.isRead) === 1 ? <i className="fas fa-check-double"></i> : <i className="fas fa-check"></i>}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -1355,31 +1777,95 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ state, onRefreshData, pre
             )}
 
             {/* MESSAGE INPUT CONSOLE */}
-            <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-slate-200 flex items-center gap-3 shrink-0">
-              <input 
-                type="text" 
-                placeholder={
-                  isMember 
-                    ? "Tulis pesan Anda untuk bantuan..."
-                    : activeMainTab === 'MEMBERS' && !isVisitor
-                    ? `Tulis pesan untuk ${selectedMemberObj?.name || 'Member'}...`
-                    : selectedInternal.type === 'ROOM'
-                    ? (selectedInternal.roomId === 'TENANT_ROOM' ? 'Tulis pesan di Room Koordinasi Tenant...' : 'Tulis pesan di Room Koordinasi Staff...')
-                    : `Tulis pesan personal untuk ${selectedPersonalUserObj?.name || 'Rekan'}...`
-                }
-                className="flex-1 px-5 py-3.5 bg-slate-50 font-bold text-xs border border-transparent rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 transition-all shadow-inner"
-                value={messageInput}
-                onChange={e => setMessageInput(e.target.value)}
-                disabled={isSending}
-              />
-              <button 
-                type="submit" 
-                disabled={isSending || !messageInput.trim()}
-                className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center transition-all hover:bg-honey-600 active:scale-95 disabled:opacity-30 shrink-0 shadow-lg shadow-slate-200"
+            <div className="border-t border-slate-200 bg-white shrink-0">
+              {photoPreviewUrl && (
+                <div className="px-4 pt-3">
+                  <div className="flex items-center gap-3 bg-slate-50 border border-honey-200 rounded-2xl p-3 shadow-inner">
+                    <img src={photoPreviewUrl} alt="Preview foto" className="w-14 h-14 rounded-xl object-cover border border-slate-200" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-honey-700">Foto Terpilih</p>
+                      <p className="text-[9px] font-bold text-slate-400 truncate">Tulis keterangan di kolom lalu kirim</p>
+                    </div>
+                    <button type="button" onClick={removePhoto} title="Batal kirim foto" className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center text-xs transition-all" >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+              <form onSubmit={handleSendMessage} className="p-4 flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => { handlePickPhoto(e.target.files?.[0] || null); e.target.value = ''; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Kirim Foto"
+                  className="w-11 h-11 rounded-2xl border border-slate-200 text-slate-500 hover:text-honey-600 hover:border-honey-300 hover:bg-honey-50 flex items-center justify-center transition-all active:scale-95 shrink-0"
+                >
+                  <i className="fas fa-camera"></i>
+                </button>
+                <input 
+                  type="text" 
+                  placeholder={
+                    photoPreviewUrl
+                      ? "Tulis keterangan untuk foto..."
+                      : isMember 
+                      ? "Tulis pesan Anda untuk bantuan..."
+                      : activeMainTab === 'MEMBERS' && !isVisitor
+                      ? `Tulis pesan untuk ${selectedMemberObj?.name || 'Member'}...`
+                      : selectedInternal.type === 'ROOM'
+                      ? (selectedInternal.roomId === 'TENANT_ROOM' ? 'Tulis pesan di Room Koordinasi Tenant...' : 'Tulis pesan di Room Koordinasi Staff...')
+                      : `Tulis pesan personal untuk ${selectedPersonalUserObj?.name || 'Rekan'}...`
+                  }
+                  className="flex-1 px-5 py-3.5 bg-slate-50 font-bold text-xs border border-transparent rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 transition-all shadow-inner"
+                  value={messageInput}
+                  onChange={e => setMessageInput(e.target.value)}
+                  disabled={isSending}
+                />
+                <button 
+                  type="submit" 
+                  disabled={isSending || (!messageInput.trim() && !photoBlob)}
+                  className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center transition-all hover:bg-honey-600 active:scale-95 disabled:opacity-30 shrink-0 shadow-lg shadow-slate-200"
+                >
+                  {isSending ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-paper-plane"></i>}
+                </button>
+              </form>
+            </div>
+
+            {/* LIGHTBOX FOTO */}
+            {lightboxUrl && (
+              <div
+                className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm flex items-center justify-center p-5"
+                onClick={() => setLightboxUrl(null)}
               >
-                {isSending ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-paper-plane"></i>}
-              </button>
-            </form>
+                <button
+                  type="button"
+                  onClick={() => setLightboxUrl(null)}
+                  className="absolute top-4 right-4 w-11 h-11 rounded-2xl bg-white/10 text-white hover:bg-white/20 flex items-center justify-center text-lg transition-all border border-white/20"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+                <a
+                  href={lightboxUrl}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-3 rounded-2xl bg-honey-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-honey-700 transition-all active:scale-95"
+                >
+                  <i className="fas fa-download"></i> Unduh Foto
+                </a>
+                <img
+                  src={lightboxUrl}
+                  alt="Foto diperbesar"
+                  onClick={e => e.stopPropagation()}
+                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                />
+              </div>
+            )}
           </>
         )}
 

@@ -1,9 +1,7 @@
-
-const CACHE_NAME = 'beesmart-v9';
+const CACHE_NAME = 'beesmart-v11';
 const ASSETS_TO_CACHE = [
   './',
-  './index.html',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+  './index.html'
 ];
 
 self.addEventListener('install', (event) => {
@@ -25,24 +23,58 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  const isLocalRequest = event.request.url.startsWith(self.location.origin);
-  const isCdnRequest = event.request.url.includes('tailwindcss.com') || event.request.url.includes('cdnjs.cloudflare.com');
-  
-  if (event.request.mode === 'navigate' || isLocalRequest || isCdnRequest) {
-    // Jangan cache permintaan API (folder /api/)
-    if (event.request.url.includes('/api/')) {
-       return;
-    }
-    
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // Jangan intervensi permintaan API (folder /api/)
+  if (url.pathname.includes('/api/')) return;
+
+  // Navigasi: network-first supaya index.html terbaru yang dipakai,
+  // cache hanya sebagai fallback saat offline.
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request);
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put('./index.html', copy.clone());
+              cache.put(event.request, copy);
+            });
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request).then((cached) => {
+            return cached || caches.match('./index.html');
+          })
+        )
+    );
+    return;
+  }
+
+  // Aset lokal & CDN: cache dulu, perbarui di background,
+  // hanya simpan respons sukses (status 200).
+  if (url.origin === self.location.origin || url.host.includes('cdnjs.cloudflare.com')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const networkPromise = fetch(event.request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+            }
+            return response;
+          })
+          .catch(() => cached);
+
+        return cached || networkPromise;
       })
     );
   }

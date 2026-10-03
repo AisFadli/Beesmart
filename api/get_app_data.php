@@ -521,6 +521,18 @@ try {
             }
         } catch (Exception $e) { $data[$table] = []; }
     }
+
+    // Kontak aman untuk role MEMBER: daftar Admin/Staff/Tenant (tanpa email/password)
+    // dipakai untuk mencari & memulai chat baru di menu Diskusi Member.
+    if ($role === 'MEMBER') {
+        try {
+            $contactStmt = $pdo->query("SELECT id, name, role FROM users WHERE role IN ('ADMIN', 'STAFF', 'TENANT') AND (status = 'ACTIVE' OR status IS NULL OR status = '') ORDER BY name ASC");
+            $data['chat_contacts'] = $contactStmt->fetchAll();
+        } catch (Exception $e) {
+            $data['chat_contacts'] = [];
+        }
+    }
+
     sendResponse($data);
 } catch (Exception $e) {
     sendResponse(["status" => "error", "message" => $e->getMessage()], 500);

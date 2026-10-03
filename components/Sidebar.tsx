@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { Icons } from '../constants';
+import { getStoredTheme, toggleTheme } from '../theme';
 
 interface SidebarProps {
   activeTab: string;
@@ -12,6 +13,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, user }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [themeDark, setThemeDark] = useState(getStoredTheme() === 'dark');
   const rawRole = (user.role || '').toString().toUpperCase();
   const role = (rawRole === 'ADMIN' ? UserRole.ADMIN : rawRole === 'MEMBER' ? UserRole.MEMBER : rawRole === 'VISITOR' ? UserRole.VISITOR : rawRole === 'TENANT' ? UserRole.TENANT : UserRole.STAFF);
 
@@ -32,35 +34,43 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
   return (
     <>
       {/* Mobile Top Header - Increased height and shadow */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 flex items-center justify-between px-6 z-[60] shadow-2xl border-b border-slate-800">
-        <h1 className="text-white font-black text-xl tracking-tighter italic flex items-center gap-2">
-          <img src="/app/logo/beesmart-logo.png" alt="" className="w-8 h-8 object-contain bg-white rounded-lg p-0.5" />
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 dark:bg-[#0d1424] flex items-center justify-between px-6 z-[60] shadow-2xl border-b border-slate-800 dark:border-slate-800">
+        <h1 className="text-white dark:text-[#f1f5f9] font-black text-xl tracking-tighter italic flex items-center gap-2">
+          <img src="/app/logo/beesmart-logo.png" alt="" className="w-9 h-9 object-contain bg-white dark:bg-slate-200 rounded-lg p-0.5" />
           Bee<span className="text-honey-500">Smart</span>
         </h1>
-        <button onClick={() => setIsOpen(!isOpen)} className="text-white text-2xl p-2 active:scale-90 transition-transform"><i className={isOpen ? 'fas fa-times' : 'fas fa-bars'}></i></button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="text-white dark:text-[#f1f5f9] w-9 h-9 rounded-xl flex items-center justify-center active:scale-90 transition-transform" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
+            <i className={`fas ${themeDark ? 'fa-sun' : 'fa-moon'}`}></i>
+          </button>
+          <button onClick={() => setIsOpen(!isOpen)} className="text-white dark:text-[#f1f5f9] text-2xl p-2 active:scale-90 transition-transform"><i className={isOpen ? 'fas fa-times' : 'fas fa-bars'}></i></button>
+        </div>
       </div>
 
-      <aside className={`fixed left-0 top-0 bottom-0 w-64 bg-slate-900 text-slate-300 transition-transform duration-300 z-[70] shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      <aside className={`fixed left-0 top-0 bottom-0 w-64 bg-slate-900 dark:bg-[#0d1424] text-slate-300 dark:text-[#b9c4d4] transition-transform duration-300 z-[70] shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-6 flex flex-col h-full">
-          <div className="mb-10 pt-4 md:pt-0">
-            <h1 className="text-white font-black text-2xl flex items-center gap-3 italic">
-               <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-11 h-11 object-contain bg-white rounded-2xl p-1.5 shadow-xl shadow-honey-500/20 not-italic transform -rotate-3" />
+          <div className="mb-10 pt-4 md:pt-0 flex items-center justify-between">
+            <h1 className="text-white dark:text-[#f1f5f9] font-black text-2xl flex items-center gap-3 italic">
+               <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-12 h-12 object-contain bg-white dark:bg-slate-200 rounded-2xl p-1.5 shadow-xl shadow-honey-500/20 not-italic transform -rotate-3" />
                BeeSmart
             </h1>
+            <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="hidden md:flex w-11 h-11 rounded-2xl items-center justify-center text-lg text-slate-300 hover:bg-slate-800/60 dark:text-[#cbd3e0] dark:hover:bg-slate-100 transition-all active:scale-90" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
+              <i className={`fas ${themeDark ? 'fa-sun' : 'fa-moon'}`}></i>
+            </button>
           </div>
 
           <nav className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-2">
             {filteredMenu.map(item => (
-              <button key={item.id} onClick={() => { setActiveTab(item.id); setIsOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-4 rounded-[1.25rem] transition-all text-left group ${activeTab === item.id ? 'bg-honey-600 text-white shadow-2xl shadow-honey-600/40 translate-x-1' : 'hover:bg-slate-800/60 text-slate-400'}`}>
+              <button key={item.id} onClick={() => { setActiveTab(item.id); setIsOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-4 rounded-[1.25rem] transition-all text-left group ${activeTab === item.id ? 'bg-honey-600 text-white shadow-2xl shadow-honey-600/40 translate-x-1' : 'hover:bg-slate-800/60 dark:hover:bg-slate-100 text-slate-400'}`}>
                 <span className={`text-lg transition-all group-hover:scale-110 ${activeTab === item.id ? 'text-white' : 'text-slate-500'}`}>{item.icon}</span>
                 <span className="font-black text-[10px] uppercase tracking-[0.15em]">{item.label}</span>
               </button>
             ))}
           </nav>
 
-          <div className="mt-auto pt-6 border-t border-slate-800 space-y-4">
+          <div className="mt-auto pt-6 border-t border-slate-800 dark:border-slate-100 space-y-4">
             {/* Enhanced User Profile Info */}
-            <div className="flex items-center gap-4 bg-slate-800/40 p-3 rounded-2xl border border-slate-700/50">
+            <div className="flex items-center gap-4 bg-slate-800/40 p-3 rounded-2xl border border-slate-700/50 dark:bg-slate-100/40 dark:border-slate-300/30">
                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-honey-500 to-honey-600 flex items-center justify-center text-white font-black text-xs uppercase shadow-lg border border-white/10">
                   {user.name.slice(0,2)}
                </div>
