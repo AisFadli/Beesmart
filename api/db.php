@@ -20,6 +20,7 @@ $allowed_origins = [
     "https://admin.aiskoperasi.store",
     "https://beesmart.id",
     "https://www.beesmart.id",
+    "https://beesmart.protechid.cloud",
     "http://localhost",
     "http://localhost:3000",
     "http://localhost:3006",

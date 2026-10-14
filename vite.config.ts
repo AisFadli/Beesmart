@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3006,
         host: '0.0.0.0',
+        allowedHosts: ['beesmart.protechid.cloud', 'localhost', '127.0.0.1'],
         proxy: {
           '/api': 'http://localhost:8088'
         }
