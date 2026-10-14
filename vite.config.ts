@@ -8,10 +8,10 @@ export default defineConfig(({ mode }) => {
     return {
       base: '/app/',
       server: {
-        port: 3000,
+        port: 3006,
         host: '0.0.0.0',
         proxy: {
-          '/api': 'http://localhost:8080'
+          '/api': 'http://localhost:8088'
         }
       },
       plugins: [react(), tailwindcss()],

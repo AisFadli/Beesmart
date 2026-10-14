@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState, useRef } from 'react';
 import { AppState, Transaction, Member } from '../types';
-import apiService from '../services/apiService';
+import apiService, { resolveMediaUrl } from '../services/apiService';
 import MemberShopping from './MemberShopping';
 import ChatInterface from './ChatInterface';
 import { MemberCardModal } from './MemberCardModal';
@@ -43,7 +43,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
   const [topUpMethod, setTopUpMethod] = useState<'CASH' | 'TRANSFER' | 'QRIS'>('TRANSFER');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const profilePhotoRef = useRef<HTMLInputElement>(null);
+  const profilePhotoInputRef = useRef<HTMLInputElement>(null);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -165,6 +165,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
       setIsSubmitting(true);
       try {
         const res = await apiService.uploadFile(file);
+        if (!res?.url) throw new Error("Gagal mengunggah bukti pembayaran.");
         setTopUpProof(res.url);
       } catch (err: any) {
         alert(err.message);
@@ -178,7 +179,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
     if (!me || topUpAmount <= 0) return;
     setIsSubmitting(true);
     try {
-      await apiService.topUpMember(me.id, topUpAmount, topUpProof);
+      await apiService.topUpMember(me.id, topUpAmount, topUpProof, topUpMethod);
       alert("Pengajuan top up berhasil dikirim. Tunggu verifikasi admin.");
       setShowTopUpModal(false);
       setTopUpAmount(0);
@@ -427,7 +428,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                           </div>
                        )}
                     </div>
-                    <input type="file" ref={profilePhotoInputRef} className="hidden" accept="image/*" onChange={handleProfilePhotoChange} />
+                    <input type="file" ref={profilePhotoInputRef} className="hidden" accept="image/*" onChange={handleMemberPhotoUpload} />
                  </div>
 
                  <div className="space-y-1">
@@ -531,7 +532,7 @@ const MemberDashboard: React.FC<{ state: AppState, onRefresh: () => void }> = ({
                                  <div className="relative">
                                     <label className="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">2. Upload Bukti Transaksi</label>
                                     <div onClick={() => fileInputRef.current?.click()} className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:bg-slate-100 transition-all">
-                                       {topUpProof ? <img src={topUpProof} className="w-full h-full object-cover" /> : <div className="text-center text-slate-300"><i className="fas fa-camera text-2xl mb-1"></i><p className="text-[8px] font-black uppercase">Ambil Gambar</p></div>}
+                                       {topUpProof ? <img src={resolveMediaUrl(topUpProof)} className="w-full h-full object-cover" alt="Bukti Pembayaran" /> : <div className="text-center text-slate-300"><i className="fas fa-camera text-2xl mb-1"></i><p className="text-[8px] font-black uppercase">Ambil Gambar</p></div>}
                                     </div>
                                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleProofUpload} className="hidden" />
                                  </div>

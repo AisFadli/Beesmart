@@ -165,7 +165,7 @@ const Inventory: React.FC<InventoryProps> = ({
       ? productProposals.filter(p => p.status === 'PENDING')
       : productProposals.filter(p => p.staffId === currentUser?.name);
       
-    const adjProposals = (stockAdjustments || [])
+    const adjProposals: ProductProposal[] = (stockAdjustments || [])
       .filter(adj => isAdmin ? adj.status === 'PENDING' : adj.staffId === currentUser?.name)
       .map(adj => {
         const product = products.find(p => p.id === adj.productId);
@@ -187,7 +187,6 @@ const Inventory: React.FC<InventoryProps> = ({
         };
       });
 
-    // @ts-ignore
     return [...baseProposals, ...adjProposals].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [productProposals, stockAdjustments, isAdmin, currentUser, products]);
 

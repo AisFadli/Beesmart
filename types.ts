@@ -134,8 +134,9 @@ export interface MemberLog {
   amount: number;
   timestamp: string;
   notes: string;
-  status: 'PENDING' | 'APPROVED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   proof_image?: string;
+  topupMethod?: 'CASH' | 'TRANSFER' | 'QRIS' | null;
 }
 
 export enum OrderStatus {

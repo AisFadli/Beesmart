@@ -324,12 +324,12 @@ const App: React.FC = () => {
     await refreshData();
   };
 
-  const handleTopUp = async (id: string, amount: number, proofImage?: string) => {
+  const handleTopUp = async (id: string, amount: number, proofImage?: string, method?: string) => {
     try {
       await apiService.request('/members_topup.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, amount, proofImage, userRole: state.currentUser?.role }),
+        body: JSON.stringify({ id, amount, proofImage, method }),
       });
       await refreshData();
     } catch (e: any) {

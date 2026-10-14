@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { AppState, Product, Transaction, TransactionItem, Member, ShippingRate } from '../types';
-import apiService from '../services/apiService';
+import apiService, { resolveMediaUrl } from '../services/apiService';
 import { Icons } from '../constants';
 
 interface MemberShoppingProps {
@@ -384,7 +384,7 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                               className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-honey-300 hover:shadow-xl hover:shadow-honey-500/5 transition-all overflow-hidden relative group"
                            >
                               {paymentProof ? (
-                                <img src={paymentProof.startsWith('data:') ? paymentProof : (window as any).location.origin + '/' + paymentProof} className="w-full h-full object-cover" />
+                                <img src={resolveMediaUrl(paymentProof)} className="w-full h-full object-cover" alt="Bukti pembayaran" />
                               ) : (
                                 <>
                                   {isUploading ? <i className="fas fa-spinner fa-spin text-2xl text-honey-600"></i> : <i className="fas fa-camera text-4xl text-slate-200 mb-3 group-hover:scale-110 transition-transform"></i>}

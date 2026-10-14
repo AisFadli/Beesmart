@@ -22,8 +22,10 @@ $allowed_origins = [
     "https://www.beesmart.id",
     "http://localhost",
     "http://localhost:3000",
+    "http://localhost:3006",
     "http://127.0.0.1",
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3006"
 ];
 
 if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
@@ -48,12 +50,13 @@ if (!file_exists($dbConfigPath)) {
 }
 $dbConfig = require $dbConfigPath;
 $host = $dbConfig['host'] ?? 'localhost';
+$port = $dbConfig['port'] ?? '3306';
 $db_name = $dbConfig['dbname'] ?? '';
 $username = $dbConfig['username'] ?? '';
 $password = $dbConfig['password'] ?? ''; 
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8mb4", $username, $password, [
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db_name;charset=utf8mb4", $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
@@ -136,6 +139,7 @@ try {
         status VARCHAR(20) DEFAULT 'APPROVED',
         notes TEXT,
         proof_image LONGTEXT,
+        topupMethod VARCHAR(20) DEFAULT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (memberId) REFERENCES members(id) ON DELETE CASCADE
     )");
@@ -411,7 +415,11 @@ try {
         'member_logs' => [
             'status' => "VARCHAR(20) DEFAULT 'APPROVED'",
             'notes' => "TEXT AFTER staffId",
-            'proof_image' => "LONGTEXT AFTER notes"
+            'proof_image' => "LONGTEXT AFTER notes",
+            'topupMethod' => "VARCHAR(20) DEFAULT NULL AFTER proof_image"
+        ],
+        'members' => [
+            'barcode' => "VARCHAR(100) DEFAULT NULL"
         ],
         'messages' => [
             'imageUrl' => "VARCHAR(500) DEFAULT NULL"
@@ -430,6 +438,11 @@ try {
             }
         }
     }
+
+    // Bersihkan referensi bukti bayar yang rusak (bug lama: objek API ter-stringify)
+    try {
+        $pdo->exec("UPDATE member_logs SET proof_image = NULL WHERE proof_image = '[object Object]' OR proof_image = ''");
+    } catch (Exception $e) {}
 
     // --- CASE SENSITIVITY MIGRATION (Normalize Categories to UPPERCASE) ---
     // This runs on every load but these are fast indexed updates or no-ops if already uppercase

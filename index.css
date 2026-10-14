@@ -71,6 +71,15 @@ body {
   border-radius: 10px;
 }
 
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Print Styles */
 @media print {
   body {

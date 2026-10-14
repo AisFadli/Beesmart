@@ -18,6 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $amount = (float)($data['amount'] ?? 0);
     $proofImage = $data['proofImage'] ?? null;
 
+    // Normalisasi metode top up (hanya nilai yang dikenal)
+    $method = strtoupper(trim((string)($data['method'] ?? '')));
+    if (!in_array($method, ['CASH', 'TRANSFER', 'QRIS'], true)) {
+        $method = 'TRANSFER';
+    }
+
+    // Abaikan nilai bukti bayar yang rusak (mis. "[object Object]")
+    if (is_string($proofImage) && ($proofImage === '[object Object]' || trim($proofImage) === '')) {
+        $proofImage = null;
+    }
+
     if (empty($memberId) || $amount <= 0) {
         sendResponse(["status" => "error", "message" => "ID Member dan nominal wajib valid."], 400);
     }
@@ -36,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // 2. Catat Log (apakah disetujui atau masih pending)
-        $logStmt = $pdo->prepare("INSERT INTO member_logs (memberId, type, amount, timestamp, notes, status, proof_image) VALUES (?, 'TOPUP', ?, NOW(), ?, ?, ?)");
-        $logStmt->execute([$memberId, $amount, $notes, $status, $proofImage]);
+        $logStmt = $pdo->prepare("INSERT INTO member_logs (memberId, type, amount, timestamp, notes, status, proof_image, topupMethod) VALUES (?, 'TOPUP', ?, NOW(), ?, ?, ?, ?)");
+        $logStmt->execute([$memberId, $amount, $notes, $status, $proofImage, $method]);
 
         $pdo->commit();
         $msg = ($status === 'APPROVED') ? "Top up berhasil ditambahkan." : "Pengajuan top up berhasil dikirim. Tunggu verifikasi admin.";

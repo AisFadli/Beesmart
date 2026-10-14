@@ -118,7 +118,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
   // Member Orders Searchable
   const filteredMemberOrders = useMemo(() => {
     return transactions.filter(t => {
-      const isMemberOrder = (t.id.startsWith('ORD-') || t.transactionType === 'ORDER') && t.memberId;
+      const isMemberOrder = t.id.startsWith('ORD-') && t.memberId;
       if (!isMemberOrder) return false;
 
       if (isTenant) {
@@ -708,9 +708,9 @@ const Orders: React.FC<OrdersProps> = ({ orders, products, categories, transacti
                         <div className="flex justify-between items-start mb-4">
                           <span className={`px-2.5 py-1 text-[8px] font-black rounded-lg uppercase tracking-widest ${
                             adj.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 
-                            adj.status === 'NORMAL' || adj.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+                            adj.status === 'NORMAL' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
                           }`}>
-                            {adj.status === 'PENDING' ? 'Menunggu Approval' : adj.status === 'NORMAL' || adj.status === 'APPROVED' ? 'Disetujui' : 'Dibatalkan/Ditolak'}
+                            {adj.status === 'PENDING' ? 'Menunggu Approval' : adj.status === 'NORMAL' ? 'Disetujui' : 'Dibatalkan/Ditolak'}
                           </span>
                           <span className="text-[8px] font-bold text-slate-400 uppercase">{new Date(adj.timestamp).toLocaleDateString('id-ID', {day:'2-digit', month:'short'})}</span>
                         </div>

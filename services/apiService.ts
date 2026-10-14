@@ -16,6 +16,24 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl(); 
 
+// Path upload dari server bersifat relatif (contoh: "uploads/proof_x.jpg"),
+// sedangkan PWA bisa dilayani dari root atau subfolder /app.
+// Fungsi ini mengubahnya menjadi URL absolut agar foto selalu terlihat.
+export const resolveMediaUrl = (url?: string | null): string => {
+  if (!url) return '';
+  const raw = String(url);
+  if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+  const prefix = window.location.pathname.startsWith('/app') ? '/app/' : '/';
+  return prefix + raw.replace(/^\/+/, '');
+};
+
+// Deteksi nilai yang gagal disimpan (mis. objek API yang ter-stringify)
+export const isValidMediaRef = (url?: string | null): boolean => {
+  if (!url) return false;
+  const raw = String(url).trim();
+  return raw !== '' && raw !== '[object Object]' && raw.startsWith('uploads/');
+}; 
+
 export class ApiService {
   private token: string = (() => {
     try { return localStorage.getItem('beesmart_token') || ''; } catch (e) { return ''; }
@@ -133,11 +151,11 @@ export class ApiService {
   async deleteMember(id: string) { return this.request('/members.php?id=' + id, { method: 'DELETE' }); }
 
   // Updated to include optional proofImage as requested by component usage
-  async topUpMember(id: string, amount: number, proofImage?: string) {
+  async topUpMember(id: string, amount: number, proofImage?: string, method?: string) {
     return this.request('/members_topup.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, amount, proofImage }),
+      body: JSON.stringify({ id, amount, proofImage, method }),
     });
   }
 

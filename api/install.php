@@ -42,6 +42,7 @@ try {
             notes TEXT,
             status VARCHAR(20) DEFAULT 'APPROVED',
             proof_image LONGTEXT,
+            topupMethod VARCHAR(20) DEFAULT NULL,
             FOREIGN KEY (memberId) REFERENCES members(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

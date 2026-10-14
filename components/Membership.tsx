@@ -1,8 +1,8 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Member, AppState, Transaction, UserRole, MemberLog } from '../types';
 import { Icons } from '../constants';
-import apiService from '../services/apiService';
+import apiService, { resolveMediaUrl, isValidMediaRef } from '../services/apiService';
 import { MemberCardModal } from './MemberCardModal';
 import { TermsPrivacyModal } from './TermsPrivacyModal';
 import { RegistrationConfirmModal } from './RegistrationConfirmModal';
@@ -12,7 +12,7 @@ interface MembershipProps {
   state: AppState;
   onSaveMember: (member: Member) => Promise<void>;
   onDeleteMember: (id: string) => Promise<void>;
-  onTopUp: (memberId: string, amount: number, proofImage?: string) => Promise<void>;
+  onTopUp: (memberId: string, amount: number, proofImage?: string, method?: string) => Promise<void>;
   onRefreshData: () => Promise<void>;
   onOpenChat: (memberId: string) => void;
 }
@@ -28,12 +28,16 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [topUpAmount, setTopUpAmount] = useState(0);
   const [topUpProof, setTopUpProof] = useState<string | undefined>(undefined);
+  const [topUpMethod, setTopUpMethod] = useState<'CASH' | 'TRANSFER' | 'QRIS'>('TRANSFER');
   const [isUploading, setIsUploading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [proofLightbox, setProofLightbox] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profilePhotoInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = state.currentUser?.role === UserRole.ADMIN;
+  const isStaff = state.currentUser?.role === UserRole.STAFF;
+  const canViewTopUp = isAdmin || isStaff;
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -144,9 +148,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
 
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
 
-  const pendingTopUps = useMemo(() => {
-    return (state.memberLogs || []).filter(l => l.status === 'PENDING' && l.type === 'TOPUP');
-  }, [state.memberLogs]);
+  
 
   const exportMemberHistoryToExcel = (member: Member, history: any[]) => {
     const headers = ['Waktu', 'Tipe Aktivitas', 'Keterangan', 'Nominal (Rp)', 'Status'];
@@ -222,14 +224,122 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
     if (file) {
       try {
         setIsUploading(true);
-        const url = await apiService.uploadFile(file);
-        setTopUpProof(url);
+        const res = await apiService.uploadFile(file);
+        if (!res?.url) throw new Error("Server tidak mengembalikan lokasi file.");
+        setTopUpProof(res.url);
       } catch (err: any) {
         alert("Gagal upload bukti: " + err.message);
       } finally {
         setIsUploading(false);
+        e.target.value = '';
       }
     }
+  };
+
+  const TOPUP_METHOD_LABELS: Record<string, string> = {
+    CASH: 'Tunai',
+    TRANSFER: 'Transfer Bank',
+    QRIS: 'QRIS',
+  };
+
+  const TOPUP_METHOD_STYLES: Record<string, string> = {
+    CASH: 'bg-amber-100 text-amber-700',
+    TRANSFER: 'bg-blue-100 text-blue-700',
+    QRIS: 'bg-emerald-100 text-emerald-700',
+  };
+
+  const memberById = useMemo(() => {
+    const map: Record<string, Member> = {};
+    (state.members || []).forEach(m => { map[m.id] = m; });
+    return map;
+  }, [state.members]);
+
+  const allTopUpLogs = useMemo(() => {
+    return (state.memberLogs || [])
+      .filter(l => l.type === 'TOPUP')
+      .map(l => ({ ...l, member: memberById[l.memberId] }))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [state.memberLogs, memberById]);
+
+  const pendingTopUps = useMemo(() => {
+    return allTopUpLogs.filter(l => l.status === 'PENDING');
+  }, [allTopUpLogs]);
+
+  const [topUpSearch, setTopUpSearch] = useState('');
+  const [topUpPeriod, setTopUpPeriod] = useState<'TODAY' | 'WEEK' | 'MONTH' | 'ALL' | 'CUSTOM'>('MONTH');
+  const [topUpStartDate, setTopUpStartDate] = useState('');
+  const [topUpEndDate, setTopUpEndDate] = useState('');
+  const [topUpStatusFilter, setTopUpStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
+  const [topUpPage, setTopUpPage] = useState(1);
+  const TOPUP_PER_PAGE = 15;
+
+  const topUpPeriodRange = useMemo(() => {
+    const now = new Date();
+    const iso = (d: Date) => d.toISOString().split('T')[0];
+    if (topUpPeriod === 'TODAY') return { start: iso(now), end: iso(now) };
+    if (topUpPeriod === 'WEEK') {
+      const s = new Date(now); s.setDate(now.getDate() - 6);
+      return { start: iso(s), end: iso(now) };
+    }
+    if (topUpPeriod === 'MONTH') {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { start: iso(s), end: iso(now) };
+    }
+    if (topUpPeriod === 'CUSTOM') return { start: topUpStartDate, end: topUpEndDate };
+    return { start: '', end: '' };
+  }, [topUpPeriod, topUpStartDate, topUpEndDate]);
+
+  const filteredTopUpLogs = useMemo(() => {
+    const q = topUpSearch.trim().toLowerCase();
+    const { start, end } = topUpPeriodRange;
+    return allTopUpLogs.filter(l => {
+      if (topUpStatusFilter !== 'ALL' && l.status !== topUpStatusFilter) return false;
+      const day = String(l.timestamp || '').slice(0, 10);
+      if (start && day < start) return false;
+      if (end && day > end) return false;
+      if (q) {
+        const haystack = [
+          l.memberId,
+          l.member?.name,
+          l.member?.whatsapp,
+          l.notes,
+          l.proof_image ? 'bukti' : '',
+        ].filter(Boolean).join(' ').toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [allTopUpLogs, topUpSearch, topUpStatusFilter, topUpPeriodRange]);
+
+  const pagedTopUpLogs = useMemo(() => {
+    const startIdx = (topUpPage - 1) * TOPUP_PER_PAGE;
+    return filteredTopUpLogs.slice(startIdx, startIdx + TOPUP_PER_PAGE);
+  }, [filteredTopUpLogs, topUpPage]);
+
+  const topUpTotalPages = Math.ceil(filteredTopUpLogs.length / TOPUP_PER_PAGE);
+
+  const topUpFilteredTotal = useMemo(() => {
+    return filteredTopUpLogs.reduce((sum, l) => sum + (l.status === 'APPROVED' ? Number(l.amount) : 0), 0);
+  }, [filteredTopUpLogs]);
+
+  // Reset halaman saat filter berubah agar tidak menampilkan halaman kosong
+  useEffect(() => {
+    setTopUpPage(1);
+  }, [topUpSearch, topUpPeriod, topUpStartDate, topUpEndDate, topUpStatusFilter]);
+
+  // Jaga page agar selalu valid
+  useEffect(() => {
+    if (topUpPage > Math.max(1, topUpTotalPages)) {
+      setTopUpPage(Math.max(1, topUpTotalPages));
+    }
+  }, [topUpPage, topUpTotalPages]);
+
+  const resetTopUpFilters = () => {
+    setTopUpSearch('');
+    setTopUpPeriod('MONTH');
+    setTopUpStartDate('');
+    setTopUpEndDate('');
+    setTopUpStatusFilter('ALL');
   };
 
   const handleApproveTopUp = async (logId: number) => {
@@ -240,6 +350,20 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ logId }),
+      });
+      await onRefreshData();
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const handleRejectTopUp = async (logId: number) => {
+    if (!isAdmin) return;
+    const reason = prompt("Masukkan alasan penolakan (opsional):", "Bukti transfer tidak sesuai / tidak valid");
+    if (reason === null) return;
+    try {
+      await apiService.request('/reject_topup.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logId, reason }),
       });
       await onRefreshData();
     } catch (e: any) { alert(e.message); }
@@ -311,9 +435,9 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                 Persetujuan Member
                 {state.members.filter(m => m.status === 'PENDING').length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[7px] flex items-center justify-center rounded-full animate-pulse font-black border border-white">{state.members.filter(m => m.status === 'PENDING').length}</span>}
              </button>
-             {isAdmin && (
+             {canViewTopUp && (
                <button onClick={() => setActiveTab('topup_approval')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all relative ${activeTab === 'topup_approval' ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}>
-                  Persetujuan Top Up
+                  {isAdmin ? 'Persetujuan Top Up' : 'Top Up & Rekap'}
                   {pendingTopUps.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[7px] flex items-center justify-center rounded-full animate-pulse font-black border border-white">{pendingTopUps.length}</span>}
                </button>
              )}
@@ -344,32 +468,302 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
         {activeTab === 'topup_approval' ? (
-          <div className="p-8">
-             <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6">Antrian Verifikasi Dana Top Up</h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {pendingTopUps.map(log => {
-                 const member = state.members.find(m => m.id === log.memberId);
-                 return (
-                   <div key={log.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col gap-4">
-                      <div className="flex justify-between items-start">
-                         <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Dari Member:</p>
-                            <p className="font-black text-slate-900 text-sm uppercase">{member?.name || 'Unknown'}</p>
-                            <p className="text-[9px] text-slate-500">{new Date(log.timestamp).toLocaleString()}</p>
+          <div className="p-4 md:p-8 space-y-10">
+             <div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6">Antrian Verifikasi Dana Top Up</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {pendingTopUps.map(log => {
+                    const member = log.member;
+                    return (
+                      <div key={log.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col gap-4">
+                         <div className="flex justify-between items-start">
+                            <div>
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Dari Member:</p>
+                               <p className="font-black text-slate-900 text-sm uppercase">{member?.name || 'Unknown'}</p>
+                               <p className="text-[9px] text-slate-500">ID: {log.memberId} &middot; {new Date(log.timestamp).toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-xl font-black text-emerald-600 leading-none mb-1">Rp {Number(log.amount).toLocaleString()}</p>
+                               <span className={`text-[8px] font-black px-2 py-0.5 rounded-full inline-block uppercase ${TOPUP_METHOD_STYLES[log.topupMethod || 'TRANSFER'] || 'bg-slate-100 text-slate-600'}`}>
+                                  {TOPUP_METHOD_LABELS[log.topupMethod || ''] || 'Tidak Diketahui'}
+                               </span>
+                            </div>
                          </div>
-                         <div className="text-right">
-                            <p className="text-xl font-black text-emerald-600 leading-none mb-1">Rp {Number(log.amount).toLocaleString()}</p>
-                            <p className="text-[8px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full inline-block uppercase">Pending</p>
+                         <div className="flex-1 min-h-[100px] bg-white rounded-2xl border border-slate-200 overflow-hidden flex items-center justify-center">
+                            {isValidMediaRef(log.proof_image) ? (
+                              <button type="button" onClick={() => setProofLightbox(resolveMediaUrl(log.proof_image))} className="w-full h-full cursor-zoom-in" title="Perbesar bukti pembayaran">
+                                 <img src={resolveMediaUrl(log.proof_image)} className="w-full h-full object-cover" alt={`Bukti Top Up ${log.memberId}`} />
+                              </button>
+                            ) : (
+                              <p className="text-[10px] text-slate-300 font-black italic">Tanpa Bukti Gambar</p>
+                            )}
                          </div>
+                         {isAdmin ? (
+                           <div className="flex gap-2">
+                             <button
+                               onClick={() => handleRejectTopUp(log.id)}
+                               className="flex-1 py-3 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl font-black text-[10px] uppercase tracking-widest border border-rose-200 transition-all"
+                             >
+                               Tolak
+                             </button>
+                             <button
+                               onClick={() => handleApproveTopUp(log.id)}
+                               className="flex-[2] py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all"
+                             >
+                               Approve & Tambah Saldo
+                             </button>
+                           </div>
+                         ) : (
+                           <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest text-center bg-amber-50 py-3 rounded-xl border border-amber-100">Menunggu Persetujuan Admin</p>
+                         )}
                       </div>
-                      <div className="flex-1 min-h-[100px] bg-white rounded-2xl border border-slate-200 overflow-hidden flex items-center justify-center">
-                         {log.proof_image ? <img src={log.proof_image} className="w-full h-full object-cover" /> : <p className="text-[10px] text-slate-300 font-black italic">Tanpa Bukti Gambar</p>}
-                      </div>
-                      <button onClick={() => handleApproveTopUp(log.id)} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100">Approve & Tambah Saldo</button>
+                    );
+                  })}
+                  {pendingTopUps.length === 0 && <div className="col-span-2 py-20 text-center text-slate-300 font-black uppercase text-xs">Belum ada antrian top up.</div>}
+                </div>
+             </div>
+
+             {/* ============ REKAP DATA TOP UP ============ */}
+             <div className="border-t border-slate-100 pt-8">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+                   <div>
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                         <i className="fas fa-receipt text-emerald-600"></i> Rekap Data Top Up
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                         {filteredTopUpLogs.length} transaksi &middot; Total disetujui Rp {topUpFilteredTotal.toLocaleString('id-ID')}
+                      </p>
                    </div>
-                 );
-               })}
-               {pendingTopUps.length === 0 && <div className="col-span-2 py-20 text-center text-slate-300 font-black uppercase text-xs">Belum ada antrian top up.</div>}
+                   <button
+                     type="button"
+                     onClick={resetTopUpFilters}
+                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all self-start"
+                   >
+                     <i className="fas fa-rotate-left mr-1"></i> Reset Filter
+                   </button>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="p-4 md:p-5 bg-slate-50 rounded-3xl border border-slate-100 mb-6 space-y-4">
+                   <div className="flex flex-wrap gap-2">
+                     {([
+                       ['TODAY', 'Hari Ini'],
+                       ['WEEK', '7 Hari'],
+                       ['MONTH', 'Bulan Ini'],
+                       ['ALL', 'Semua'],
+                     ] as const).map(([val, label]) => (
+                       <button
+                         key={val}
+                         type="button"
+                         onClick={() => setTopUpPeriod(val)}
+                         className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${topUpPeriod === val ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}
+                       >
+                         {label}
+                       </button>
+                     ))}
+                     <button
+                       type="button"
+                       onClick={() => setTopUpPeriod('CUSTOM')}
+                       className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${topUpPeriod === 'CUSTOM' ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}
+                     >
+                       Custom
+                     </button>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="lg:col-span-2">
+                         <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Cari Nama / ID Member</label>
+                         <div className="relative">
+                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><Icons.Search /></span>
+                            <input
+                              type="text"
+                              placeholder="Nama member atau ID member..."
+                              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-500/10 font-bold text-[11px]"
+                              value={topUpSearch}
+                              onChange={e => setTopUpSearch(e.target.value)}
+                            />
+                         </div>
+                      </div>
+                      <div>
+                         <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Dari Tanggal</label>
+                         <input
+                           type="date"
+                           disabled={topUpPeriod !== 'CUSTOM'}
+                           className="w-full px-3 py-3 rounded-2xl border border-slate-200 bg-white outline-none font-bold text-[11px] disabled:bg-slate-100 disabled:text-slate-400"
+                           value={topUpStartDate}
+                           onChange={e => setTopUpStartDate(e.target.value)}
+                         />
+                      </div>
+                      <div>
+                         <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Sampai Tanggal</label>
+                         <input
+                           type="date"
+                           disabled={topUpPeriod !== 'CUSTOM'}
+                           className="w-full px-3 py-3 rounded-2xl border border-slate-200 bg-white outline-none font-bold text-[11px] disabled:bg-slate-100 disabled:text-slate-400"
+                           value={topUpEndDate}
+                           onChange={e => setTopUpEndDate(e.target.value)}
+                         />
+                      </div>
+                   </div>
+
+                   <div className="flex flex-wrap gap-2">
+                     {([
+                       ['ALL', 'Semua Status'],
+                       ['APPROVED', 'Disetujui'],
+                       ['PENDING', 'Pending'],
+                       ['REJECTED', 'Ditolak'],
+                     ] as const).map(([val, label]) => (
+                       <button
+                         key={val}
+                         type="button"
+                         onClick={() => setTopUpStatusFilter(val)}
+                         className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border transition-all ${topUpStatusFilter === val ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                       >
+                         {label}
+                       </button>
+                     ))}
+                   </div>
+                </div>
+
+                {/* Tabel Desktop */}
+                <div className="overflow-x-auto hidden md:block rounded-2xl border border-slate-100">
+                   <table className="w-full text-left">
+                     <thead className="bg-slate-50 text-[9px] uppercase font-black text-slate-400 tracking-widest">
+                       <tr>
+                         <th className="px-4 py-4">Tanggal</th>
+                         <th className="px-4 py-4">ID Member</th>
+                         <th className="px-4 py-4">Nama Member</th>
+                         <th className="px-4 py-4">Metode</th>
+                         <th className="px-4 py-4 text-right">Nominal</th>
+                         <th className="px-4 py-4 text-center">Status</th>
+                         <th className="px-4 py-4 text-center">Bukti</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-100 bg-white">
+                       {pagedTopUpLogs.map(log => (
+                         <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <p className="text-[10px] font-black text-slate-800">{new Date(log.timestamp).toLocaleDateString('id-ID')}</p>
+                              <p className="text-[8px] text-slate-400 font-bold">{new Date(log.timestamp).toLocaleTimeString('id-ID')}</p>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className="font-mono text-[10px] font-black text-honey-600">{log.memberId}</span>
+                            </td>
+                            <td className="px-4 py-4">
+                              <p className="text-[11px] font-black text-slate-800 uppercase truncate max-w-[180px]">{log.member?.name || 'Unknown'}</p>
+                              {log.member?.whatsapp && <p className="text-[9px] text-slate-400 font-bold">{log.member.whatsapp}</p>}
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${TOPUP_METHOD_STYLES[log.topupMethod || 'TRANSFER'] || 'bg-slate-100 text-slate-600'}`}>
+                                {TOPUP_METHOD_LABELS[log.topupMethod || ''] || 'Tidak Diketahui'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-right whitespace-nowrap">
+                              <span className="text-[12px] font-black text-emerald-600">Rp {Number(log.amount).toLocaleString('id-ID')}</span>
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                                log.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                                log.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {log.status === 'APPROVED' ? 'Disetujui' : log.status === 'REJECTED' ? 'Ditolak' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              {isValidMediaRef(log.proof_image) ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setProofLightbox(resolveMediaUrl(log.proof_image))}
+                                  className="w-14 h-14 rounded-xl overflow-hidden border border-slate-200 hover:border-emerald-400 transition-all cursor-zoom-in bg-slate-50"
+                                  title="Perbesar bukti pembayaran"
+                                >
+                                  <img src={resolveMediaUrl(log.proof_image)} className="w-full h-full object-cover" alt={`Bukti Top Up ${log.memberId}`} />
+                                </button>
+                              ) : (
+                                <span className="text-[8px] font-black text-slate-300 uppercase">Tidak Ada</span>
+                              )}
+                            </td>
+                         </tr>
+                       ))}
+                       {pagedTopUpLogs.length === 0 && (
+                         <tr><td colSpan={7} className="py-16 text-center text-slate-300 font-black uppercase text-xs tracking-widest">Tidak ada data top up pada filter ini</td></tr>
+                       )}
+                     </tbody>
+                   </table>
+                </div>
+
+                {/* Tabel Mobile */}
+                <div className="md:hidden divide-y divide-slate-100 rounded-2xl border border-slate-100 overflow-hidden">
+                  {pagedTopUpLogs.map(log => (
+                    <div key={log.id} className="p-4 bg-white flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-black text-slate-800 uppercase truncate">{log.member?.name || 'Unknown'}</p>
+                          <p className="text-[9px] font-mono font-black text-honey-600">{log.memberId}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase shrink-0 ${
+                          log.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                          log.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {log.status === 'APPROVED' ? 'Disetujui' : log.status === 'REJECTED' ? 'Ditolak' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${TOPUP_METHOD_STYLES[log.topupMethod || 'TRANSFER'] || 'bg-slate-100 text-slate-600'}`}>
+                            {TOPUP_METHOD_LABELS[log.topupMethod || ''] || 'Tidak Diketahui'}
+                          </span>
+                          <p className="text-[8px] text-slate-400 font-bold mt-1">{new Date(log.timestamp).toLocaleString('id-ID')}</p>
+                        </div>
+                        <span className="text-[12px] font-black text-emerald-600">Rp {Number(log.amount).toLocaleString('id-ID')}</span>
+                      </div>
+                      {isValidMediaRef(log.proof_image) && (
+                        <button
+                          type="button"
+                          onClick={() => setProofLightbox(resolveMediaUrl(log.proof_image))}
+                          className="w-full h-32 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 cursor-zoom-in"
+                        >
+                          <img src={resolveMediaUrl(log.proof_image)} className="w-full h-full object-cover" alt={`Bukti Top Up ${log.memberId}`} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {pagedTopUpLogs.length === 0 && <div className="py-14 text-center text-slate-300 font-black uppercase text-[10px]">Tidak ada data top up</div>}
+                </div>
+
+                {/* Pagination Rekap */}
+                {topUpTotalPages > 1 && (
+                  <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setTopUpPage(p => Math.max(1, p - 1))}
+                      disabled={topUpPage === 1}
+                      className="px-4 py-2 text-[9px] font-black uppercase bg-white border rounded-xl disabled:opacity-30 hover:bg-slate-100 transition-all shadow-sm"
+                    >
+                      Prev
+                    </button>
+                    <div className="flex gap-1 overflow-x-auto max-w-[220px] no-scrollbar">
+                      {[...Array(topUpTotalPages)].map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setTopUpPage(i + 1)}
+                          className={`w-8 h-8 rounded-lg text-[9px] font-black transition-all shrink-0 ${topUpPage === i + 1 ? 'bg-emerald-600 text-white shadow-md' : 'bg-white border text-slate-400 hover:bg-slate-100'}`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTopUpPage(p => Math.min(topUpTotalPages, p + 1))}
+                      disabled={topUpPage === topUpTotalPages}
+                      className="px-4 py-2 text-[9px] font-black uppercase bg-white border rounded-xl disabled:opacity-30 hover:bg-slate-100 transition-all shadow-sm"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
              </div>
           </div>
         ) : (
@@ -540,6 +934,22 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               
               <div className="space-y-5 overflow-y-auto custom-scrollbar flex-1 pr-2">
                  <div>
+                    <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Metode Top Up</label>
+                    <div className="grid grid-cols-3 gap-2 mt-1">
+                       {(['CASH', 'TRANSFER', 'QRIS'] as const).map(m => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setTopUpMethod(m)}
+                            className={`py-3 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all ${topUpMethod === m ? 'bg-honey-600 border-honey-600 text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-honey-200'}`}
+                          >
+                            {TOPUP_METHOD_LABELS[m]}
+                          </button>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div>
                     <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nominal Saldo (Rp)</label>
                     <input type="number" placeholder="0" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-2xl text-honey-600 outline-none focus:ring-4 focus:ring-honey-500/10 shadow-inner" value={topUpAmount} onChange={e => setTopUpAmount(Number(e.target.value))} />
                  </div>
@@ -547,7 +957,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                  <div>
                     <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Bukti Transfer (Upload)</label>
                     <div onClick={() => fileInputRef.current?.click()} className="mt-1 w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:bg-honey-50 hover:border-honey-300 transition-all">
-                       {topUpProof ? <img src={topUpProof} className="w-full h-full object-cover" /> : <div className="text-center text-slate-300"><i className="fas fa-cloud-upload-alt text-2xl mb-1"></i><p className="text-[8px] font-black uppercase">Klik Untuk Ambil Gambar Bukti</p></div>}
+                       {isValidMediaRef(topUpProof) ? <img src={resolveMediaUrl(topUpProof)} className="w-full h-full object-cover" alt="Pratinjau bukti pembayaran" /> : <div className="text-center text-slate-300"><i className={`fas ${isUploading ? 'fa-spinner fa-spin' : 'fa-cloud-upload-alt'} text-2xl mb-1`}></i><p className="text-[8px] font-black uppercase">{isUploading ? 'Mengunggah...' : 'Klik Untuk Ambil Gambar Bukti'}</p></div>}
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleProofUpload} className="hidden" />
                  </div>
@@ -561,7 +971,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               
               <div className="flex gap-4 pt-6 border-t mt-4 shrink-0">
                  <button onClick={() => setIsTopUpModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500">Batal</button>
-                 <button onClick={async () => { await onTopUp(selectedMember.id, topUpAmount, topUpProof); setIsTopUpModalOpen(false); }} className="flex-1 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-honey-100">Kirim Ajuan</button>
+                 <button onClick={async () => { await onTopUp(selectedMember.id, topUpAmount, topUpProof, topUpMethod); setIsTopUpModalOpen(false); setTopUpProof(undefined); }} className="flex-1 py-4 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-honey-100">Kirim Ajuan</button>
               </div>
            </div>
         </div>
@@ -736,6 +1146,37 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox Pratinjau Bukti Pembayaran */}
+      {proofLightbox && (
+        <div
+          className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-5"
+          onClick={() => setProofLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setProofLightbox(null)}
+            className="absolute top-4 right-4 w-11 h-11 rounded-2xl bg-white/10 text-white hover:bg-white/20 flex items-center justify-center text-lg transition-all border border-white/20"
+          >
+            <i className="fas fa-times"></i>
+          </button>
+          <a
+            href={proofLightbox}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-3 rounded-2xl bg-honey-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-honey-700 transition-all active:scale-95"
+          >
+            <i className="fas fa-download"></i> Unduh Bukti
+          </a>
+          <img
+            src={proofLightbox}
+            alt="Bukti pembayaran"
+            onClick={e => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+          />
         </div>
       )}
 

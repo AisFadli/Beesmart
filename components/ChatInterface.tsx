@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { AppState, User, AppMessage, Member, UserRole } from '../types';
-import apiService from '../services/apiService';
+import apiService, { resolveMediaUrl } from '../services/apiService';
 
 interface ChatInterfaceProps {
   state: AppState;
@@ -16,13 +16,7 @@ const matchIds = (id1?: string | number, id2?: string | number) => {
   return clean1 === clean2;
 };
 
-// Resolve relative upload path (uploads/xxx) ke URL absolut sesuai lokasi PWA (/app)
-const resolveMediaUrl = (url?: string | null) => {
-  if (!url) return '';
-  if (/^(https?:|data:|blob:)/i.test(url)) return url;
-  const prefix = window.location.pathname.startsWith('/app') ? '/app/' : '/';
-  return prefix + url.replace(/^\/+/, '');
-};
+
 
 // Kompres foto di sisi client agar ukurannya kecil saat dikirim
 const compressImage = (file: File, maxDim = 1280, quality = 0.8): Promise<File> => {
@@ -627,7 +621,8 @@ try {
   // Member's available chat channels (Admin or Tenants who contacted them)
   const memberContactTenants = useMemo(() => {
     if (!isMember) return [];
-    const tenantMap = new Map<string, { id: string; name: string; lastMsg?: AppMessage; unread: number }>();
+    type TenantContact = { id: string; name: string; lastMsg?: AppMessage; unread: number };
+    const tenantMap = new Map<string, TenantContact>();
 
     const safeMessages = allMessages;
 
@@ -636,7 +631,7 @@ try {
 
       if (msg.senderRole === 'TENANT' && matchIds(msg.receiverId, currentUser?.id)) {
         const key = normalizeId(msg.senderId);
-        const existing = tenantMap.get(key) || { id: msg.senderId, name: msg.senderName || 'Tenant', unread: 0 };
+        const existing: TenantContact = tenantMap.get(key) || { id: msg.senderId, name: msg.senderName || 'Tenant', unread: 0 };
         if (!existing.lastMsg || safeGetTime(msg.timestamp) >= safeGetTime(existing.lastMsg.timestamp)) {
           existing.lastMsg = msg;
         }
@@ -647,7 +642,7 @@ try {
         tenantMap.set(key, existing);
       } else if (msg.receiverRole === 'TENANT' && matchIds(msg.senderId, currentUser?.id)) {
         const key = normalizeId(msg.receiverId);
-        const existing = tenantMap.get(key) || { id: msg.receiverId, name: msg.receiverName || 'Tenant', unread: 0 };
+        const existing: TenantContact = tenantMap.get(key) || { id: msg.receiverId, name: msg.receiverName || 'Tenant', unread: 0 };
         if (!existing.lastMsg || safeGetTime(msg.timestamp) >= safeGetTime(existing.lastMsg.timestamp)) {
           existing.lastMsg = msg;
         }
