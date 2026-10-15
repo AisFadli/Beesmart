@@ -1,9 +1,10 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $data = json_decode(file_get_contents('php://input'), true);
+if (!is_array($data)) sendResponse(["status" => "error", "message" => "Data import tidak valid."], 400);
 
 if ($method !== 'POST') {
     sendResponse(["status" => "error", "message" => "Method not allowed"], 405);
@@ -12,7 +13,9 @@ if ($method !== 'POST') {
 try {
     $items = $data['items'] ?? [];
     $updateStock = filter_var($data['updateStock'] ?? false, FILTER_VALIDATE_BOOLEAN);
-    $staffId = $data['staffId'] ?? 'System Import';
+    $actorStmt = $pdo->prepare("SELECT name FROM users WHERE id = ? LIMIT 1");
+    $actorStmt->execute([$auth['uid'] ?? '']);
+    $staffId = $actorStmt->fetchColumn() ?: ($auth['uid'] ?? 'System Import');
 
     if (empty($items)) {
         sendResponse(["status" => "error", "message" => "No items to import"], 400);
@@ -47,10 +50,10 @@ try {
 
         foreach ($txData['items'] as $item) {
             $sku = $item['SKU'] ?? '';
-            $qty = (float)($item['Quantity'] ?? 0);
-            $price = (float)($item['Selling_Price'] ?? 0);
+            $qty = filter_var($item['Quantity'] ?? null, FILTER_VALIDATE_INT);
+            $price = $item['Selling_Price'] ?? null;
 
-            if (empty($sku) || $qty <= 0) {
+            if (empty($sku) || $qty === false || $qty <= 0 || !is_numeric($price) || (float)$price < 0) {
                 $results[] = ["ref" => $ref, "status" => "error", "message" => "Invalid SKU or Quantity"];
                 $txError = true;
                 break;
@@ -67,6 +70,7 @@ try {
                 break;
             }
 
+            $price = (float)$price;
             $subtotal = $qty * $price;
             $total += $subtotal;
 
@@ -80,11 +84,6 @@ try {
                 'subtotal' => $subtotal
             ];
 
-            // Update stock if requested
-            if ($updateStock) {
-                $stmt = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
-                $stmt->execute([$qty, $product['id']]);
-            }
         }
 
         if ($txError) {
@@ -103,6 +102,12 @@ try {
             continue;
         }
 
+        if (!preg_match('/^[A-Za-z0-9_-]{1,50}$/', (string)$txId)) {
+            $results[] = ["ref" => $ref, "status" => "error", "message" => "Invalid transaction ID"];
+            $errorCount++;
+            continue;
+        }
+
         $stmt = $pdo->prepare("INSERT INTO transactions (id, timestamp, total, paymentMethod, paymentStatus, staffId, customerName, notes, status) VALUES (?, ?, ?, ?, 'PAID', ?, ?, ?, 'NORMAL')");
         $stmt->execute([$txId, $txData['date'], $total, $txData['paymentMethod'], $staffId, $txData['customerName'], $txData['notes']]);
 
@@ -110,6 +115,10 @@ try {
         $stmt = $pdo->prepare("INSERT INTO transaction_items (transactionId, productId, name, category, quantity, price, costPrice, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         foreach ($txItems as $ti) {
             $stmt->execute([$txId, $ti['productId'], $ti['name'], $ti['category'], $ti['quantity'], $ti['price'], $ti['costPrice'], $ti['subtotal']]);
+            if ($updateStock) {
+                $stmtStock = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+                $stmtStock->execute([$ti['quantity'], $ti['productId']]);
+            }
         }
 
         $successCount++;

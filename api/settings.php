@@ -22,15 +22,19 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
-    requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+    $auth = requireAuth(['ADMIN', 'STAFF', 'TENANT']);
+    $isAdmin = strtoupper($auth['role'] ?? '') === 'ADMIN';
     $data = json_decode(file_get_contents("php://input"), true);
+    if (!is_array($data)) {
+        sendResponse(["status" => "error", "message" => "Data pengaturan tidak valid."], 400);
+    }
     try {
         foreach ($data as $key => $value) {
-            if ($key === 'staffName' || $key === 'userRole') continue;
+            if (!$isAdmin && !in_array($key, ['autoPrint', 'printerType'], true)) continue;
             $valStr = is_array($value) ? json_encode($value) : $value;
             $stmt = $pdo->prepare("REPLACE INTO app_settings (setting_key, setting_value) VALUES (?, ?)");
             $stmt->execute([$key, $valStr]);
-            logActivity($pdo, $data['staffName'] ?? 'System', 'Settings', 'UPDATE_SETTING', $key, null, $value);
+            logActivity($pdo, $auth['uid'] ?? 'System', 'Settings', 'UPDATE_SETTING', $key, null, $value);
         }
         sendResponse(["status" => "success"]);
     } catch (Exception $e) {

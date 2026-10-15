@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'TENANT']);
 
 $productId = $_GET['productId'] ?? '';
 
@@ -16,6 +16,17 @@ try {
 
     if (!$product) {
         sendResponse(["status" => "error", "message" => "Product not found."], 404);
+    }
+
+    if (strtoupper($auth['role'] ?? '') === 'TENANT') {
+        $tenantStmt = $pdo->prepare("SELECT tenantCategories FROM users WHERE id = ? AND (status = 'ACTIVE' OR status IS NULL OR status = '') LIMIT 1");
+        $tenantStmt->execute([$auth['uid'] ?? '']);
+        $tenantRow = $tenantStmt->fetch();
+        $tenantCategories = $tenantRow ? (json_decode($tenantRow['tenantCategories'] ?? '[]', true) ?: []) : [];
+        $tenantCategories = array_map(function($category) { return strtoupper(trim((string)$category)); }, $tenantCategories);
+        if (!in_array(strtoupper(trim((string)$product['category'])), $tenantCategories, true)) {
+            sendResponse(["status" => "error", "message" => "Produk berada di luar kategori yang dikelola tenant."], 403);
+        }
     }
 
     $history = [];
@@ -108,7 +119,7 @@ try {
     // Calculate Running Balance
     $runningBalance = 0;
     foreach ($history as &$h) {
-        $effectiveQty = ($h['status'] === 'CANCELLED' || $h['status'] === 'PENDING') ? 0 : $h['qty'];
+        $effectiveQty = in_array($h['status'], ['CANCELLED', 'PENDING', 'INACTIVE'], true) ? 0 : $h['qty'];
         $runningBalance += $effectiveQty;
         $h['endingBalance'] = $runningBalance;
         $h['date'] = date('d/m/Y', strtotime($h['timestamp']));

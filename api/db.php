@@ -60,9 +60,34 @@ try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db_name;charset=utf8mb4", $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
     ]);
-    
+
+    require_once __DIR__ . '/auth_guard.php';
+    $selfFile = basename($_SERVER['SCRIPT_FILENAME'] ?? ($_SERVER['SCRIPT_NAME'] ?? ''));
+    $publicEndpoints = ['auth.php', 'forgot_password.php', 'register.php', 'index.php'];
+    $requestAuth = null;
+    if (!in_array($selfFile, $publicEndpoints, true) && $_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
+        $requestAuth = requireAuth();
+    }
+
+    $schemaVersion = '2026-10-15-2';
+    $pdo->exec("CREATE TABLE IF NOT EXISTS app_schema_versions (
+        version VARCHAR(32) PRIMARY KEY,
+        appliedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $versionStmt = $pdo->prepare("SELECT 1 FROM app_schema_versions WHERE version = ? LIMIT 1");
+    $versionStmt->execute([$schemaVersion]);
+    if (!$versionStmt->fetchColumn()) {
+        $migrationLock = (int)$pdo->query("SELECT GET_LOCK('beesmart_schema_migration', 10)")->fetchColumn();
+        if ($migrationLock !== 1) {
+            sendResponse(["status" => "error", "message" => "Database sedang menjalankan pembaruan skema. Coba lagi sebentar."], 503);
+        }
+
+        try {
+            $versionStmt->execute([$schemaVersion]);
+            if (!$versionStmt->fetchColumn()) {
     // --- CORE SCHEMA INITIALIZATION ---
     $pdo->exec("CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(50) PRIMARY KEY,
@@ -71,6 +96,7 @@ try {
         name VARCHAR(100),
         role VARCHAR(20) DEFAULT 'USER',
         status VARCHAR(20) DEFAULT 'ACTIVE',
+        tokenVersion INT NOT NULL DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
     try { $pdo->exec("ALTER TABLE users ADD COLUMN email VARCHAR(100) UNIQUE AFTER username"); } catch (Exception $e) {}
@@ -311,6 +337,15 @@ try {
     try {
         $pdo->exec("ALTER TABLE messages ADD INDEX idx_msg_isread (isRead)");
     } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE order_items ADD INDEX idx_order_items_product (productId)");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE stock_adjustments ADD INDEX idx_stock_adjustments_product (productId)");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE messages ADD INDEX idx_msg_timestamp (timestamp)");
+    } catch (Exception $e) {}
 
     // Ensure all products have a valid status
     $pdo->exec("UPDATE products SET status = 'ACTIVE' WHERE status IS NULL OR status = ''");
@@ -384,6 +419,9 @@ try {
 
     // --- MIGRATION / SCHEMA UPDATES FOR EXISTING INSTALLS ---
     $tables = [
+        'users' => [
+            'tokenVersion' => "INT NOT NULL DEFAULT 0"
+        ],
         'products' => [
             'initialStock' => "INT DEFAULT 0",
             'status' => "VARCHAR(20) DEFAULT 'ACTIVE'",
@@ -485,12 +523,34 @@ try {
         error_log("Normalization Migration Failed: " . $e->getMessage());
     }
 
+            $versionInsert = $pdo->prepare("INSERT INTO app_schema_versions (version) VALUES (?)");
+            $versionInsert->execute([$schemaVersion]);
+            }
+        } finally {
+            $pdo->query("SELECT RELEASE_LOCK('beesmart_schema_migration')");
+        }
+    }
+
+    if ($requestAuth) {
+        $stmtAccount = $pdo->prepare("SELECT role, status, tokenVersion, name FROM users WHERE id = ? LIMIT 1");
+        $stmtAccount->execute([$requestAuth['uid']]);
+        $account = $stmtAccount->fetch();
+        if (!$account || strtoupper((string)$account['status']) !== 'ACTIVE' ||
+            strtoupper((string)$account['role']) !== strtoupper((string)$requestAuth['role']) ||
+            (int)$account['tokenVersion'] !== (int)($requestAuth['ver'] ?? 0)) {
+            sendResponse(["status" => "error", "message" => "Sesi tidak lagi aktif. Silakan login kembali."], 401);
+        }
+        $requestAuth['name'] = $account['name'];
+        $GLOBALS['AUTH'] = $requestAuth;
+    }
+
 } catch (PDOException $e) {
     ob_clean();
     http_response_code(500);
+    error_log("Database bootstrap failed: " . $e->getMessage());
     echo json_encode([
         "status" => "error", 
-        "message" => "Koneksi Database Gagal: " . $e->getMessage()
+        "message" => "Koneksi atau inisialisasi database gagal."
     ]);
     exit;
 }
@@ -547,14 +607,4 @@ function sendResponse($data, $status = 200) {
     }
     echo json_encode($data);
     exit;
-}
-
-// --- API AUTHENTICATION (TERPUSAT) ---
-// Semua endpoint wajib token kecuali: login, lupa password, index.
-require_once __DIR__ . '/auth_guard.php';
-
-$selfFile = basename($_SERVER['SCRIPT_FILENAME'] ?? ($_SERVER['SCRIPT_NAME'] ?? ''));
-$publicEndpoints = ['auth.php', 'forgot_password.php', 'register.php', 'index.php'];
-if (!in_array($selfFile, $publicEndpoints, true) && $_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
-    requireAuth();
 }

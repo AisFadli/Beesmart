@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'TENANT']);
 
 $category = $_GET['category'] ?? '';
 
@@ -9,6 +9,17 @@ if (!$category) {
 }
 
 try {
+    if (strtoupper($auth['role'] ?? '') === 'TENANT') {
+        $tenantStmt = $pdo->prepare("SELECT tenantCategories FROM users WHERE id = ? AND (status = 'ACTIVE' OR status IS NULL OR status = '') LIMIT 1");
+        $tenantStmt->execute([$auth['uid'] ?? '']);
+        $tenantRow = $tenantStmt->fetch();
+        $tenantCategories = $tenantRow ? (json_decode($tenantRow['tenantCategories'] ?? '[]', true) ?: []) : [];
+        $tenantCategories = array_map(function($item) { return strtoupper(trim((string)$item)); }, $tenantCategories);
+        if (!in_array(strtoupper(trim($category)), $tenantCategories, true)) {
+            sendResponse(["status" => "error", "message" => "Kategori berada di luar cakupan tenant."], 403);
+        }
+    }
+
     // 1. Get all products in the category
     $stmtProds = $pdo->prepare("SELECT id, name, sku, category, initialStock, initialStockDate, costPrice, stock FROM products WHERE category = ? AND (status != 'INACTIVE' OR status IS NULL)");
     $stmtProds->execute([$category]);
@@ -41,7 +52,8 @@ try {
         SELECT i.productId, SUM(i.quantity) as total_out
         FROM transaction_items i
         JOIN transactions t ON i.transactionId = t.id
-        WHERE i.productId IN ($placeholders) AND t.status != 'CANCELLED'
+                WHERE i.productId IN ($placeholders)
+                    AND (t.status IS NULL OR t.status NOT IN ('CANCELLED', 'PENDING', 'INACTIVE'))
         GROUP BY i.productId
     ");
     $stmtSales->execute($productIds);
@@ -54,7 +66,8 @@ try {
     $stmtAdj = $pdo->prepare("
         SELECT productId, type, quantity, status
         FROM stock_adjustments
-        WHERE productId IN ($placeholders) AND status != 'CANCELLED' AND status != 'PENDING'
+                WHERE productId IN ($placeholders)
+                    AND (status IS NULL OR status NOT IN ('CANCELLED', 'PENDING'))
     ");
     $stmtAdj->execute($productIds);
     $adjMap = [];
@@ -73,7 +86,7 @@ try {
         $orders = $ordersMap[$pid] ?? 0;
         $sales = $salesMap[$pid] ?? 0;
         $adjustments = $adjMap[$pid] ?? 0;
-        $initial = (int)$p['initialStock'];
+        $initial = !empty($p['initialStockDate']) ? (int)$p['initialStock'] : 0;
         
         // Final stock calculated from audit trail
         $calculatedStock = $initial + $orders - $sales + $adjustments;

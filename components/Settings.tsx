@@ -649,10 +649,12 @@ const Settings: React.FC<SettingsProps> = ({ settings, userRole, shippingRates, 
 
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Password {userForm.id ? '(Kosongkan jika tidak diubah)' : '(Default: 123456 jika kosong)'}
+                  Password {userForm.id ? '(Kosongkan jika tidak diubah)' : '(Minimal 8 karakter)'}
                 </label>
                 <input 
                   type="password" 
+                  required={!userForm.id}
+                  minLength={8}
                   value={userForm.password} 
                   onChange={e => setUserForm(prev => ({ ...prev, password: e.target.value }))}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-honey-500" 

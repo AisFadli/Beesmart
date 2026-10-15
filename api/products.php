@@ -1,11 +1,12 @@
 
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
+    requireAuth(['ADMIN']);
     $data = json_decode(file_get_contents("php://input"), true);
     try {
         // Log action
@@ -64,7 +65,7 @@ if ($method === 'POST') {
         ]);
 
         if ($before) {
-            logActivity($pdo, $data['staffName'] ?? 'System', 'Inventory', 'UPDATE', $data['id'], $before, $data);
+            logActivity($pdo, $auth['name'] ?? 'System', 'Inventory', 'UPDATE', $data['id'], $before, $data);
         }
         
         sendResponse(["status" => "success", "message" => "Produk berhasil diperbarui"]);
@@ -74,6 +75,7 @@ if ($method === 'POST') {
 }
 
 if ($method === 'DELETE') {
+    requireAuth(['ADMIN']);
     $id = $_GET['id'] ?? '';
     try {
         // Fetch before data for log

@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -33,7 +33,7 @@ try {
             throw new Exception("Gagal memproses data produk (JSON Error: " . json_last_error_msg() . ")");
         }
 
-        $staffId = $data['staffId'] ?? 'unknown';
+        $staffId = $auth['name'] ?? ($auth['uid'] ?? 'unknown');
         $reason = $data['reason'] ?? '';
         $id = 'PROP-' . time() . '-' . rand(1000, 9999);
         

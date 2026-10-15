@@ -2,23 +2,25 @@
 <?php
 require_once 'db.php';
 require_once 'mail_sender.php';
+$auth = requireAuth(['ADMIN', 'STAFF', 'MEMBER']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
     $data = json_decode(file_get_contents("php://input"), true);
+    if (!is_array($data)) sendResponse(["status" => "error", "message" => "Data member tidak valid."], 400);
 
     // Otorisasi & anti-tamper: member hanya boleh mengubah profil dirinya sendiri,
     // dan tidak dapat mengubah saldo/status/barcode.
-    $auth = currentAuth();
     $authRole = strtoupper($auth['role'] ?? '');
     $isStaff = in_array($authRole, ['ADMIN', 'STAFF'], true);
     if (!$isStaff) {
-        if (($data['id'] ?? '') !== $auth['uid']) {
+        $memberUid = preg_replace('/^(USER-|USR-)/i', '', trim((string)($auth['uid'] ?? '')));
+        if (!in_array(($data['id'] ?? ''), [$auth['uid'] ?? '', $memberUid], true)) {
             sendResponse(["status" => "error", "message" => "Anda hanya dapat mengubah profil Anda sendiri."], 403);
         }
         unset($data['depositBalance'], $data['status'], $data['registrationDate'], $data['barcode']);
-        $data['id'] = $auth['uid'];
+        $data['id'] = $memberUid;
     }
 
     try {
@@ -59,8 +61,16 @@ if ($method === 'POST') {
             $password = password_hash($data['password'], PASSWORD_BCRYPT);
         }
 
-        $barcode = !empty($data['barcode']) ? trim($data['barcode']) : ('MBR-' . $data['id']);
+        $barcode = $isStaff
+            ? (!empty($data['barcode']) ? trim($data['barcode']) : ('MBR-' . $data['id']))
+            : ($before['barcode'] ?? ('MBR-' . $data['id']));
         $image = $data['image'] ?? $data['photo'] ?? ($before['image'] ?? null);
+        $registrationDate = $isStaff
+            ? ($data['registrationDate'] ?? ($before['registrationDate'] ?? date('Y-m-d H:i:s')))
+            : ($before['registrationDate'] ?? date('Y-m-d H:i:s'));
+        $depositBalance = $isStaff
+            ? (float)($data['depositBalance'] ?? ($before['depositBalance'] ?? 0))
+            : (float)($before['depositBalance'] ?? 0);
 
         $stmt = $pdo->prepare("REPLACE INTO members (id, barcode, name, email, address, password, whatsapp, image, registrationDate, depositBalance, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
@@ -76,15 +86,15 @@ if ($method === 'POST') {
             $password,
             $data['whatsapp'], 
             $image,
-            str_replace('T', ' ', $data['registrationDate']), 
-            (float)($data['depositBalance'] ?? 0), 
+            str_replace('T', ' ', $registrationDate),
+            $depositBalance,
             $status
         ]);
 
         // Sync to users table for login capability
         // Automatically ACTIVE because members are now auto-approved, unless suspended
         $userStatus = ($status === 'APPROVED') ? 'ACTIVE' : 'SUSPENDED';
-        $stmtUser = $pdo->prepare("REPLACE INTO users (id, name, email, password, role, status) VALUES (?, ?, ?, ?, 'MEMBER', ?)");
+        $stmtUser = $pdo->prepare("INSERT INTO users (id, name, email, password, role, status) VALUES (?, ?, ?, ?, 'MEMBER', ?) ON DUPLICATE KEY UPDATE name = VALUES(name), email = VALUES(email), password = VALUES(password), role = 'MEMBER', status = VALUES(status)");
         $stmtUser->execute([
             $data['id'],
             $data['name'],
@@ -92,6 +102,9 @@ if ($method === 'POST') {
             $password,
             $userStatus
         ]);
+        if ($before && ($password !== $before['password'] || $status !== $before['status'])) {
+            $pdo->prepare("UPDATE users SET tokenVersion = tokenVersion + 1 WHERE id = ?")->execute([$data['id']]);
+        }
 
         // Kirim Email No-Reply beserta Lampiran Teks S&K dan Kebijakan Privasi
         if (!$before) {
@@ -137,7 +150,7 @@ if ($method === 'POST') {
         }
 
         if ($before) {
-            logActivity($pdo, $data['staffName'] ?? 'System', 'Membership', 'UPDATE_MEMBER', $data['id'], $before, $data);
+            logActivity($pdo, $auth['name'] ?? 'System', 'Membership', 'UPDATE_MEMBER', $data['id'], $before, $data);
         }
 
         sendResponse(["status" => "success", "message" => "Data member berhasil diperbarui"]);
@@ -147,6 +160,7 @@ if ($method === 'POST') {
 }
 
 if ($method === 'DELETE') {
+    requireAuth(['ADMIN', 'STAFF']);
     $id = $_GET['id'] ?? '';
     try {
         $stmt = $pdo->prepare("SELECT * FROM members WHERE id = ?");
@@ -156,7 +170,7 @@ if ($method === 'DELETE') {
         if ($before) {
             $stmt = $pdo->prepare("UPDATE members SET status = 'INACTIVE' WHERE id = ?");
             $stmt->execute([$id]);
-            logActivity($pdo, $_GET['staffName'] ?? 'System', 'Membership', 'DELETE_MEMBER', $id, $before, ['status' => 'INACTIVE']);
+            logActivity($pdo, $auth['name'] ?? 'System', 'Membership', 'DELETE_MEMBER', $id, $before, ['status' => 'INACTIVE']);
         }
         sendResponse(["status" => "success", "message" => "Member berhasil dihapus"]);
     } catch (PDOException $e) {

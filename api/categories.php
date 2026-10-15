@@ -1,10 +1,11 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
+    requireAuth(['ADMIN']);
     $data = json_decode(file_get_contents("php://input"), true);
     try {
         $before = null;
@@ -20,7 +21,7 @@ if ($method === 'POST') {
         $stmt->execute([$data['id'], $normalizedName, $status]);
 
         if ($before) {
-            logActivity($pdo, $data['staffName'] ?? 'System', 'Inventory', 'UPDATE_CATEGORY', $data['id'], $before, $data);
+            logActivity($pdo, $auth['name'] ?? 'System', 'Inventory', 'UPDATE_CATEGORY', $data['id'], $before, $data);
         }
 
         sendResponse(["status" => "success"]);
@@ -30,6 +31,7 @@ if ($method === 'POST') {
 }
 
 if ($method === 'DELETE') {
+    requireAuth(['ADMIN']);
     $id = $_GET['id'] ?? '';
     try {
         $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");

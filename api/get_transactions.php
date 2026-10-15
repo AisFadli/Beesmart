@@ -1,15 +1,19 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR', 'MEMBER']);
 
-$startDate = $_GET['startDate'] ?? date('Y-m-d', strtotime('-30 days'));
-$endDate = $_GET['endDate'] ?? date('Y-m-d');
-$page = (int)($_GET['page'] ?? 1);
-$limit = (int)($_GET['limit'] ?? 50);
+$startDate = (string)($_GET['startDate'] ?? date('Y-m-d', strtotime('-30 days')));
+$endDate = (string)($_GET['endDate'] ?? date('Y-m-d'));
+$page = min(10000, max(1, (int)($_GET['page'] ?? 1)));
+$limit = min(100, max(1, (int)($_GET['limit'] ?? 50)));
 $offset = ($page - 1) * $limit;
 $search = $_GET['search'] ?? '';
-$role = $_GET['role'] ?? '';
-$userId = $_GET['userId'] ?? '';
+$role = strtoupper($auth['role'] ?? '');
+$userId = (string)($auth['uid'] ?? '');
+
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate) || $startDate > $endDate) {
+    sendResponse(["status" => "error", "message" => "Rentang tanggal tidak valid."], 400);
+}
 
 try {
     $tenantCategoriesUpper = [];
@@ -34,7 +38,7 @@ try {
         }
     }
 
-    $where = "WHERE DATE(timestamp) BETWEEN ? AND ?";
+    $where = "WHERE timestamp >= ? AND timestamp < DATE_ADD(?, INTERVAL 1 DAY)";
     $params = [$startDate, $endDate];
 
     if ($role === 'TENANT' && !empty($tenantCategoriesUpper)) {
@@ -43,6 +47,13 @@ try {
         foreach ($tenantCategoriesUpper as $tc) {
             $params[] = $tc;
         }
+    }
+
+    if ($role === 'MEMBER') {
+        $memberId = preg_replace('/^(USER-|USR-)/i', '', trim($userId));
+        $where .= " AND memberId IN (?, ?)";
+        $params[] = $userId;
+        $params[] = $memberId;
     }
 
     if (!empty($search)) {

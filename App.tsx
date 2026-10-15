@@ -381,6 +381,7 @@ const App: React.FC = () => {
                       categories={state.categories}
                       transactions={state.transactions}
                       productProposals={state.productProposals}
+                      onRefreshData={refreshData}
                       onSaveProduct={async p => { await apiService.saveProduct(p); refreshData(); }}
                       onDeleteProduct={async id => { await apiService.deleteProduct(id); refreshData(); }}
                       userRole={state.currentUser.role}

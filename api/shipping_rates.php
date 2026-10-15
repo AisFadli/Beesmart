@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -10,6 +10,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    requireAuth(['ADMIN']);
     $data = json_decode(file_get_contents("php://input"), true);
     try {
         if (isset($data['id'])) {
@@ -20,13 +21,13 @@ if ($method === 'POST') {
             $stmt = $pdo->prepare("UPDATE shipping_rates SET minDistance = ?, maxDistance = ?, rate = ? WHERE id = ?");
             $stmt->execute([$data['minDistance'], $data['maxDistance'], $data['rate'], $data['id']]);
             
-            logActivity($pdo, $data['staffName'] ?? 'System', 'Settings', 'UPDATE_SHIPPING_RATE', $data['id'], $before, $data);
+            logActivity($pdo, $auth['name'] ?? 'System', 'Settings', 'UPDATE_SHIPPING_RATE', $data['id'], $before, $data);
         } else {
             $stmt = $pdo->prepare("INSERT INTO shipping_rates (minDistance, maxDistance, rate) VALUES (?, ?, ?)");
             $stmt->execute([$data['minDistance'], $data['maxDistance'], $data['rate']]);
             $id = $pdo->lastInsertId();
             
-            logActivity($pdo, $data['staffName'] ?? 'System', 'Settings', 'CREATE_SHIPPING_RATE', $id, null, $data);
+            logActivity($pdo, $auth['name'] ?? 'System', 'Settings', 'CREATE_SHIPPING_RATE', $id, null, $data);
         }
         sendResponse(["status" => "success"]);
     } catch (Exception $e) {
@@ -35,6 +36,7 @@ if ($method === 'POST') {
 }
 
 if ($method === 'DELETE') {
+    requireAuth(['ADMIN']);
     $id = $_GET['id'] ?? '';
     try {
         $stmt = $pdo->prepare("SELECT * FROM shipping_rates WHERE id = ?");

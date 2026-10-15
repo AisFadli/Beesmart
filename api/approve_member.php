@@ -1,7 +1,7 @@
 
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF']);
+$auth = requireAuth(['ADMIN', 'STAFF']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents("php://input"), true);
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $upd->execute([$memberId]);
 
         // 3. Masukkan ke tabel users agar bisa login
-        $ins = $pdo->prepare("REPLACE INTO users (id, email, name, role, password, status) VALUES (?, ?, ?, ?, ?, ?)");
+        $ins = $pdo->prepare("INSERT INTO users (id, email, name, role, password, status) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE email = VALUES(email), name = VALUES(name), role = VALUES(role), password = VALUES(password), status = VALUES(status), tokenVersion = tokenVersion + 1");
         $ins->execute([
             $memberId,
             $member['email'],
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'ACTIVE'
         ]);
 
-        logActivity($pdo, $data['staffName'] ?? 'System', 'Membership', 'APPROVE_MEMBER', $memberId, $member, ['status' => 'APPROVED']);
+        logActivity($pdo, $auth['name'] ?? 'System', 'Membership', 'APPROVE_MEMBER', $memberId, $member, ['status' => 'APPROVED']);
 
         $pdo->commit();
         sendResponse(["status" => "success", "message" => "Member disetujui dan akun login telah aktif."]);

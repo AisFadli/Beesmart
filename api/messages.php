@@ -1,5 +1,9 @@
 <?php
 require_once 'db.php';
+$auth = requireAuth(['ADMIN', 'STAFF', 'TENANT', 'VISITOR', 'MEMBER']);
+$authRole = strtoupper($auth['role'] ?? '');
+$authUid = trim((string)($auth['uid'] ?? ''));
+$cleanAuthUid = preg_replace('/^(USER-|USR-)/i', '', $authUid);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $data = json_decode(file_get_contents('php://input'), true);
@@ -9,21 +13,68 @@ try {
         $action = $data['action'] ?? 'send';
 
         if ($action === 'send') {
-            $senderId = $data['senderId'] ?? '';
-            $senderRole = $data['senderRole'] ?? '';
-            $senderName = $data['senderName'] ?? '';
-            $receiverId = $data['receiverId'] ?? '';
-            $receiverRole = $data['receiverRole'] ?? '';
-            $receiverName = $data['receiverName'] ?? '';
+            $requestedReceiverId = trim((string)($data['receiverId'] ?? ''));
             $message = trim((string)($data['message'] ?? ''));
             $imageUrl = !empty($data['imageUrl']) ? trim((string)$data['imageUrl']) : null;
 
-            if (empty($senderId) || empty($receiverId) || (empty($message) && empty($imageUrl))) {
+            if ($requestedReceiverId === '' || (empty($message) && empty($imageUrl)) || strlen($message) > 20000) {
                 throw new Exception("Sender, Receiver, dan Pesan atau Foto tidak boleh kosong.");
             }
 
+            if ($imageUrl !== null && !preg_match('#^uploads/[A-Za-z0-9_.-]+$#', $imageUrl)) {
+                sendResponse(["status" => "error", "message" => "Lampiran tidak valid."], 400);
+            }
+
+            $receiverId = $requestedReceiverId;
+            $receiverRole = '';
+            $receiverName = '';
+            if ($requestedReceiverId === 'TENANT_ROOM' && in_array($authRole, ['ADMIN', 'STAFF', 'TENANT'], true)) {
+                $receiverRole = 'TENANT_GROUP';
+                $receiverName = 'Room Koordinasi Tenant';
+            } elseif ($requestedReceiverId === 'INTERNAL' && in_array($authRole, ['ADMIN', 'STAFF', 'VISITOR'], true)) {
+                $receiverRole = 'STAFF';
+                $receiverName = 'Komunitas Internal Staff';
+            } elseif ($requestedReceiverId === 'ADMIN' && $authRole === 'MEMBER') {
+                $receiverRole = 'ADMIN';
+                $receiverName = 'Admin Koperasi';
+            } else {
+                $stmtMember = $pdo->prepare("SELECT id, name FROM members WHERE id = ? AND status = 'APPROVED' LIMIT 1");
+                $stmtMember->execute([$requestedReceiverId]);
+                $targetMember = $stmtMember->fetch();
+                if ($targetMember && in_array($authRole, ['ADMIN', 'STAFF', 'TENANT'], true)) {
+                    $receiverRole = 'MEMBER';
+                    $receiverName = $targetMember['name'];
+                } else {
+                    $stmtUser = $pdo->prepare("SELECT id, name, role FROM users WHERE id = ? AND (status = 'ACTIVE' OR status IS NULL OR status = '') LIMIT 1");
+                    $stmtUser->execute([$requestedReceiverId]);
+                    $targetUser = $stmtUser->fetch();
+                    $targetRole = strtoupper((string)($targetUser['role'] ?? ''));
+                    $canContactUser = $targetUser && in_array($authRole, ['ADMIN', 'STAFF', 'TENANT', 'VISITOR'], true);
+                    if ($authRole === 'MEMBER') $canContactUser = $targetUser && $targetRole === 'TENANT';
+                    if ($authRole === 'VISITOR') $canContactUser = $targetUser && in_array($targetRole, ['ADMIN', 'STAFF'], true);
+                    if (!$canContactUser) {
+                        sendResponse(["status" => "error", "message" => "Penerima tidak valid atau Anda tidak berhak menghubunginya."], 403);
+                    }
+                    $receiverId = $targetUser['id'];
+                    $receiverRole = $targetRole;
+                    $receiverName = $targetUser['name'];
+                }
+            }
+
+            if ($receiverRole === '') {
+                sendResponse(["status" => "error", "message" => "Penerima tidak valid atau Anda tidak berhak menghubunginya."], 403);
+            }
+
+            $stmtSender = $pdo->prepare("SELECT name FROM users WHERE id = ? UNION SELECT name FROM members WHERE id = ? LIMIT 1");
+            $stmtSender->execute([$authUid, $authUid]);
+            $senderName = $stmtSender->fetchColumn() ?: ($auth['email'] ?? 'User');
+            $senderId = $authRole === 'MEMBER' ? $cleanAuthUid : $authUid;
+            if (in_array($authRole, ['ADMIN', 'STAFF'], true) && $receiverRole === 'MEMBER') {
+                $senderId = 'ADMIN';
+            }
+
             $stmt = $pdo->prepare("INSERT INTO messages (senderId, senderRole, senderName, receiverId, receiverRole, receiverName, message, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$senderId, $senderRole, $senderName, $receiverId, $receiverRole, $receiverName, $message, $imageUrl]);
+            $stmt->execute([$senderId, $authRole, $senderName, $receiverId, $receiverRole, $receiverName, $message, $imageUrl]);
 
             sendResponse(["status" => "success", "id" => $pdo->lastInsertId()]);
         } elseif ($action === 'delete') {
@@ -33,9 +84,7 @@ try {
             }
 
             // Otorisasi: pengirim pesan tsb ATAU role ADMIN
-            $auth = currentAuth();
-            $authRole = strtoupper((string)($auth['role'] ?? ''));
-            $authUid = strtolower(preg_replace('/^(USER-|USR-)/i', '', trim((string)($auth['uid'] ?? ''))));
+            $normalizedAuthUid = strtolower($cleanAuthUid);
 
             $chkStmt = $pdo->prepare("SELECT * FROM messages WHERE id = ? LIMIT 1");
             $chkStmt->execute([$msgId]);
@@ -46,7 +95,7 @@ try {
             }
 
             $msgSenderNorm = strtolower(preg_replace('/^(USER-|USR-)/i', '', trim((string)$msg['senderId'])));
-            $isSender = ($authUid !== '' && $authUid === $msgSenderNorm);
+            $isSender = ($normalizedAuthUid !== '' && $normalizedAuthUid === $msgSenderNorm);
             $isAdmin = ($authRole === 'ADMIN');
 
             if (!$isSender && !$isAdmin) {
@@ -71,22 +120,36 @@ try {
 
             sendResponse(["status" => "success", "message" => "Pesan berhasil dihapus."]);
         } elseif ($action === 'mark_read') {
-            $senderId = $data['senderId'] ?? '';
-            $receiverId = $data['receiverId'] ?? '';
+            $senderId = trim((string)($data['senderId'] ?? ''));
+            $receiverId = trim((string)($data['receiverId'] ?? ''));
 
-            if (empty($receiverId)) {
+            $allowedReceivers = [$authUid, $cleanAuthUid];
+            if (in_array($authRole, ['ADMIN', 'STAFF'], true)) $allowedReceivers = array_merge($allowedReceivers, ['ADMIN', 'INTERNAL']);
+            if ($authRole === 'TENANT') $allowedReceivers[] = 'TENANT_ROOM';
+            if ($authRole === 'VISITOR') $allowedReceivers[] = 'INTERNAL';
+            $allowedReceivers = array_values(array_unique(array_filter($allowedReceivers)));
+
+            if ($receiverId === '' || !in_array($receiverId, $allowedReceivers, true)) {
+                sendResponse(["status" => "error", "message" => "Anda tidak berhak memperbarui status pesan ini."], 403);
+            }
+
+            if ($receiverId === '') {
                 throw new Exception("Parameter receiverId kosong.");
             }
 
+            $receiverPlaceholders = implode(',', array_fill(0, count($allowedReceivers), '?'));
+            $params = $allowedReceivers;
             if (empty($senderId) || $senderId === 'ANY') {
-                $stmt = $pdo->prepare("UPDATE messages SET isRead = 1 WHERE receiverId = ?");
-                $stmt->execute([$receiverId]);
+                $stmt = $pdo->prepare("UPDATE messages SET isRead = 1 WHERE receiverId IN ($receiverPlaceholders)");
+                $stmt->execute($params);
             } else {
-                $stmt = $pdo->prepare("UPDATE messages SET isRead = 1 WHERE senderId = ? AND receiverId = ?");
-                $stmt->execute([$senderId, $receiverId]);
+                $stmt = $pdo->prepare("UPDATE messages SET isRead = 1 WHERE senderId = ? AND receiverId IN ($receiverPlaceholders)");
+                $stmt->execute(array_merge([$senderId], $params));
             }
 
             sendResponse(["status" => "success"]);
+        } else {
+            sendResponse(["status" => "error", "message" => "Aksi pesan tidak valid."], 400);
         }
     } else {
         throw new Exception("Metode request tidak diizinkan.");

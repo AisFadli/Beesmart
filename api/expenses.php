@@ -1,12 +1,13 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $data = json_decode(file_get_contents('php://input'), true);
 
 try {
     if ($method === 'POST') {
+        requireAuth(['ADMIN']);
         $action = $data['action'] ?? 'save';
         
         if ($action === 'save') {
@@ -15,7 +16,7 @@ try {
             $description = $data['description'] ?? '';
             $category = strtoupper(trim($data['category'] ?? 'General'));
             $amount = (float)($data['amount'] ?? 0);
-            $staffId = $data['staffId'] ?? 'Unknown';
+            $staffId = $auth['name'] ?? ($auth['uid'] ?? 'Unknown');
             $status = $data['status'] ?? 'NORMAL';
 
             $stmt = $pdo->prepare("REPLACE INTO expenses (id, date, description, category, amount, staffId, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -29,6 +30,7 @@ try {
             sendResponse(["status" => "success"]);
         }
     } elseif ($method === 'DELETE') {
+        requireAuth(['ADMIN']);
         $id = $_GET['id'] ?? '';
         if ($id) {
             $stmt = $pdo->prepare("DELETE FROM expenses WHERE id = ?");

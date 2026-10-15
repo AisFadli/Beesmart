@@ -1,12 +1,17 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$auth = requireAuth(['ADMIN', 'STAFF', 'USER', 'TENANT', 'VISITOR']);
+$authRole = strtoupper($auth['role'] ?? '');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     if ($method === 'GET') {
-        $stmt = $pdo->query("SELECT * FROM users ORDER BY name ASC");
+        if ($authRole === 'ADMIN') {
+            $stmt = $pdo->query("SELECT * FROM users ORDER BY name ASC");
+        } else {
+            $stmt = $pdo->query("SELECT id, name, email, role, status FROM users WHERE status = 'ACTIVE' OR status IS NULL ORDER BY name ASC");
+        }
         $users = $stmt->fetchAll();
         foreach ($users as &$u) {
             unset($u['password']);
@@ -21,8 +26,12 @@ try {
         }
         sendResponse($users);
     } elseif ($method === 'POST') {
+        if ($authRole !== 'ADMIN') {
+            sendResponse(["status" => "error", "message" => "Akses ditolak."], 403);
+        }
+
         $data = json_decode(file_get_contents("php://input"), true);
-        if (!$data) throw new Exception("Data tidak valid");
+        if (!is_array($data)) sendResponse(["status" => "error", "message" => "Data tidak valid."], 400);
 
         $id = $data['id'] ?? ('USR-' . time() . '-' . rand(100, 999));
         $email = trim($data['email'] ?? '');
@@ -36,7 +45,13 @@ try {
             : json_encode([]);
 
         if (empty($email) || empty($name)) {
-            throw new Exception("Nama dan Email wajib diisi");
+            sendResponse(["status" => "error", "message" => "Nama dan Email wajib diisi."], 400);
+        }
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            sendResponse(["status" => "error", "message" => "Format email tidak valid."], 400);
+        }
+        if (!in_array($role, ['ADMIN', 'STAFF', 'TENANT'], true) || !in_array($status, ['ACTIVE', 'INACTIVE'], true)) {
+            sendResponse(["status" => "error", "message" => "Role atau status akun tidak valid."], 400);
         }
 
         // Check duplicate email
@@ -53,17 +68,20 @@ try {
 
         if ($existing) {
             if (!empty($password)) {
+                if (!is_string($password) || strlen($password) < 8) {
+                    sendResponse(["status" => "error", "message" => "Password minimal 8 karakter."], 400);
+                }
                 $hashed = password_hash($password, PASSWORD_BCRYPT);
-                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ?, status = ?, tenantCategories = ?, password = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ?, status = ?, tenantCategories = ?, password = ?, tokenVersion = tokenVersion + 1 WHERE id = ?");
                 $stmt->execute([$name, $email, $role, $status, $tenantCategories, $hashed, $id]);
             } else {
-                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ?, status = ?, tenantCategories = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ?, status = ?, tenantCategories = ?, tokenVersion = tokenVersion + 1 WHERE id = ?");
                 $stmt->execute([$name, $email, $role, $status, $tenantCategories, $id]);
             }
             sendResponse(["status" => "success", "message" => "Data user berhasil diperbarui"]);
         } else {
-            if (empty($password)) {
-                $password = '123456';
+            if (!is_string($password) || strlen($password) < 8) {
+                sendResponse(["status" => "error", "message" => "Password minimal 8 karakter."], 400);
             }
             $hashed = password_hash($password, PASSWORD_BCRYPT);
             $stmt = $pdo->prepare("INSERT INTO users (id, email, name, role, status, tenantCategories, password) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -71,6 +89,9 @@ try {
             sendResponse(["status" => "success", "message" => "User baru berhasil ditambahkan"]);
         }
     } elseif ($method === 'DELETE') {
+        if ($authRole !== 'ADMIN') {
+            sendResponse(["status" => "error", "message" => "Akses ditolak."], 403);
+        }
         $id = $_GET['id'] ?? '';
         if (empty($id)) throw new Exception("ID User tidak ditemukan");
         $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND role != 'ADMIN'");

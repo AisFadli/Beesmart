@@ -48,7 +48,7 @@ function base64UrlDecode($data) {
     return base64_decode(strtr($data, '-_', '+/'));
 }
 
-function issueAuthToken($uid, $role, $email = '') {
+function issueAuthToken($uid, $role, $email = '', $tokenVersion = 0) {
     $secret = authSecret();
     if ($secret === null) {
         return null;
@@ -58,6 +58,7 @@ function issueAuthToken($uid, $role, $email = '') {
         'role'  => strtoupper((string)$role),
         'email' => (string)$email,
         'exp'   => time() + authTtl(),
+        'ver'   => (int)$tokenVersion,
     ]));
     $sig = hash_hmac('sha256', $payload, $secret);
     return $payload . '.' . $sig;
@@ -107,6 +108,7 @@ function getBearerToken() {
  * Hasil verifikasi disimpan di $GLOBALS['AUTH'].
  */
 function requireAuth($roles = null) {
+    $previousAuth = $GLOBALS['AUTH'] ?? null;
     $auth = verifyAuthToken(getBearerToken());
     if (!$auth) {
         sendResponse(["status" => "error", "message" => "Tidak terautentikasi. Silakan login kembali."], 401);
@@ -116,6 +118,9 @@ function requireAuth($roles = null) {
         if (!in_array(strtoupper($auth['role']), $allowed, true)) {
             sendResponse(["status" => "error", "message" => "Akses ditolak untuk role Anda."], 403);
         }
+    }
+    if (is_array($previousAuth) && ($previousAuth['uid'] ?? null) === ($auth['uid'] ?? null) && isset($previousAuth['name'])) {
+        $auth['name'] = $previousAuth['name'];
     }
     $GLOBALS['AUTH'] = $auth;
     return $auth;

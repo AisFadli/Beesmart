@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF']);
+requireAuth(['ADMIN']);
 
 try {
     $raw = file_get_contents('php://input');

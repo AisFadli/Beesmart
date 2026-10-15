@@ -27,7 +27,7 @@ try {
     $msgs = [];
 
     if ($role === 'MEMBER') {
-        $mStmt = $pdo->prepare("SELECT * FROM messages WHERE (senderId = ? OR receiverId = ?) AND id > ? ORDER BY id ASC");
+        $mStmt = $pdo->prepare("SELECT * FROM messages WHERE (senderId = ? OR receiverId = ?) AND id > ? ORDER BY id ASC LIMIT 500");
         $mStmt->execute([$memberSearchId, $memberSearchId, $lastId]);
         $msgs = $mStmt->fetchAll();
     } elseif ($role === 'TENANT') {
@@ -49,7 +49,7 @@ try {
                   AND (receiverId = 'TENANT_ROOM' 
                        OR senderId IN ($inPlaceholders) 
                        OR receiverId IN ($inPlaceholders)) 
-                ORDER BY id ASC";
+                ORDER BY id ASC LIMIT 500";
         $mStmt = $pdo->prepare($sql);
         $mStmt->execute(array_merge([$lastId], $candidateIds, $candidateIds));
         $msgs = $mStmt->fetchAll();
@@ -71,12 +71,12 @@ try {
                        OR ((senderId IN ($inPlaceholders) OR receiverId IN ($inPlaceholders)) 
                            AND senderRole IN ('ADMIN', 'STAFF', 'VISITOR') 
                            AND receiverRole IN ('ADMIN', 'STAFF', 'VISITOR'))) 
-                ORDER BY id ASC";
+                ORDER BY id ASC LIMIT 500";
         $mStmt = $pdo->prepare($sql);
         $mStmt->execute(array_merge([$lastId], $candidateIds, $candidateIds));
         $msgs = $mStmt->fetchAll();
     } else {
-        $sql = "SELECT * FROM messages WHERE id > ? ORDER BY id ASC";
+        $sql = "SELECT * FROM messages WHERE id > ? ORDER BY id ASC LIMIT 500";
         $mStmt = $pdo->prepare($sql);
         $mStmt->execute([$lastId]);
         $msgs = $mStmt->fetchAll();

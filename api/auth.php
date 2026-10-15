@@ -20,21 +20,32 @@ if (empty($email) || empty($password)) {
 
 try {
     $stmt = $pdo->prepare("SELECT id, email, name, role, tenantCategories, password FROM users WHERE email = ? AND status = 'ACTIVE' LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, email, name, role, tenantCategories, password, tokenVersion FROM users WHERE email = ? AND status = 'ACTIVE' LIMIT 1");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    if ($user && (password_verify($password, $user['password']) || $password === $user['password'])) {
+    $storedPassword = (string)($user['password'] ?? '');
+    $tokenVersion = (int)($user['tokenVersion'] ?? 0);
+    $passwordVerified = $user && password_verify($password, $storedPassword);
+    $legacyPasswordVerified = $user && !$passwordVerified && hash_equals($storedPassword, (string)$password);
+    if ($user && ($passwordVerified || $legacyPasswordVerified)) {
+        if ($legacyPasswordVerified) {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $pdo->prepare("UPDATE users SET password = ?, tokenVersion = tokenVersion + 1 WHERE id = ?")->execute([$hashedPassword, $user['id']]);
+            $tokenVersion++;
+        }
         unset($user['password']);
         if (isset($user['tenantCategories']) && $user['tenantCategories']) {
             $user['tenantCategories'] = json_decode($user['tenantCategories'], true) ?? [];
         } else {
             $user['tenantCategories'] = [];
         }
-        $token = issueAuthToken($user['id'], $user['role'] ?? 'USER', $user['email'] ?? '');
+        $token = issueAuthToken($user['id'], $user['role'] ?? 'USER', $user['email'] ?? '', $tokenVersion);
         if ($token === null) {
             error_log("auth.php: api/auth_config.php belum dikonfigurasi (secret kosong).");
             sendResponse(["status" => "error", "message" => "Server autentikasi belum dikonfigurasi."], 500);
         }
+        unset($user['tokenVersion']);
         $user['token'] = $token;
         sendResponse($user);
     } else {

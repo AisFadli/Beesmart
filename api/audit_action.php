@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-requireAuth(['ADMIN', 'STAFF']);
+requireAuth(['ADMIN']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(["status" => "error", "message" => "Method not allowed"], 405);
@@ -13,6 +13,9 @@ $productId = $data['productId'] ?? '';
 
 if (!$ref) {
     sendResponse(["status" => "error", "message" => "Reference ID is required."], 400);
+}
+if (!in_array($action, ['edit', 'cancel', 'approve_adjustment'], true)) {
+    sendResponse(["status" => "error", "message" => "Action tidak valid."], 400);
 }
 
 // Auto-resolve productId for ADJ- if missing
@@ -160,7 +163,8 @@ try {
                 $stmtUpdateItem->execute([$absQty, $absQty, $ref, $productId]);
                 
                 // Recalculate transaction total
-                $pdo->exec("UPDATE transactions t SET total = (SELECT SUM(subtotal) FROM transaction_items WHERE transactionId = t.id) WHERE id = '$ref'");
+                $stmtTotal = $pdo->prepare("UPDATE transactions t SET total = (SELECT SUM(subtotal) FROM transaction_items WHERE transactionId = t.id) WHERE id = ?");
+                $stmtTotal->execute([$ref]);
                 
                 $stmtUpdateTx = $pdo->prepare("UPDATE transactions SET timestamp = ?, status = 'REVISED' WHERE id = ?");
                 $stmtUpdateTx->execute([$newDate, $ref]);
@@ -193,7 +197,8 @@ try {
                     $stmtUpdateItem->execute([$newQty, $newQty, $ref, $productId]);
                     
                     // Recalculate order totalCost
-                    $pdo->exec("UPDATE orders o SET totalCost = (SELECT SUM(subtotal) FROM order_items WHERE orderId = o.id) WHERE id = '$ref'");
+                    $stmtTotal = $pdo->prepare("UPDATE orders o SET totalCost = (SELECT SUM(subtotal) FROM order_items WHERE orderId = o.id) WHERE id = ?");
+                    $stmtTotal->execute([$ref]);
                 }
             }
         } else if ($ref === 'STOK-AWAL') {

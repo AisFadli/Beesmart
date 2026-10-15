@@ -102,8 +102,8 @@ if ($method === 'POST') {
         if (empty($token)) {
             sendResponse(["status" => "error", "message" => "Token tidak valid."], 400);
         }
-        if (empty($password) || empty($confirm_password)) {
-            sendResponse(["status" => "error", "message" => "Password baru dan konfirmasi wajib diisi."], 400);
+        if (!is_string($password) || strlen($password) < 8 || empty($confirm_password)) {
+            sendResponse(["status" => "error", "message" => "Password baru minimal 8 karakter dan konfirmasi wajib diisi."], 400);
         }
         if ($password !== $confirm_password) {
             sendResponse(["status" => "error", "message" => "Password dan konfirmasi password tidak cocok."], 400);
@@ -128,7 +128,7 @@ if ($method === 'POST') {
             $pdo->beginTransaction();
 
             // 1. Update users table
-            $stmtUser = $pdo->prepare("UPDATE users SET password = ? WHERE email = ?");
+            $stmtUser = $pdo->prepare("UPDATE users SET password = ?, tokenVersion = tokenVersion + 1 WHERE email = ?");
             $stmtUser->execute([$hashed_password, $email]);
             $usersAffected = $stmtUser->rowCount();
 

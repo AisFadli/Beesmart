@@ -41,11 +41,14 @@ try {
     }
 
     $tables = ['app_settings', 'shipping_rates', 'categories', 'products', 'messages'];
-    if ($role === 'ADMIN' || $role === 'STAFF' || $role === 'TENANT' || $role === 'USER' || $role === 'VISITOR') {
+    if ($role === 'ADMIN' || $role === 'STAFF' || $role === 'TENANT' || $role === 'USER') {
         $tables = array_merge($tables, ['members', 'transactions', 'member_logs', 'stock_adjustments', 'orders', 'expenses', 'product_proposals', 'activity_logs']);
-        if ($role === 'ADMIN' || $role === 'STAFF' || $role === 'TENANT' || $role === 'VISITOR') {
+        if ($role === 'ADMIN' || $role === 'TENANT') {
             $tables[] = 'users';
         }
+    } elseif ($role === 'VISITOR') {
+        $tables = array_merge($tables, ['transactions', 'expenses']);
+        $tables[] = 'users';
     } elseif ($role === 'MEMBER') {
         $tables = array_merge($tables, ['members', 'transactions', 'member_logs', 'member_profile']);
     }
@@ -119,8 +122,8 @@ try {
                     $sql = "SELECT * FROM transactions ";
                     $params = [];
                     if ($role === 'MEMBER') {
-                        $sql .= "WHERE (memberId = ? OR customerName = ? OR staffId = ? OR memberId = ?) ";
-                        $params = [$memberSearchId, $userId, $userId, $userId];
+                        $sql .= "WHERE memberId IN (?, ?) ";
+                        $params = [$memberSearchId, $userId];
                     }
                     $sql .= "ORDER BY timestamp DESC LIMIT 300";
                     $txStmt = $pdo->prepare($sql);
@@ -179,7 +182,7 @@ try {
                                 SELECT productId, SUM(quantity) as total_sold, MIN(timestamp) as first_sale
                                 FROM transaction_items ti
                                 JOIN transactions t ON ti.transactionId = t.id
-                                WHERE t.status != 'CANCELLED'
+                                WHERE COALESCE(t.status, 'ACTIVE') NOT IN ('CANCELLED', 'INACTIVE')
                                 GROUP BY productId
                             ) s ON p.id = s.productId
                             WHERE (p.status != 'INACTIVE' OR p.status IS NULL OR p.status = '') 
@@ -229,7 +232,7 @@ try {
                             SELECT productId, SUM(quantity) as total_sold, MIN(timestamp) as first_sale
                             FROM transaction_items ti
                             JOIN transactions t ON ti.transactionId = t.id
-                            WHERE t.status != 'CANCELLED'
+                            WHERE COALESCE(t.status, 'ACTIVE') NOT IN ('CANCELLED', 'INACTIVE')
                             GROUP BY productId
                         ) s ON p.id = s.productId
                         WHERE (p.status != 'INACTIVE' OR p.status IS NULL OR p.status = '') 
@@ -270,6 +273,8 @@ try {
                     $mStmt = $pdo->prepare("SELECT * FROM members WHERE id = ? OR email = ?");
                     $mStmt->execute([$memberSearchId, $userId]);
                     $mems = $mStmt->fetchAll();
+                } elseif ($role === 'TENANT') {
+                    $mems = $pdo->query("SELECT id, barcode, name, depositBalance, registrationDate, status FROM members WHERE status = 'APPROVED' ORDER BY registrationDate DESC")->fetchAll();
                 } else {
                     $mems = $pdo->query("SELECT * FROM members ORDER BY registrationDate DESC")->fetchAll();
                 }
@@ -446,7 +451,9 @@ try {
                 }
                 $data['activity_logs'] = $activityLogs;
             } elseif ($table === 'users') {
-                $userList = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
+                $userList = $role === 'ADMIN'
+                    ? $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll()
+                    : $pdo->query("SELECT id, name, email, role, status FROM users WHERE status = 'ACTIVE' OR status IS NULL ORDER BY name ASC")->fetchAll();
                 foreach ($userList as &$u) {
                     unset($u['password']);
                     if (!isset($u['createdAt'])) {
@@ -461,7 +468,7 @@ try {
                 $data['users'] = $userList;
             } elseif ($table === 'messages') {
                 if ($role === 'MEMBER') {
-                    $mStmt = $pdo->prepare("SELECT * FROM messages WHERE senderId = ? OR receiverId = ? ORDER BY timestamp ASC");
+                    $mStmt = $pdo->prepare("SELECT * FROM messages WHERE senderId = ? OR receiverId = ? ORDER BY timestamp DESC LIMIT 500");
                     $mStmt->execute([$memberSearchId, $memberSearchId]);
                     $msgs = $mStmt->fetchAll();
                 } elseif ($role === 'TENANT') {
@@ -483,7 +490,7 @@ try {
                             WHERE receiverId = 'TENANT_ROOM' 
                                OR senderId IN ($inPlaceholders) 
                                OR receiverId IN ($inPlaceholders) 
-                            ORDER BY timestamp ASC";
+                            ORDER BY timestamp DESC LIMIT 500";
                     $mStmt = $pdo->prepare($sql);
                     $mStmt->execute(array_merge($candidateIds, $candidateIds));
                     $msgs = $mStmt->fetchAll();
@@ -504,13 +511,17 @@ try {
                                OR ((senderId IN ($inPlaceholders) OR receiverId IN ($inPlaceholders)) 
                                    AND senderRole IN ('ADMIN', 'STAFF', 'VISITOR') 
                                    AND receiverRole IN ('ADMIN', 'STAFF', 'VISITOR')) 
-                            ORDER BY timestamp ASC";
+                            ORDER BY timestamp DESC LIMIT 500";
                     $mStmt = $pdo->prepare($sql);
                     $mStmt->execute(array_merge($candidateIds, $candidateIds));
                     $msgs = $mStmt->fetchAll();
                 } else {
-                    $msgs = $pdo->query("SELECT * FROM messages ORDER BY timestamp ASC")->fetchAll();
+                    $msgs = $pdo->query("SELECT * FROM messages ORDER BY timestamp DESC LIMIT 500")->fetchAll();
                 }
+                usort($msgs, function($a, $b) {
+                    $timestampOrder = strcmp((string)$a['timestamp'], (string)$b['timestamp']);
+                    return $timestampOrder !== 0 ? $timestampOrder : ((int)$a['id'] <=> (int)$b['id']);
+                });
                 foreach ($msgs as &$msg) {
                     $msg['timestamp'] = str_replace(' ', 'T', $msg['timestamp']);
                     $msg['isRead'] = (int)$msg['isRead'];

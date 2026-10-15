@@ -20,6 +20,7 @@ interface InventoryProps {
   onDeleteProduct: (id: string) => Promise<void>;
   onSaveCategory: (category: Category) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
+  onRefreshData?: () => Promise<void>;
   onViewAudit?: (id: string) => void;
   onProcessProposal: (id: number, status: 'APPROVED' | 'DECLINED', adminNote: string) => Promise<void>;
   onProposeProductChange: (productId: string | undefined, type: 'UPDATE' | 'CREATE' | 'DISCOUNT', productData: Partial<Product>, reason: string) => Promise<void>;
@@ -30,7 +31,7 @@ interface InventoryProps {
 
 const Inventory: React.FC<InventoryProps> = ({ 
   products, members = [] as Member[], categories, productProposals, stockAdjustments, onSaveProduct, onDeleteProduct, 
-  onSaveCategory, onDeleteCategory, onViewAudit, onProcessProposal, onProposeProductChange, userRole, currentUser, settings
+  onSaveCategory, onDeleteCategory, onRefreshData, onViewAudit, onProcessProposal, onProposeProductChange, userRole, currentUser, settings
 }) => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'proposals'>('inventory');
   const [search, setSearch] = useState('');
@@ -53,6 +54,7 @@ const Inventory: React.FC<InventoryProps> = ({
   const [isPreviewPriceTagOpen, setIsPreviewPriceTagOpen] = useState(false);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [showBarcodeScannerModal, setShowBarcodeScannerModal] = useState(false);
+  const [isSyncingStock, setIsSyncingStock] = useState(false);
 
   const [tenantUsersList, setTenantUsersList] = useState<User[]>([]);
 
@@ -471,6 +473,27 @@ const Inventory: React.FC<InventoryProps> = ({
     XLSX.writeFile(wb, `Inventory_${selectedCategory || 'All'}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const handleSyncStockAudit = async () => {
+    if (!window.confirm('Sinkronkan audit seluruh produk aktif dengan stok Inventory saat ini? Selisih akan dicatat sebagai penyesuaian stok per hari ini.')) return;
+
+    setIsSyncingStock(true);
+    try {
+      const result = await apiService.request('/sync_stock_audit.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      if (onRefreshData) await onRefreshData();
+      alert(result.reconciledCount > 0
+        ? `Sinkronisasi selesai. ${result.reconciledCount} produk disesuaikan pada audit stok.`
+        : 'Semua stok audit sudah sesuai dengan Inventory.');
+    } catch (error: any) {
+      alert('Gagal menyinkronkan stok: ' + error.message);
+    } finally {
+      setIsSyncingStock(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
        {/* Modal Konfirmasi Hapus Produk */}
@@ -529,6 +552,17 @@ const Inventory: React.FC<InventoryProps> = ({
           <p className="text-slate-500 font-medium text-xs uppercase tracking-widest mt-1 ml-1">Manajemen Produk & Kategori</p>
         </div>
         <div className="flex items-center gap-2">
+          {activeTab === 'inventory' && isAdmin && (
+            <button
+              onClick={handleSyncStockAudit}
+              disabled={isSyncingStock}
+              className="bg-amber-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-100 hover:bg-amber-700 transition-all disabled:opacity-60"
+              title="Catat selisih stok aktual sebagai penyesuaian audit hari ini"
+            >
+              <i className={`fas ${isSyncingStock ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'} mr-2`}></i>
+              {isSyncingStock ? 'Sinkronisasi...' : 'Sinkron Stok Audit'}
+            </button>
+          )}
           {activeTab === 'inventory' && (
             <button 
               onClick={exportProductsToExcel}
