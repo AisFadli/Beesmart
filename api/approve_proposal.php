@@ -30,15 +30,15 @@ try {
     
     if ($proposal['productId']) {
         // Update existing product
-        $stmt = $pdo->prepare("INSERT INTO products (id, sku, barcode, name, category, price, costPrice, stock, minStock, image, discountValue, discountType, discountStart, discountEnd, initialStock, initialStockDate, status) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        $stmt = $pdo->prepare("INSERT INTO products (id, sku, barcode, name, category, price, costPrice, stock, minStock, image, discountValue, discountType, discountStart, discountEnd, initialStock, initialStockDate, status, indentStatus)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                ON DUPLICATE KEY UPDATE 
                                sku=VALUES(sku), barcode=VALUES(barcode), name=VALUES(name), category=VALUES(category), price=VALUES(price), 
                                costPrice=VALUES(costPrice), stock=VALUES(stock), minStock=VALUES(minStock), 
                                image=VALUES(image), discountValue=VALUES(discountValue), discountType=VALUES(discountType), 
                                discountStart=VALUES(discountStart), discountEnd=VALUES(discountEnd), 
                                initialStock=VALUES(initialStock), initialStockDate=VALUES(initialStockDate), 
-                               status=VALUES(status)");
+                               status=VALUES(status), indentStatus=VALUES(indentStatus)");
         $stmt->execute([
             $proposal['productId'],
             $productData['sku'],
@@ -56,12 +56,13 @@ try {
             $productData['discountEnd'] ?? null,
             $productData['initialStock'] ?? 0,
             $productData['initialStockDate'] ?? date('Y-m-d H:i:s'),
-            $productData['status'] ?? 'ACTIVE'
+            $productData['status'] ?? 'ACTIVE',
+            ($productData['indentStatus'] ?? 'INACTIVE') === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE'
         ]);
     } else {
         // Create new product
-        $stmt = $pdo->prepare("INSERT INTO products (id, sku, barcode, name, category, price, costPrice, stock, minStock, image, discountValue, discountType, discountStart, discountEnd, initialStock, initialStockDate, status) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO products (id, sku, barcode, name, category, price, costPrice, stock, minStock, image, discountValue, discountType, discountStart, discountEnd, initialStock, initialStockDate, status, indentStatus)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $productData['id'],
             $productData['sku'],
@@ -79,7 +80,8 @@ try {
             $productData['discountEnd'] ?? null,
             $productData['initialStock'] ?? 0,
             $productData['initialStockDate'] ?? date('Y-m-d H:i:s'),
-            $productData['status'] ?? 'ACTIVE'
+            $productData['status'] ?? 'ACTIVE',
+            ($productData['indentStatus'] ?? 'INACTIVE') === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE'
         ]);
     }
     

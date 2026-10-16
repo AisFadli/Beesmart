@@ -9,13 +9,15 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
   user: User;
+  onMemberAction: (action: 'CARD' | 'EDIT_PROFILE' | 'TOP_UP' | 'TERMS') => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, user }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, user, onMemberAction }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [themeDark, setThemeDark] = useState(getStoredTheme() === 'dark');
   const rawRole = (user.role || '').toString().toUpperCase();
   const role = (rawRole === 'ADMIN' ? UserRole.ADMIN : rawRole === 'MEMBER' ? UserRole.MEMBER : rawRole === 'VISITOR' ? UserRole.VISITOR : rawRole === 'TENANT' ? UserRole.TENANT : UserRole.STAFF);
+  const displayName = typeof user.name === 'string' && user.name.trim() ? user.name : 'User';
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <Icons.Dashboard />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT, UserRole.VISITOR, UserRole.MEMBER] },
@@ -66,16 +68,37 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
                 <span className="font-black text-[10px] uppercase tracking-[0.15em]">{item.label}</span>
               </button>
             ))}
+            {role === UserRole.MEMBER && (
+              <div className="pt-5 mt-5 border-t border-slate-800 dark:border-slate-100">
+                <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Akun Member</p>
+                <button onClick={() => { onMemberAction('CARD'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
+                  <span className="w-5 text-center text-honey-500"><i className="fas fa-id-card"></i></span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Kartu Member Digital</span>
+                </button>
+                <button onClick={() => { onMemberAction('EDIT_PROFILE'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
+                  <span className="w-5 text-center"><i className="fas fa-edit"></i></span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Edit Profil</span>
+                </button>
+                <button onClick={() => { onMemberAction('TOP_UP'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
+                  <span className="w-5 text-center text-emerald-500"><i className="fas fa-plus-circle"></i></span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Top Up</span>
+                </button>
+                <button onClick={() => { onMemberAction('TERMS'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
+                  <span className="w-5 text-center"><i className="fas fa-file-contract"></i></span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Syarat &amp; Ketentuan</span>
+                </button>
+              </div>
+            )}
           </nav>
 
           <div className="mt-auto pt-6 border-t border-slate-800 dark:border-slate-100 space-y-4">
             {/* Enhanced User Profile Info */}
             <div className="flex items-center gap-4 bg-slate-800/40 p-3 rounded-2xl border border-slate-700/50 dark:bg-slate-100/40 dark:border-slate-300/30">
                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-honey-500 to-honey-600 flex items-center justify-center text-white font-black text-xs uppercase shadow-lg border border-white/10">
-                  {user.name.slice(0,2)}
+                  {displayName.slice(0,2)}
                </div>
                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-black text-white truncate leading-none mb-1">{user.name}</p>
+                  <p className="text-xs font-black text-white truncate leading-none mb-1">{displayName}</p>
                   <p className={`text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-md inline-block ${role === UserRole.ADMIN ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : role === UserRole.STAFF ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : role === UserRole.TENANT ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-honey-500/20 text-honey-400 border border-honey-500/30'}`}>
                     {role}
                   </p>

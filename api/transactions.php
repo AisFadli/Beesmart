@@ -54,7 +54,7 @@ if ($method === 'POST') {
         $pdo->beginTransaction();
 
         $productPlaceholders = implode(',', array_fill(0, count($productIds), '?'));
-        $stmtProducts = $pdo->prepare("SELECT id, sku, name, category, price, costPrice, stock, discountValue, discountType, discountStart, discountEnd, status FROM products WHERE id IN ($productPlaceholders) FOR UPDATE");
+        $stmtProducts = $pdo->prepare("SELECT id, sku, name, category, price, costPrice, stock, discountValue, discountType, discountStart, discountEnd, status, indentStatus FROM products WHERE id IN ($productPlaceholders) FOR UPDATE");
         $stmtProducts->execute($productIds);
         $products = [];
         foreach ($stmtProducts->fetchAll() as $product) {
@@ -142,6 +142,12 @@ if ($method === 'POST') {
         foreach ($data['items'] as $item) {
             $product = $products[(string)$item['productId']];
             $quantity = (int)$item['quantity'];
+            if ($authRole === 'MEMBER' && $quantity > (int)$product['stock'] && strtoupper((string)($product['indentStatus'] ?? 'INACTIVE')) !== 'ACTIVE') {
+                $message = (int)$product['stock'] <= 0
+                    ? "Stok saat ini tidak tersedia, silahkan menghubungi admin untuk pemesanan lebih lanjut."
+                    : "Stok produk {$product['name']} tidak mencukupi. Silahkan perbarui keranjang.";
+                throw new Exception($message, 409);
+            }
             if ($quantity > (int)$product['stock']) $hasIndent = true;
 
             $originalPrice = (float)$product['price'];
@@ -229,7 +235,7 @@ if ($method === 'POST') {
         sendResponse(["status" => "success", "message" => "Transaksi berhasil disimpan"]);
     } catch (Exception $e) {
         $pdo->rollBack();
-        sendResponse(["status" => "error", "message" => $e->getMessage()], 500);
+        sendResponse(["status" => "error", "message" => $e->getMessage()], $e->getCode() === 409 ? 409 : 500);
     }
 }
 

@@ -72,7 +72,7 @@ try {
         $requestAuth = requireAuth();
     }
 
-    $schemaVersion = '2026-10-15-2';
+    $schemaVersion = '2026-10-16-1';
     $pdo->exec("CREATE TABLE IF NOT EXISTS app_schema_versions (
         version VARCHAR(32) PRIMARY KEY,
         appliedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -125,6 +125,7 @@ try {
         image LONGTEXT,
         initialStockDate DATETIME DEFAULT NULL,
         status VARCHAR(20) DEFAULT 'ACTIVE',
+        indentStatus VARCHAR(20) DEFAULT 'INACTIVE',
         discountValue DECIMAL(15, 2) DEFAULT 0,
         discountType VARCHAR(20) DEFAULT 'FIXED',
         discountStart DATETIME DEFAULT NULL,
@@ -425,6 +426,7 @@ try {
         'products' => [
             'initialStock' => "INT DEFAULT 0",
             'status' => "VARCHAR(20) DEFAULT 'ACTIVE'",
+            'indentStatus' => "VARCHAR(20) DEFAULT 'INACTIVE'",
             'discountValue' => "DECIMAL(15, 2) DEFAULT 0",
             'discountType' => "VARCHAR(20) DEFAULT 'FIXED'",
             'discountStart' => "DATETIME DEFAULT NULL",

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beesmart-v11';
+const CACHE_NAME = 'beesmart-v12';
 const ASSETS_TO_CACHE = [
   './',
   './index.html'

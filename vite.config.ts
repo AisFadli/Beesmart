@@ -12,6 +12,10 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         allowedHosts: ['beesmart.protechid.cloud', 'localhost', '127.0.0.1'],
         proxy: {
+          '/app/api': {
+            target: 'http://localhost:8088',
+            rewrite: (path) => path.replace(/^\/app/, '')
+          },
           '/api': 'http://localhost:8088'
         }
       },

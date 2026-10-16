@@ -62,6 +62,7 @@ try {
             discountType VARCHAR(20) DEFAULT 'FIXED',
             discountStart DATETIME,
             discountEnd DATETIME,
+            indentStatus VARCHAR(20) DEFAULT 'INACTIVE',
             status VARCHAR(20) DEFAULT 'ACTIVE'
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

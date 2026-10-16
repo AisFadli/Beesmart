@@ -1,17 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { User, Product, Category, Transaction, AppState, StoreSettings, Order, Member, UserRole, StockAdjustment } from './types';
 import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import MemberDashboard from './components/MemberDashboard';
-import Inventory from './components/Inventory';
-import POS from './components/POS';
-import Reports from './components/Reports';
-import OperationalReport from './components/OperationalReport';
-import Orders from './components/Orders';
 import Auth from './components/Auth';
-import Settings from './components/Settings';
-import Membership from './components/Membership';
-import ChatInterface from './components/ChatInterface';
 import apiService from './services/apiService';
 
 const DEFAULT_SETTINGS: StoreSettings = {
@@ -22,6 +12,17 @@ const DEFAULT_SETTINGS: StoreSettings = {
 
 import { DashboardSkeleton, Skeleton } from './components/LoadingSkeleton';
 
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const MemberDashboard = lazy(() => import('./components/MemberDashboard'));
+const Inventory = lazy(() => import('./components/Inventory'));
+const POS = lazy(() => import('./components/POS'));
+const Reports = lazy(() => import('./components/Reports'));
+const OperationalReport = lazy(() => import('./components/OperationalReport'));
+const Orders = lazy(() => import('./components/Orders'));
+const Settings = lazy(() => import('./components/Settings'));
+const Membership = lazy(() => import('./components/Membership'));
+const ChatInterface = lazy(() => import('./components/ChatInterface'));
+
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     currentUser: null, products: [], categories: [], members: [], transactions: [], memberLogs: [], stockAdjustments: [], orders: [], expenses: [], productProposals: [], messages: [], users: [], chat_contacts: [], settings: DEFAULT_SETTINGS, isLoading: true
@@ -29,6 +30,8 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [auditProductId, setAuditProductId] = useState('');
   const [preSelectedMemberId, setPreSelectedMemberId] = useState('');
+  const [memberActionRequest, setMemberActionRequest] = useState<{ id: number; action: 'CARD' | 'EDIT_PROFILE' | 'TOP_UP' | 'TERMS' } | null>(null);
+  const memberActionIdRef = useRef(0);
 
   const notifiedIdsRef = useRef<{
     proposals: string[];
@@ -364,11 +367,12 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { apiService.setToken(''); localStorage.removeItem('beesmart_user'); setState(prev => ({ ...prev, currentUser: null })); }} user={state.currentUser} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { apiService.setToken(''); localStorage.removeItem('beesmart_user'); setState(prev => ({ ...prev, currentUser: null })); }} user={state.currentUser} onMemberAction={action => setMemberActionRequest({ id: ++memberActionIdRef.current, action })} />
       <div className="flex-1 md:ml-64 w-full h-full overflow-hidden flex flex-col relative">
         <main className="flex-1 overflow-y-auto p-4 md:p-10 pt-20 md:pt-10 custom-scrollbar bg-slate-50">
           <div className="max-w-7xl mx-auto">
-            {activeTab === 'dashboard' && (isMember ? <MemberDashboard state={state} onRefresh={refreshData} /> : <Dashboard state={state} />)}
+            <Suspense fallback={<div className="py-12"><DashboardSkeleton /></div>}>
+            {activeTab === 'dashboard' && (isMember ? <MemberDashboard state={state} onRefresh={refreshData} memberActionRequest={memberActionRequest} onMemberActionHandled={id => setMemberActionRequest(current => current?.id === id ? null : current)} /> : <Dashboard state={state} />)}
             {activeTab === 'discuss' && <ChatInterface state={state} onRefreshData={refreshData} preSelectedMemberId={preSelectedMemberId} />}
             {!isMember && (
                <>
@@ -433,6 +437,7 @@ const App: React.FC = () => {
                  {activeTab === 'settings' && <Settings settings={state.settings} userRole={state.currentUser.role} onSave={async s => { await apiService.saveSettings(s); refreshData(); }} onRefresh={refreshData} shippingRates={(state as any).shipping_rates || []} categories={state.categories} />}
                </>
             )}
+            </Suspense>
           </div>
         </main>
       </div>

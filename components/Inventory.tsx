@@ -137,7 +137,7 @@ const Inventory: React.FC<InventoryProps> = ({
     price: 0, costPrice: 0, stock: 0, minStock: 5, image: '',
     initialStockDate: new Date().toISOString().split('T')[0],
     discountValue: 0, discountType: 'FIXED', discountStart: '', discountEnd: '',
-    status: 'ACTIVE'
+    status: 'ACTIVE', indentStatus: 'INACTIVE'
   });
   const [proposalReason, setProposalReason] = useState('');
 
@@ -254,7 +254,7 @@ const Inventory: React.FC<InventoryProps> = ({
       price: 0, costPrice: 0, stock: 0, initialStock: 0, minStock: 5, image: '',
       initialStockDate: new Date().toISOString().split('T')[0],
       discountValue: 0, discountType: 'FIXED', discountStart: '', discountEnd: '',
-      status: 'ACTIVE'
+      status: 'ACTIVE', indentStatus: 'INACTIVE'
     });
     setProposalReason('');
     setIsModalOpen(true);
@@ -1118,6 +1118,14 @@ const Inventory: React.FC<InventoryProps> = ({
                       <input type="number" disabled={!isAdmin} className={`w-full p-4 rounded-2xl font-bold outline-none shadow-inner ${isAdmin ? 'bg-slate-50 border border-slate-200' : 'bg-slate-100 border-transparent text-slate-400 cursor-not-allowed'}`} value={formData.initialStock} onChange={e => setFormData({...formData, initialStock: Number(e.target.value)})} />
                     </div>
                  </div>
+
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Status Indent untuk Member</label>
+                     <select className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none" value={formData.indentStatus || 'INACTIVE'} onChange={e => setFormData({...formData, indentStatus: e.target.value as 'ACTIVE' | 'INACTIVE'})}>
+                       <option value="ACTIVE">Aktif - tetap dapat dipesan saat stok kosong</option>
+                       <option value="INACTIVE">Nonaktif - tidak dapat dipesan saat stok kosong</option>
+                     </select>
+                   </div>
 
                  {!isAdmin && (
                    <div className="space-y-2 p-6 bg-amber-50 rounded-3xl border border-amber-100">

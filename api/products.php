@@ -31,8 +31,8 @@ if ($method === 'POST') {
 
         $barcode = !empty($data['barcode']) ? trim($data['barcode']) : ($data['sku'] ?? $data['id']);
 
-        $stmt = $pdo->prepare("INSERT INTO products (id, sku, barcode, name, category, price, costPrice, stock, initialStock, minStock, image, initialStockDate, status, discountValue, discountType, discountStart, discountEnd) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        $stmt = $pdo->prepare("INSERT INTO products (id, sku, barcode, name, category, price, costPrice, stock, initialStock, minStock, image, initialStockDate, status, indentStatus, discountValue, discountType, discountStart, discountEnd)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                ON DUPLICATE KEY UPDATE 
                                sku = VALUES(sku), 
                                barcode = VALUES(barcode),
@@ -46,11 +46,14 @@ if ($method === 'POST') {
                                image = VALUES(image), 
                                initialStockDate = VALUES(initialStockDate), 
                                status = VALUES(status), 
+                               indentStatus = VALUES(indentStatus),
                                discountValue = VALUES(discountValue), 
                                discountType = VALUES(discountType), 
                                discountStart = VALUES(discountStart), 
                                discountEnd = VALUES(discountEnd)");
         $status = $data['status'] ?? ($before ? $before['status'] : 'ACTIVE');
+        $indentStatus = strtoupper((string)($data['indentStatus'] ?? ($before['indentStatus'] ?? 'INACTIVE')));
+        if (!in_array($indentStatus, ['ACTIVE', 'INACTIVE'], true)) $indentStatus = 'INACTIVE';
         $normalizedCategory = strtoupper(trim($data['category'] ?? 'LAINNYA'));
         $stmt->execute([
             $data['id'], $data['sku'], $barcode, $data['name'], $normalizedCategory, 
@@ -58,6 +61,7 @@ if ($method === 'POST') {
             $data['image'] ?? null, 
             isset($data['initialStockDate']) ? str_replace('T', ' ', $data['initialStockDate']) : null,
             $status,
+            $indentStatus,
             (float)($data['discountValue'] ?? 0),
             $data['discountType'] ?? 'FIXED',
             isset($data['discountStart']) && $data['discountStart'] ? str_replace('T', ' ', $data['discountStart']) : null,

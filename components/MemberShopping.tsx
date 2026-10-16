@@ -133,6 +133,17 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
   };
 
   const addToCart = (product: Product) => {
+    const existing = cart.find(item => item.productId === product.id);
+    if ((product.indentStatus || 'INACTIVE') !== 'ACTIVE') {
+      if (product.stock <= 0) {
+        alert('Stok saat ini tidak tersedia, silahkan menghubungi admin untuk pemesanan lebih lanjut.');
+        return;
+      }
+      if ((existing?.quantity || 0) >= product.stock) {
+        alert(`Stok produk ${product.name} hanya tersedia ${product.stock} unit.`);
+        return;
+      }
+    }
     const finalPrice = getDiscountedPrice(product);
     const hasDiscount = finalPrice < product.price;
 
@@ -205,6 +216,17 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
 
   const submitOrder = async () => {
     if (cart.length === 0 || isProcessing) return;
+    const unavailableItem = cart.find(item => {
+      const product = state.products.find(candidate => candidate.id === item.productId);
+      return product && (product.indentStatus || 'INACTIVE') !== 'ACTIVE' && item.quantity > product.stock;
+    });
+    if (unavailableItem) {
+      const product = state.products.find(candidate => candidate.id === unavailableItem.productId);
+      alert(product && product.stock <= 0
+        ? 'Stok saat ini tidak tersedia, silahkan menghubungi admin untuk pemesanan lebih lanjut.'
+        : `Stok produk ${unavailableItem.name} tidak mencukupi. Silahkan perbarui keranjang.`);
+      return;
+    }
     if ((paymentMethod === 'TRANSFER' || paymentMethod === 'QRIS') && !paymentProof) {
       alert("Wajib melampirkan bukti pembayaran untuk metode ini!");
       return;
@@ -546,7 +568,9 @@ const MemberShopping: React.FC<MemberShoppingProps> = ({ state, member, onRefres
                   <Icons.Inventory />
                 )}
                 {p.stock <= 0 && (
-                   <div className="absolute top-2 right-2 bg-yellow-600 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-lg">INDENT</div>
+                   <div className={`absolute top-2 right-2 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-lg ${(p.indentStatus || 'INACTIVE') === 'ACTIVE' ? 'bg-yellow-600' : 'bg-rose-600'}`}>
+                    {(p.indentStatus || 'INACTIVE') === 'ACTIVE' ? 'INDENT' : 'TIDAK TERSEDIA'}
+                   </div>
                 )}
              </div>
              <p className="text-[11px] font-black text-slate-800 leading-tight uppercase mb-1 group-hover:text-honey-600 line-clamp-2 min-h-[2.6em] break-all [overflow-wrap:anywhere] whitespace-normal">{p.name}</p>

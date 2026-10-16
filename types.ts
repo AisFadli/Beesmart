@@ -48,6 +48,7 @@ export interface Product {
   discountStart?: string;
   discountEnd?: string;
   status?: 'ACTIVE' | 'INACTIVE';
+  indentStatus?: 'ACTIVE' | 'INACTIVE';
   avgMonthlySales?: number;
 }
 
