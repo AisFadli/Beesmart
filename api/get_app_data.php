@@ -12,6 +12,32 @@ try {
     
     // Normalize Member ID if it has USER- prefix from users table
     $memberSearchId = (strpos($userId, 'USER-') === 0) ? substr($userId, 5) : $userId;
+    $familyMemberIds = [];
+    $familyMemberNames = [];
+    if ($role === 'MEMBER') {
+        $parentStmt = $pdo->prepare("SELECT id, name FROM members WHERE (id = ? OR email = ?) AND status = 'APPROVED' LIMIT 1");
+        $parentStmt->execute([$memberSearchId, $auth['email'] ?? '']);
+        $parent = $parentStmt->fetch();
+        if ($parent) {
+            $familyMemberIds[] = $parent['id'];
+            $familyMemberNames[$parent['id']] = $parent['name'];
+            $childrenStmt = $pdo->prepare("SELECT m.* FROM member_guardians g JOIN members m ON m.id = g.childMemberId WHERE g.parentMemberId = ? AND g.status = 'ACTIVE' AND m.status = 'APPROVED' ORDER BY m.name ASC");
+            $childrenStmt->execute([$parent['id']]);
+            $children = $childrenStmt->fetchAll();
+            foreach ($children as &$child) {
+                unset($child['password']);
+                $child['depositBalance'] = (float)$child['depositBalance'];
+                $child['email'] = (string)($child['email'] ?? '');
+                $child['whatsapp'] = (string)($child['whatsapp'] ?? '');
+                $child['registrationDate'] = str_replace(' ', 'T', $child['registrationDate']);
+                $familyMemberIds[] = $child['id'];
+                $familyMemberNames[$child['id']] = $child['name'];
+            }
+            $data['family_children'] = $children;
+        } else {
+            $data['family_children'] = [];
+        }
+    }
 
     $tenantUser = null;
     $tenantCategories = [];
@@ -57,7 +83,7 @@ try {
         try {
             if ($table === 'member_profile') {
                 $stmt = $pdo->prepare("SELECT * FROM members WHERE id = ? OR email = ? LIMIT 1");
-                $stmt->execute([$memberSearchId, $userId]);
+                $stmt->execute([$memberSearchId, $auth['email'] ?? '']);
                 $prof = $stmt->fetch();
                 if ($prof) {
                     unset($prof['password']);
@@ -122,8 +148,13 @@ try {
                     $sql = "SELECT * FROM transactions ";
                     $params = [];
                     if ($role === 'MEMBER') {
-                        $sql .= "WHERE memberId IN (?, ?) ";
-                        $params = [$memberSearchId, $userId];
+                        if ($familyMemberIds) {
+                            $placeholders = implode(',', array_fill(0, count($familyMemberIds), '?'));
+                            $sql .= "WHERE memberId IN ($placeholders) ";
+                            $params = $familyMemberIds;
+                        } else {
+                            $sql .= "WHERE 1 = 0 ";
+                        }
                     }
                     $sql .= "ORDER BY timestamp DESC LIMIT 300";
                     $txStmt = $pdo->prepare($sql);
@@ -150,6 +181,7 @@ try {
                             $tx['total'] = (float)$tx['total'];
                             $tx['shippingCost'] = (float)($tx['shippingCost'] ?? 0);
                             $tx['items'] = $itemsGrouped[$tx['id']] ?? [];
+                            if (isset($familyMemberNames[$tx['memberId']])) $tx['memberName'] = $familyMemberNames[$tx['memberId']];
                         }
                     }
                     $data['transactions'] = $txs;
@@ -271,18 +303,32 @@ try {
             } elseif ($table === 'members') {
                 if ($role === 'MEMBER') {
                     $mStmt = $pdo->prepare("SELECT * FROM members WHERE id = ? OR email = ?");
-                    $mStmt->execute([$memberSearchId, $userId]);
+                    $mStmt->execute([$memberSearchId, $auth['email'] ?? '']);
                     $mems = $mStmt->fetchAll();
                 } elseif ($role === 'TENANT') {
                     $mems = $pdo->query("SELECT id, barcode, name, depositBalance, registrationDate, status FROM members WHERE status = 'APPROVED' ORDER BY registrationDate DESC")->fetchAll();
                 } else {
                     $mems = $pdo->query("SELECT * FROM members ORDER BY registrationDate DESC")->fetchAll();
                 }
+                $familyLinks = [];
+                if (in_array($role, ['ADMIN', 'STAFF'], true)) {
+                    $linksStmt = $pdo->query("SELECT g.parentMemberId, g.childMemberId, parent.name AS parentName, child.name AS childName FROM member_guardians g JOIN members parent ON parent.id = g.parentMemberId JOIN members child ON child.id = g.childMemberId WHERE g.status = 'ACTIVE'");
+                    foreach ($linksStmt->fetchAll() as $link) {
+                        $familyLinks[$link['parentMemberId']]['children'][] = $link['childName'];
+                        $familyLinks[$link['childMemberId']]['guardians'][] = $link['parentName'];
+                    }
+                }
 
                 foreach ($mems as &$m) {
                     unset($m['password']);
                     $m['depositBalance'] = (float)$m['depositBalance'];
+                    $m['email'] = (string)($m['email'] ?? '');
+                    $m['whatsapp'] = (string)($m['whatsapp'] ?? '');
                     $m['registrationDate'] = str_replace(' ', 'T', $m['registrationDate']);
+                    if (in_array($role, ['ADMIN', 'STAFF'], true)) {
+                        $m['linkedChildren'] = $familyLinks[$m['id']]['children'] ?? [];
+                        $m['guardianNames'] = $familyLinks[$m['id']]['guardians'] ?? [];
+                    }
                 }
                 $data['members'] = $mems;
             } elseif ($table === 'member_logs') {
@@ -292,8 +338,13 @@ try {
                     $sql = "SELECT * FROM member_logs ";
                     $params = [];
                     if ($role === 'MEMBER') {
-                        $sql .= "WHERE memberId = ? OR memberId = ? ";
-                        $params = [$memberSearchId, $userId];
+                        if ($familyMemberIds) {
+                            $placeholders = implode(',', array_fill(0, count($familyMemberIds), '?'));
+                            $sql .= "WHERE memberId IN ($placeholders) ";
+                            $params = $familyMemberIds;
+                        } else {
+                            $sql .= "WHERE 1 = 0 ";
+                        }
                     }
                     $sql .= "ORDER BY timestamp DESC LIMIT 500";
                     $stmt = $pdo->prepare($sql);
@@ -454,6 +505,35 @@ try {
                 $userList = $role === 'ADMIN'
                     ? $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll()
                     : $pdo->query("SELECT id, name, email, role, status FROM users WHERE status = 'ACTIVE' OR status IS NULL ORDER BY name ASC")->fetchAll();
+                
+                // Index existing user IDs/emails to prevent duplication
+                $existingUserKeys = [];
+                foreach ($userList as $u) {
+                    $existingUserKeys[strtolower(trim($u['id']))] = true;
+                    if (!empty($u['email'])) {
+                        $existingUserKeys[strtolower(trim($u['email']))] = true;
+                    }
+                }
+
+                // Fetch members and append them as MEMBER role if not already in users table
+                $membersForUsers = $pdo->query("SELECT id, name, email, registrationDate FROM members WHERE status = 'APPROVED' ORDER BY name ASC")->fetchAll();
+                foreach ($membersForUsers as $m) {
+                    $mId = strtolower(trim($m['id']));
+                    $mEmail = !empty($m['email']) ? strtolower(trim($m['email'])) : '';
+                    if (!isset($existingUserKeys[$mId]) && ($mEmail === '' || !isset($existingUserKeys[$mEmail]))) {
+                        $userList[] = [
+                            'id' => $m['id'],
+                            'name' => $m['name'],
+                            'email' => $m['email'] ?? ($m['id'] . '@beesmart.id'),
+                            'role' => 'MEMBER',
+                            'status' => 'ACTIVE',
+                            'createdAt' => $m['registrationDate'] ?? date('Y-m-d H:i:s'),
+                            'tenantCategories' => []
+                        ];
+                        $existingUserKeys[$mId] = true;
+                    }
+                }
+
                 foreach ($userList as &$u) {
                     unset($u['password']);
                     if (!isset($u['createdAt'])) {
