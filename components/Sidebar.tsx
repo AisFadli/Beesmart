@@ -30,11 +30,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
     { id: 'dashboard', label: 'Dashboard', icon: <Icons.Dashboard />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT, UserRole.VISITOR, UserRole.MEMBER] },
     { id: 'discuss', label: 'Diskusi & Pesan', icon: <i className="fas fa-comments"></i>, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT, UserRole.MEMBER, UserRole.VISITOR] },
     { id: 'pos', label: 'Cashier (POS)', icon: <Icons.POS />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT] },
-    { id: 'membership', label: 'Membership', icon: <i className="fas fa-id-card"></i>, roles: [UserRole.ADMIN, UserRole.STAFF] },
     { id: 'inventory', label: 'Inventory Tenant', icon: <Icons.Inventory />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT] },
     { id: 'orders', label: 'Order Barang', icon: <i className="fas fa-truck-loading"></i>, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT] },
-    { id: 'operational', label: 'Report Operasional', icon: <i className="fas fa-chart-line"></i>, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.VISITOR] },
     { id: 'reports', label: 'Reports', icon: <Icons.Reports />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT, UserRole.VISITOR] },
+    { id: 'operational', label: 'Report Operasional', icon: <i className="fas fa-chart-line"></i>, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.VISITOR] },
+    { id: 'membership', label: 'Membership', icon: <i className="fas fa-id-card"></i>, roles: [UserRole.ADMIN, UserRole.STAFF] },
     { id: 'users', label: 'Manajemen User', icon: <i className="fas fa-users-cog"></i>, roles: [UserRole.ADMIN] },
     { id: 'settings', label: 'Settings', icon: <Icons.Settings />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT] },
   ];
@@ -104,24 +104,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
                 <span className="font-black text-[10px] uppercase tracking-[0.15em]">{item.label}</span>
               </button>
             ))}
-            {role === UserRole.MEMBER && (
-              <div className="pt-5 mt-5 border-t border-slate-800 dark:border-slate-100">
-                <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Akun Member</p>
+            {role === UserRole.TENANT && (
+              <div className="pt-4 mt-4 border-t border-slate-800 dark:border-slate-100">
+                <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Akun Member & Saldo</p>
                 <button onClick={() => { onMemberAction('CARD'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
                   <span className="w-5 text-center text-honey-500"><i className="fas fa-id-card"></i></span>
                   <span className="font-bold text-[10px] uppercase tracking-widest">Kartu Member Digital</span>
                 </button>
-                <button onClick={() => { onMemberAction('EDIT_PROFILE'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
-                  <span className="w-5 text-center"><i className="fas fa-edit"></i></span>
-                  <span className="font-bold text-[10px] uppercase tracking-widest">Edit Profil</span>
-                </button>
                 <button onClick={() => { onMemberAction('TOP_UP'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
                   <span className="w-5 text-center text-emerald-500"><i className="fas fa-plus-circle"></i></span>
-                  <span className="font-bold text-[10px] uppercase tracking-widest">Top Up</span>
-                </button>
-                <button onClick={() => { onMemberAction('TERMS'); setIsOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-slate-400 hover:bg-slate-800/60 dark:hover:bg-slate-100 transition-colors">
-                  <span className="w-5 text-center"><i className="fas fa-file-contract"></i></span>
-                  <span className="font-bold text-[10px] uppercase tracking-widest">Syarat &amp; Ketentuan</span>
+                  <span className="font-bold text-[10px] uppercase tracking-widest">Top Up Saldo</span>
                 </button>
               </div>
             )}
