@@ -210,6 +210,50 @@ if ($method === 'POST') {
             // Catat log penggunaan
             $logStmt = $pdo->prepare("INSERT INTO member_logs (memberId, type, amount, timestamp, notes) VALUES (?, 'USAGE', ?, NOW(), ?)");
             $logStmt->execute([$memberId, $computedTotal, "Pembayaran Transaksi #" . $transactionId]);
+
+            // Kirim email notifikasi ke Orang Tua / Wali jika member adalah siswa atau memiliki wali
+            try {
+                require_once __DIR__ . '/mail_sender.php';
+                $guardiansStmt = $pdo->prepare("SELECT p.email, p.name FROM member_guardians g JOIN members p ON p.id = g.parentMemberId WHERE g.childMemberId = ? AND g.status = 'ACTIVE' AND p.email IS NOT NULL AND p.email != ''");
+                $guardiansStmt->execute([$memberId]);
+                $guardians = $guardiansStmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // Ambil sisa saldo terbaru anak
+                $currBalStmt = $pdo->prepare("SELECT depositBalance FROM members WHERE id = ? LIMIT 1");
+                $currBalStmt->execute([$memberId]);
+                $newChildBal = (float)($currBalStmt->fetchColumn() ?? 0);
+
+                // Susun rincian item yang dibeli
+                $itemsText = "";
+                foreach ($normalizedItems as $ni) {
+                    $pName = $ni['product']['name'] ?? 'Produk';
+                    $qty = $ni['quantity'] ?? 1;
+                    $sub = $ni['subtotal'] ?? 0;
+                    $itemsText .= "  • " . $pName . " (x" . $qty . ") - Rp " . number_format($sub, 0, ',', '.') . "\n";
+                }
+                if ($shippingCost > 0) {
+                    $itemsText .= "  • Ongkos Kirim - Rp " . number_format($shippingCost, 0, ',', '.') . "\n";
+                }
+
+                foreach ($guardians as $guardian) {
+                    if (!empty($guardian['email'])) {
+                        $subject = "Notifikasi Penggunaan Saldo Deposit - " . ($member['name'] ?? 'Anak Anda');
+                        $message = "Halo " . $guardian['name'] . ",\n\n"
+                                 . "Anak Anda, " . ($member['name'] ?? 'Siswa') . ", baru saja menggunakan saldo deposit untuk bertransaksi di BeeSmart.\n\n"
+                                 . "--- RINCIAN TRANSAKSI ---\n"
+                                 . "- ID Transaksi: #" . $transactionId . "\n"
+                                 . "- Waktu: " . date('d-m-Y H:i:s') . "\n"
+                                 . "- Daftar Item:\n" . $itemsText . "\n"
+                                 . "- Total Penggunaan: Rp " . number_format($computedTotal, 0, ',', '.') . "\n"
+                                 . "- Sisa Saldo Anak: Rp " . number_format($newChildBal, 0, ',', '.') . "\n\n"
+                                 . "Terima kasih telah mempercayakan layanan Koperasi Syariah AIS.";
+                        
+                        @sendNoReplyEmail($guardian['email'], $subject, $message);
+                    }
+                }
+            } catch (Exception $mailErr) {
+                error_log("Gagal mengirim email laporan deposit: " . $mailErr->getMessage());
+            }
         }
 
         // 3. Insert items dan Update Stok
@@ -349,6 +393,43 @@ if ($method === 'PUT') {
             $orderStatus !== '' ? $orderStatus : null,
             $data['id']
         ]);
+
+        // Jika dari UNPAID menjadi PAID dengan metode DEPOSIT, potong saldo member & catat log
+        if ($before['paymentStatus'] === 'UNPAID' && $paymentStatus === 'PAID' && $paymentMethod === 'DEPOSIT') {
+            $memberId = $data['memberId'] ?? ($before['memberId'] ?? null);
+            if (!$memberId) {
+                throw new Exception("Pelunasan dengan deposit memerlukan ID Member yang valid.");
+            }
+            
+            // Verifikasi member ada di database
+            $stmtMemberCheck = $pdo->prepare("SELECT id, name, status, depositBalance FROM members WHERE id = ? LIMIT 1 FOR UPDATE");
+            $stmtMemberCheck->execute([$memberId]);
+            $member = $stmtMemberCheck->fetch();
+            if (!$member) {
+                throw new Exception("Member dengan ID {$memberId} tidak ditemukan.");
+            }
+            if ($member['status'] === 'SUSPENDED') {
+                throw new Exception("Status member {$member['name']} sedang disuspend.");
+            }
+
+            $totalAmount = (float)$before['total'];
+            if ($totalAmount > 0) {
+                $stmtDeduct = $pdo->prepare("UPDATE members SET depositBalance = depositBalance - ? WHERE id = ? AND depositBalance >= ?");
+                $stmtDeduct->execute([$totalAmount, $memberId, $totalAmount]);
+                if ($stmtDeduct->rowCount() === 0) {
+                    throw new Exception("Saldo deposit member {$member['name']} (Rp " . number_format($member['depositBalance'], 0, ',', '.') . ") tidak mencukupi untuk melunasi tagihan Rp " . number_format($totalAmount, 0, ',', '.') . ".");
+                }
+            }
+
+            // Update memberId dan customerName pada transaksi agar sesuai dengan member yang melunasi
+            $customerName = $member['name'];
+            $stmtUpdateMeta = $pdo->prepare("UPDATE transactions SET memberId = ?, customerName = ? WHERE id = ?");
+            $stmtUpdateMeta->execute([$memberId, $customerName, $data['id']]);
+
+            // Catat log penggunaan deposit
+            $logStmt = $pdo->prepare("INSERT INTO member_logs (memberId, type, amount, timestamp, notes) VALUES (?, 'USAGE', ?, NOW(), ?)");
+            $logStmt->execute([$memberId, $totalAmount, "Pelunasan Piutang Transaksi #" . $data['id']]);
+        }
 
         logActivity($pdo, $auth['name'] ?? 'System', 'Transactions', 'UPDATE_TRANSACTION', $data['id'], $before, $data);
 

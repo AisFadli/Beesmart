@@ -270,8 +270,8 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-3 sm:p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 border border-slate-100 relative max-h-[92vh] overflow-y-auto custom-scrollbar">
+    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-2 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-sm w-full p-3 shadow-2xl space-y-2 border border-slate-100 relative max-h-[98vh] flex flex-col">
         {/* Close Button */}
         <button
           onClick={() => {
@@ -339,22 +339,22 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
         <div 
           onClick={triggerManualFocus}
           title="Ketuk layar kamera untuk memfokuskan ulang"
-          className="relative overflow-hidden rounded-2xl border-2 border-slate-200 bg-slate-900 aspect-square flex items-center justify-center cursor-pointer group"
+          className="relative overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-900 w-full h-52 sm:h-60 flex items-center justify-center cursor-pointer group shrink-0"
         >
           <div id={regionId} className="w-full h-full"></div>
 
           {/* Camera Controls Overlay (Top Buttons) */}
           {isScanning && !errorMsg && (
-            <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+            <div className="absolute top-3 right-3 z-[100] flex items-center gap-2">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   triggerManualFocus();
                 }}
-                className="px-2.5 py-1.5 bg-slate-900/80 hover:bg-slate-900 text-white rounded-xl text-[10px] font-bold backdrop-blur-md border border-white/20 flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                className="px-3 py-2 bg-slate-900/90 hover:bg-slate-950 text-white rounded-xl text-[11px] font-black backdrop-blur-md border border-white/30 flex items-center gap-1.5 shadow-xl transition-all active:scale-95"
               >
-                <i className="fas fa-bullseye text-honey-400"></i>
+                <i className="fas fa-bullseye text-honey-400 text-sm"></i>
                 <span>Fokus</span>
               </button>
 
@@ -365,13 +365,13 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
                     e.stopPropagation();
                     toggleTorch();
                   }}
-                  className={`px-2.5 py-1.5 rounded-xl text-[10px] font-bold backdrop-blur-md border flex items-center gap-1.5 shadow-md transition-all active:scale-95 ${
+                  className={`px-3 py-2 rounded-xl text-[11px] font-black backdrop-blur-md border flex items-center gap-1.5 shadow-xl transition-all active:scale-95 ${
                     isTorchOn 
                       ? 'bg-amber-500 text-white border-amber-300' 
-                      : 'bg-slate-900/80 text-white border-white/20 hover:bg-slate-900'
+                      : 'bg-slate-900/90 text-white border-white/30 hover:bg-slate-950'
                   }`}
                 >
-                  <i className={`fas ${isTorchOn ? 'fa-bolt text-yellow-200' : 'fa-lightbulb'}`}></i>
+                  <i className={`fas ${isTorchOn ? 'fa-bolt text-yellow-200' : 'fa-lightbulb'} text-sm`}></i>
                   <span>{isTorchOn ? 'Senter ON' : 'Senter'}</span>
                 </button>
               )}

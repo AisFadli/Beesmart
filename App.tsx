@@ -20,14 +20,16 @@ const Reports = lazy(() => import('./components/Reports'));
 const OperationalReport = lazy(() => import('./components/OperationalReport'));
 const Orders = lazy(() => import('./components/Orders'));
 const Settings = lazy(() => import('./components/Settings'));
+const UserManagement = lazy(() => import('./components/UserManagement'));
 const Membership = lazy(() => import('./components/Membership'));
 const ChatInterface = lazy(() => import('./components/ChatInterface'));
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
-    currentUser: null, products: [], categories: [], members: [], transactions: [], memberLogs: [], stockAdjustments: [], orders: [], expenses: [], productProposals: [], messages: [], users: [], chat_contacts: [], settings: DEFAULT_SETTINGS, isLoading: true
+    currentUser: null, products: [], categories: [], members: [], familyChildren: [], transactions: [], memberLogs: [], stockAdjustments: [], orders: [], expenses: [], productProposals: [], messages: [], users: [], chat_contacts: [], settings: DEFAULT_SETTINGS, isLoading: true
   });
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedFamilyMemberId, setSelectedFamilyMemberId] = useState('FAMILY');
   const [auditProductId, setAuditProductId] = useState('');
   const [preSelectedMemberId, setPreSelectedMemberId] = useState('');
   const [memberActionRequest, setMemberActionRequest] = useState<{ id: number; action: 'CARD' | 'EDIT_PROFILE' | 'TOP_UP' | 'TERMS' } | null>(null);
@@ -242,6 +244,16 @@ const App: React.FC = () => {
       const activeRole = role || currentUserRef.current?.role;
       const activeId = userId || currentUserRef.current?.id;
       const data = await apiService.getAppData(activeRole, activeId);
+      
+      // Simpan cache lokal agar saat reload berikutnya aplikasi langsung tampil instan
+      try {
+        localStorage.setItem('beesmart_cached_products', JSON.stringify(data.products || []));
+        localStorage.setItem('beesmart_cached_categories', JSON.stringify(data.categories || []));
+        localStorage.setItem('beesmart_cached_settings', JSON.stringify(data.settings || {}));
+        localStorage.setItem('beesmart_cached_members', JSON.stringify(data.members || []));
+        localStorage.setItem('beesmart_cached_orders', JSON.stringify(data.orders || []));
+      } catch (err) {}
+
       setState(prev => {
         let updatedUser = prev.currentUser;
         if (data.user_profile) {
@@ -258,6 +270,7 @@ const App: React.FC = () => {
           products: data.products || [], 
           categories: data.categories || [], 
           members: data.members || [],
+          familyChildren: data.family_children || [],
           transactions: data.transactions || [],
           memberLogs: data.member_logs || [],
           stockAdjustments: data.stock_adjustments || [],
@@ -297,7 +310,29 @@ const App: React.FC = () => {
           return;
         }
 
-        // Load data with the saved user's role immediately
+        // INSTANT CACHE HYDRATION: Tampilkan data dari cache lokal seketika agar tidak ada loading kosong saat reload
+        try {
+          const cachedProducts = localStorage.getItem('beesmart_cached_products');
+          const cachedCategories = localStorage.getItem('beesmart_cached_categories');
+          const cachedSettings = localStorage.getItem('beesmart_cached_settings');
+          const cachedMembers = localStorage.getItem('beesmart_cached_members');
+          const cachedOrders = localStorage.getItem('beesmart_cached_orders');
+
+          if (cachedProducts || cachedCategories) {
+            setState(prev => ({
+              ...prev,
+              currentUser: savedUser,
+              products: cachedProducts ? JSON.parse(cachedProducts) : prev.products,
+              categories: cachedCategories ? JSON.parse(cachedCategories) : prev.categories,
+              members: cachedMembers ? JSON.parse(cachedMembers) : prev.members,
+              orders: cachedOrders ? JSON.parse(cachedOrders) : prev.orders,
+              settings: cachedSettings ? { ...DEFAULT_SETTINGS, ...JSON.parse(cachedSettings) } : prev.settings,
+              isLoading: false
+            }));
+          }
+        } catch (err) {}
+
+        // Fetch fresh data in background
         await refreshData(savedUser?.role, savedUser?.id);
         
         setState(prev => ({ 
@@ -311,15 +346,30 @@ const App: React.FC = () => {
     };
     initApp();
 
-    // Auto-refresh data every 30 seconds using latest currentUserRef to prevent stale closure bug
+    // Auto-refresh data every 20 seconds or when user focuses back on the PWA/app window
     const interval = setInterval(() => {
       const curUser = currentUserRef.current;
       if (curUser) {
         refreshData(curUser.role, curUser.id);
       }
-    }, 30000);
+    }, 20000);
 
-    return () => clearInterval(interval);
+    const handleVisibilitySync = () => {
+      if (document.visibilityState === 'visible') {
+        const curUser = currentUserRef.current;
+        if (curUser) {
+          refreshData(curUser.role, curUser.id);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilitySync);
+    window.addEventListener('focus', handleVisibilitySync);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilitySync);
+      window.removeEventListener('focus', handleVisibilitySync);
+    };
   }, []);
 
   const handleSaveMember = async (m: Member) => {
@@ -367,12 +417,12 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { apiService.setToken(''); localStorage.removeItem('beesmart_user'); setState(prev => ({ ...prev, currentUser: null })); }} user={state.currentUser} onMemberAction={action => setMemberActionRequest({ id: ++memberActionIdRef.current, action })} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => { apiService.setToken(''); localStorage.removeItem('beesmart_user'); setSelectedFamilyMemberId('FAMILY'); setState(prev => ({ ...prev, currentUser: null, familyChildren: [] })); }} user={state.currentUser} familyChildren={state.familyChildren || []} selectedFamilyMemberId={selectedFamilyMemberId} onSelectFamilyMember={setSelectedFamilyMemberId} onMemberAction={action => setMemberActionRequest({ id: ++memberActionIdRef.current, action })} />
       <div className="flex-1 md:ml-64 w-full h-full overflow-hidden flex flex-col relative">
-        <main className="flex-1 overflow-y-auto p-4 md:p-10 pt-20 md:pt-10 custom-scrollbar bg-slate-50">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-10 pt-20 md:pt-10 custom-scrollbar bg-slate-50">
           <div className="max-w-7xl mx-auto">
             <Suspense fallback={<div className="py-12"><DashboardSkeleton /></div>}>
-            {activeTab === 'dashboard' && (isMember ? <MemberDashboard state={state} onRefresh={refreshData} memberActionRequest={memberActionRequest} onMemberActionHandled={id => setMemberActionRequest(current => current?.id === id ? null : current)} /> : <Dashboard state={state} />)}
+            {activeTab === 'dashboard' && (isMember ? <MemberDashboard state={state} onRefresh={refreshData} selectedFamilyMemberId={selectedFamilyMemberId} onSelectFamilyMember={setSelectedFamilyMemberId} memberActionRequest={memberActionRequest} onMemberActionHandled={id => setMemberActionRequest(current => current?.id === id ? null : current)} /> : <Dashboard state={state} />)}
             {activeTab === 'discuss' && <ChatInterface state={state} onRefreshData={refreshData} preSelectedMemberId={preSelectedMemberId} />}
             {!isMember && (
                <>
@@ -433,7 +483,8 @@ const App: React.FC = () => {
                  )}
                  {activeTab === 'orders' && <Orders orders={state.orders} products={state.products} categories={state.categories} transactions={state.transactions} stockAdjustments={state.stockAdjustments} user={state.currentUser} onSaveOrder={async o => { await apiService.saveOrder(o); refreshData(); }} onRefreshData={refreshData} auditProductId={auditProductId} setAuditProductId={setAuditProductId} />}
                  {activeTab === 'operational' && (state.currentUser.role === UserRole.ADMIN || state.currentUser.role === UserRole.STAFF || state.currentUser.role === UserRole.VISITOR) && <OperationalReport state={state} onRefreshData={refreshData} />}
-                 {activeTab === 'reports' && <Reports transactions={state.transactions} products={state.products} settings={state.settings} userRole={state.currentUser.role} currentUser={state.currentUser} onDeleteTransaction={async id => { await apiService.deleteTransaction(id); refreshData(); }} onUpdateTransaction={async tx => { await apiService.updateTransaction(tx); refreshData(); }} />}
+                 {activeTab === 'reports' && <Reports transactions={state.transactions} products={state.products} members={state.members} settings={state.settings} userRole={state.currentUser.role} currentUser={state.currentUser} onDeleteTransaction={async id => { await apiService.deleteTransaction(id); refreshData(); }} onUpdateTransaction={async tx => { await apiService.updateTransaction(tx); refreshData(); }} />}
+                 {activeTab === 'users' && <UserManagement categories={state.categories} userRole={state.currentUser.role} currentUser={state.currentUser} />}
                  {activeTab === 'settings' && <Settings settings={state.settings} userRole={state.currentUser.role} onSave={async s => { await apiService.saveSettings(s); refreshData(); }} onRefresh={refreshData} shippingRates={(state as any).shipping_rates || []} categories={state.categories} />}
                </>
             )}

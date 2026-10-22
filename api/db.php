@@ -1,4 +1,9 @@
 <?php
+// Load security middleware (anti-RCE, rate limit, scanner block)
+if (php_sapi_name() !== 'cli') {
+    require_once __DIR__ . '/security.php';
+}
+
 // KEAMANAN: Blokir akses langsung file ini via HTTP (db.php hanya boleh di-include oleh endpoint lain)
 if (isset($_SERVER['REQUEST_METHOD']) && ($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
     http_response_code(403);
@@ -66,17 +71,17 @@ try {
 
     require_once __DIR__ . '/auth_guard.php';
     $selfFile = basename($_SERVER['SCRIPT_FILENAME'] ?? ($_SERVER['SCRIPT_NAME'] ?? ''));
-    $publicEndpoints = ['auth.php', 'forgot_password.php', 'register.php', 'index.php'];
+    $publicEndpoints = ['auth.php', 'forgot_password.php', 'register.php', 'member_activation.php', 'index.php'];
     $requestAuth = null;
-    if (!in_array($selfFile, $publicEndpoints, true) && $_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
+    if (php_sapi_name() !== 'cli' && !in_array($selfFile, $publicEndpoints, true) && $_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
         $requestAuth = requireAuth();
     }
 
-    $schemaVersion = '2026-10-16-1';
+    $schemaVersion = '2026-10-16-3';
     $pdo->exec("CREATE TABLE IF NOT EXISTS app_schema_versions (
         version VARCHAR(32) PRIMARY KEY,
         appliedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci");
     $versionStmt = $pdo->prepare("SELECT 1 FROM app_schema_versions WHERE version = ? LIMIT 1");
     $versionStmt->execute([$schemaVersion]);
     if (!$versionStmt->fetchColumn()) {
@@ -141,18 +146,27 @@ try {
         whatsapp VARCHAR(20),
         depositBalance DECIMAL(15, 2) DEFAULT 0,
         registrationDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-        status VARCHAR(20) DEFAULT 'APPROVED'
-    )");
+        status VARCHAR(20) DEFAULT 'APPROVED',
+        memberType VARCHAR(20) DEFAULT 'ADULT',
+        nis VARCHAR(50) DEFAULT NULL,
+        nisn VARCHAR(50) DEFAULT NULL,
+        className VARCHAR(100) DEFAULT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci");
 
     // Migration to add missing columns to products table
     try { $pdo->exec("ALTER TABLE products ADD COLUMN barcode VARCHAR(100) AFTER sku"); } catch (Exception $e) {}
 
     // Migration to add missing columns to members table
     try { $pdo->exec("ALTER TABLE members ADD COLUMN email VARCHAR(100) UNIQUE AFTER name"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE members MODIFY COLUMN email VARCHAR(100) DEFAULT NULL"); } catch (Exception $e) {}
     try { $pdo->exec("ALTER TABLE members ADD COLUMN password VARCHAR(255) AFTER email"); } catch (Exception $e) {}
     try { $pdo->exec("ALTER TABLE members ADD COLUMN address TEXT AFTER password"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE members MODIFY COLUMN whatsapp VARCHAR(20) DEFAULT NULL"); } catch (Exception $e) {}
     try { $pdo->exec("ALTER TABLE members ADD COLUMN barcode VARCHAR(100) AFTER id"); } catch (Exception $e) {}
     try { $pdo->exec("ALTER TABLE members ADD COLUMN image LONGTEXT AFTER whatsapp"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE members ENGINE=InnoDB"); } catch (Exception $e) {}
+    try { $pdo->exec("CREATE INDEX idx_members_nis ON members (nis)"); } catch (Exception $e) {}
+    try { $pdo->exec("CREATE INDEX idx_members_nisn ON members (nisn)"); } catch (Exception $e) {}
 
     // Auto-populate barcode for products and members if empty
     try { $pdo->exec("UPDATE products SET barcode = sku WHERE barcode IS NULL OR barcode = ''"); } catch (Exception $e) {}
@@ -163,6 +177,7 @@ try {
         memberId VARCHAR(50),
         type VARCHAR(20),
         amount DECIMAL(15, 2),
+        transferId VARCHAR(50) DEFAULT NULL,
         staffId VARCHAR(100),
         status VARCHAR(20) DEFAULT 'APPROVED',
         notes TEXT,
@@ -171,6 +186,45 @@ try {
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (memberId) REFERENCES members(id) ON DELETE CASCADE
     )");
+    try { $pdo->exec("ALTER TABLE member_logs ADD COLUMN staffId VARCHAR(100) AFTER transferId"); } catch (Exception $e) {}
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS member_guardians (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        parentMemberId VARCHAR(50) NOT NULL,
+        childMemberId VARCHAR(50) NOT NULL,
+        relationship VARCHAR(30) DEFAULT 'PARENT',
+        status VARCHAR(20) DEFAULT 'ACTIVE',
+        createdBy VARCHAR(50) DEFAULT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_guardian_child (parentMemberId, childMemberId),
+        KEY idx_guardian_child (childMemberId),
+        FOREIGN KEY (parentMemberId) REFERENCES members(id) ON DELETE CASCADE,
+        FOREIGN KEY (childMemberId) REFERENCES members(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS member_invitations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        memberId VARCHAR(50) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        tokenHash CHAR(64) NOT NULL UNIQUE,
+        expiresAt DATETIME NOT NULL,
+        usedAt DATETIME DEFAULT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_invitation_member (memberId),
+        FOREIGN KEY (memberId) REFERENCES members(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS deposit_transfers (
+        id VARCHAR(50) PRIMARY KEY,
+        fromMemberId VARCHAR(50) NOT NULL,
+        toMemberId VARCHAR(50) NOT NULL,
+        amount DECIMAL(15, 2) NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_transfer_from (fromMemberId, createdAt),
+        KEY idx_transfer_to (toMemberId, createdAt),
+        FOREIGN KEY (fromMemberId) REFERENCES members(id),
+        FOREIGN KEY (toMemberId) REFERENCES members(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS password_resets (
         email VARCHAR(100) NOT NULL,
@@ -402,7 +456,7 @@ try {
         before_data LONGTEXT,
         after_data LONGTEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS messages (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -416,7 +470,7 @@ try {
         imageUrl VARCHAR(500) DEFAULT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         isRead INT DEFAULT 0
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci");
 
     // --- MIGRATION / SCHEMA UPDATES FOR EXISTING INSTALLS ---
     $tables = [
@@ -455,12 +509,17 @@ try {
         ],
         'member_logs' => [
             'status' => "VARCHAR(20) DEFAULT 'APPROVED'",
+            'transferId' => "VARCHAR(50) DEFAULT NULL",
             'notes' => "TEXT AFTER staffId",
             'proof_image' => "LONGTEXT AFTER notes",
             'topupMethod' => "VARCHAR(20) DEFAULT NULL AFTER proof_image"
         ],
         'members' => [
-            'barcode' => "VARCHAR(100) DEFAULT NULL"
+            'barcode' => "VARCHAR(100) DEFAULT NULL",
+            'memberType' => "VARCHAR(20) DEFAULT 'ADULT'",
+            'nis' => "VARCHAR(50) DEFAULT NULL",
+            'nisn' => "VARCHAR(50) DEFAULT NULL",
+            'className' => "VARCHAR(100) DEFAULT NULL"
         ],
         'messages' => [
             'imageUrl' => "VARCHAR(500) DEFAULT NULL"

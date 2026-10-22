@@ -17,11 +17,14 @@ api/mail_config.php
 api/app_config.php
 api/db_config.php
 api/auth_config.php
+live_token.txt
+Data/
 
 # Backup database & uploads (data sensitif / runtime)
 BeeSmart_Data.sql
 uploads/
 api/error_log
+logs/
 
 # Editor directories and files
 .vscode/*

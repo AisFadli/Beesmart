@@ -121,38 +121,37 @@ body {
   height: 100% !important;
   border: none !important;
   position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  overflow: hidden !important;
   background-color: #0f172a !important;
   border-radius: 1rem !important;
+  overflow: hidden !important;
+}
+
+#html5-qrcode-reader-container__scan_region {
+  background: transparent !important;
+}
+
+#html5-qrcode-reader-container__dashboard {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+#html5-qrcode-reader-container__dashboard span,
+#html5-qrcode-reader-container__dashboard button {
+  display: none !important;
 }
 
 #html5-qrcode-reader-container video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  display: block !important;
-  border-radius: 0.75rem !important;
-}
-
-#html5-qrcode-reader-container canvas {
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
+  display: block !important;
 }
 
-#html5-qrcode-reader-container div {
-  width: 100% !important;
-  height: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: relative !important;
+#html5-qrcode-reader-container canvas {
+  display: none !important;
 }
 
 #html5-qrcode-reader-container img,
