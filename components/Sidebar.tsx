@@ -35,6 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
     { id: 'reports', label: 'Reports', icon: <Icons.Reports />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT, UserRole.VISITOR] },
     { id: 'operational', label: 'Report Operasional', icon: <i className="fas fa-chart-line"></i>, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.VISITOR] },
     { id: 'membership', label: 'Membership', icon: <i className="fas fa-id-card"></i>, roles: [UserRole.ADMIN, UserRole.STAFF] },
+    { id: 'services', label: 'Layanan & Tagihan', icon: <i className="fas fa-bus"></i>, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.MEMBER, UserRole.TENANT] },
     { id: 'users', label: 'Manajemen User', icon: <i className="fas fa-users-cog"></i>, roles: [UserRole.ADMIN] },
     { id: 'settings', label: 'Settings', icon: <Icons.Settings />, roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.TENANT] },
   ];
