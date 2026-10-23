@@ -62,12 +62,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
       <aside className={`fixed left-0 top-0 bottom-0 w-72 sm:w-64 bg-slate-900 dark:bg-[#0d1424] text-slate-300 dark:text-[#b9c4d4] transition-transform duration-300 z-[70] shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-4 sm:p-6 flex flex-col h-full">
           <div className="mb-6 pt-2 md:pt-0 flex items-center justify-between">
-            <h1 className="text-white dark:text-[#f1f5f9] font-black text-2xl flex items-center gap-3 italic">
-               <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-11 h-11 object-contain bg-white dark:bg-slate-200 rounded-2xl p-1.5 shadow-xl shadow-honey-500/20 not-italic transform -rotate-3" />
-               BeeSmart
-               <i className="fas fa-spinner fa-spin text-honey-500 text-sm ml-1" title="Memuat data..."></i>
-            </h1>
-            <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="hidden md:flex w-10 h-10 rounded-2xl items-center justify-center text-lg text-slate-300 hover:bg-slate-800/60 dark:text-[#cbd3e0] dark:hover:bg-slate-100 transition-all active:scale-90" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
+            <div className="flex items-center gap-2 min-w-0">
+              <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-10 h-10 object-contain bg-white dark:bg-slate-200 rounded-2xl p-1.5 shadow-xl shadow-honey-500/25 shrink-0 transform -rotate-3" />
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h1 className="text-white dark:text-[#f1f5f9] font-black text-xl italic tracking-tight truncate">BeeSmart</h1>
+                <i className="fas fa-spinner fa-spin text-honey-500 text-xs shrink-0" title="Memuat data..."></i>
+              </div>
+            </div>
+            <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="hidden md:flex w-9 h-9 rounded-xl items-center justify-center text-base text-slate-300 hover:bg-slate-800/60 dark:text-[#cbd3e0] transition-all active:scale-90 shrink-0" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
               <i className={`fas ${themeDark ? 'fa-sun' : 'fa-moon'}`}></i>
             </button>
           </div>
