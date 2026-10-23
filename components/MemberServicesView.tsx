@@ -51,6 +51,10 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
 
   useEffect(() => {
     loadData();
+    const interval = setInterval(() => {
+      loadData();
+    }, 15000);
+    return () => clearInterval(interval);
   }, [user.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
