@@ -148,11 +148,11 @@ export class ApiService {
     });
   }
 
-  async transferMemberDeposit(childMemberId: string, amount: string, requestId: string) {
+  async transferMemberDeposit(childMemberId: string, amount: string, requestId: string, direction: 'to_child' | 'to_parent' = 'to_child') {
     return this.request('/member_deposit_transfer.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ childMemberId, amount, requestId }),
+      body: JSON.stringify({ childMemberId, amount, requestId, direction }),
     });
   }
 

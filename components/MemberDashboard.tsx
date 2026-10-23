@@ -13,9 +13,11 @@ type MemberAction = 'CARD' | 'EDIT_PROFILE' | 'TOP_UP' | 'TERMS';
 const MemberDashboard: React.FC<{
   state: AppState;
   onRefresh: () => void;
+  selectedFamilyMemberId: string;
+  onSelectFamilyMember: (memberId: string) => void;
   memberActionRequest: { id: number; action: MemberAction } | null;
   onMemberActionHandled: (id: number) => void;
-}> = ({ state, onRefresh, memberActionRequest, onMemberActionHandled }) => {
+}> = ({ state, onRefresh, selectedFamilyMemberId, onSelectFamilyMember, memberActionRequest, onMemberActionHandled }) => {
   const isMember = state.currentUser?.role === 'MEMBER';
   const me: Member = React.useMemo(() => {
     if (state.members && state.members.length > 0 && state.currentUser) {
@@ -66,6 +68,12 @@ const MemberDashboard: React.FC<{
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<Member>>({});
+  const [isBalanceVisible, setIsBalanceVisible] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<Member | null>(null);
+  const [transferDirection, setTransferDirection] = useState<'to_child' | 'to_parent'>('to_child');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferRequestId, setTransferRequestId] = useState('');
+  const [isTransferring, setIsTransferring] = useState(false);
   
   // Top Up Multi-step states
   const [topUpStep, setTopUpStep] = useState<'METHOD' | 'DETAILS'>('METHOD');
@@ -152,36 +160,67 @@ const MemberDashboard: React.FC<{
     ).length;
   }, [state.messages, me]);
   
-  const myTransactions = useMemo(() => {
-    if (!me) return [];
-    return (state.transactions || [])
-      .filter(tx => tx.memberId === me.id)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [state.transactions, me]);
+    const familyChildren = state.familyChildren || [];
+    const selectedChild = familyChildren.find(child => child.id === selectedFamilyMemberId) || null;
+    const isFamilyOverview = selectedFamilyMemberId === 'FAMILY' && familyChildren.length > 0;
+    const activeProfile = selectedChild || me;
+    const visibleMemberIds = isFamilyOverview ? [me.id, ...familyChildren.map(child => child.id)] : [activeProfile.id];
 
-  const myActivity = useMemo(() => {
-     if (!me) return [];
-     const purchases = myTransactions.map(t => ({
-        timestamp: t.timestamp,
+    const myTransactions = useMemo(() => {
+     const visibleIds = new Set(visibleMemberIds);
+     return (state.transactions || [])
+      .filter(tx => tx.memberId && visibleIds.has(tx.memberId))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [state.transactions, visibleMemberIds.join('|')]);
+
+    const myActivity = useMemo(() => {
+      const visibleIds = new Set(visibleMemberIds);
+      const memberNames = new Map([[me.id, me.name], ...familyChildren.map(child => [child.id, child.name] as [string, string])]);
+      const purchases = myTransactions.map(transaction => ({
+        timestamp: transaction.timestamp,
         type: 'PURCHASE',
-        desc: t.items.map(i => i.name).join(', '),
-        amount: -t.total,
-        method: t.paymentMethod,
-        status: t.orderStatus || (t.paymentStatus === 'PAID' ? 'APPROVED' : 'PENDING'),
-        notes: t.notes
-     }));
-     const logs = (state.memberLogs || [])
-        .filter(l => l.memberId === me.id)
-        .map(l => ({
-           timestamp: l.timestamp,
-           type: l.type,
-           desc: l.notes,
-           amount: l.type === 'TOPUP' ? l.amount : -l.amount,
-           method: 'DEPOSIT',
-           status: l.status
+        desc: transaction.items.map(item => item.name).join(', '),
+        amount: -transaction.total,
+        method: transaction.paymentMethod,
+        status: transaction.orderStatus || (transaction.paymentStatus === 'PAID' ? 'APPROVED' : 'PENDING'),
+        memberName: memberNames.get(transaction.memberId || '') || me.name
+      }));
+      const logs = (state.memberLogs || [])
+          .filter(log => visibleIds.has(log.memberId) && log.type !== 'USAGE')
+        .map(log => ({
+          timestamp: log.timestamp,
+          type: log.type,
+          desc: log.notes,
+          amount: log.type === 'TOPUP' || log.type === 'TRANSFER_IN' ? Number(log.amount) : -Number(log.amount),
+          method: 'DEPOSIT',
+          status: log.status,
+          memberName: memberNames.get(log.memberId) || me.name
         }));
-     return [...purchases, ...logs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [myTransactions, state.memberLogs, me]);
+      return [...purchases, ...logs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [myTransactions, state.memberLogs, me, familyChildren, visibleMemberIds.join('|')]);
+
+    const startDepositTransfer = (child: Member, direction: 'to_child' | 'to_parent' = 'to_child') => {
+     setTransferTarget(child);
+     setTransferDirection(direction);
+     setTransferAmount('');
+     setTransferRequestId(`TRF-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    };
+
+    const submitDepositTransfer = async () => {
+     if (!transferTarget || isTransferring || Number(transferAmount) <= 0) return;
+     setIsTransferring(true);
+     try {
+      await apiService.transferMemberDeposit(transferTarget.id, transferAmount, transferRequestId, transferDirection);
+      setTransferTarget(null);
+      setTransferAmount('');
+      await onRefresh();
+      alert(transferDirection === 'to_parent' ? 'Penarikan saldo dari siswa berhasil.' : 'Transfer saldo berhasil.');
+     } catch (error: any) {
+      alert(error.message || 'Transfer saldo gagal.');
+     } finally {
+      setIsTransferring(false);
+     }
+    };
 
   const exportMemberHistoryToExcel = (member: Member, history: any[]) => {
     const headers = ['Waktu', 'Tipe Aktivitas', 'Keterangan', 'Metode Pembayaran / Dana', 'Nominal (Rp)', 'Status'];
@@ -326,37 +365,74 @@ const MemberDashboard: React.FC<{
         <ChatInterface state={state} onRefreshData={async () => { onRefresh(); }} />
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         <div className={`p-8 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden group transition-all ${me.status === 'SUSPENDED' ? 'bg-red-600 grayscale-[0.3]' : 'bg-honey-600'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className={`p-6 md:p-8 rounded-2xl shadow-xl text-white relative overflow-hidden group transition-all ${activeProfile.status === 'SUSPENDED' ? 'bg-red-600 grayscale-[0.3]' : 'bg-honey-700'}`}>
             <div className="relative z-10">
-               <div className="flex justify-between items-start mb-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Saldo Deposit Anda</p>
-                  {me.status === 'SUSPENDED' && <span className="bg-white text-red-600 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest">SUSPENDED</span>}
+                <div className="flex justify-between items-start gap-3 mb-2">
+                  <p className="min-w-0 whitespace-normal break-words text-xs font-bold uppercase tracking-wider opacity-80">{isFamilyOverview ? 'Saldo Orang Tua' : selectedChild ? `Saldo ${activeProfile.name}` : 'Saldo Deposit Anda'}</p>
+                  <button type="button" onClick={() => setIsBalanceVisible(visible => !visible)} className="w-10 h-10 shrink-0 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center" aria-label={isBalanceVisible ? 'Sembunyikan saldo' : 'Tampilkan saldo'} title={isBalanceVisible ? 'Sembunyikan saldo' : 'Tampilkan saldo'}>
+                    <i className={`fas ${isBalanceVisible ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                  {activeProfile.status === 'SUSPENDED' && <span className="bg-white text-red-600 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest">SUSPENDED</span>}
                </div>
-               <h3 className="text-4xl font-black mb-6">Rp {Number(me.depositBalance).toLocaleString('id-ID')}</h3>
-               <div className="flex items-center gap-2">
-                  <span className="bg-white/20 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest">ID: {me.id}</span>
+                <h3 className="text-3xl md:text-4xl font-black mb-5 break-words">Rp {isBalanceVisible ? Number(activeProfile.depositBalance).toLocaleString('id-ID') : '••••••'}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="max-w-full break-all bg-white/20 px-2 py-1 rounded text-xs font-semibold">{selectedChild ? [activeProfile.className, activeProfile.nisn || activeProfile.nis].filter(Boolean).join(' · ') : `ID: ${activeProfile.id}`}</span>
+                  {selectedChild && (
+                   <div className="flex flex-wrap gap-2">
+                     <button type="button" onClick={() => startDepositTransfer(selectedChild, 'to_child')} className="px-3 py-2 rounded-lg bg-white text-emerald-800 text-xs font-bold hover:bg-emerald-50"><i className="fas fa-arrow-right mr-1.5"></i>Transfer ke anak</button>
+                     <button type="button" onClick={() => startDepositTransfer(selectedChild, 'to_parent')} className="px-3 py-2 rounded-lg bg-emerald-900/40 text-white text-xs font-bold hover:bg-emerald-900/60 border border-white/20"><i className="fas fa-arrow-left mr-1.5"></i>Tarik dari anak</button>
+                   </div>
+                 )}
                </div>
+                {selectedChild && <p className="mt-4 text-xs text-white/80">Saldo orang tua terpisah: Rp {isBalanceVisible ? Number(me.depositBalance).toLocaleString('id-ID') : '••••••'}</p>}
             </div>
-            <i className="fas fa-wallet absolute -right-4 -bottom-4 text-9xl opacity-10 rotate-12"></i>
+              <i className="fas fa-wallet absolute -right-4 -bottom-4 text-8xl opacity-10 rotate-12"></i>
          </div>
-         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Kunjungan</p>
             <h3 className="text-3xl font-black text-slate-900">{myTransactions.length} <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Transaksi</span></h3>
          </div>
-         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Pengeluaran</p>
-            <h3 className="text-3xl font-black text-honey-600">Rp {Number(myTransactions.reduce((s,t) => s + t.total, 0)).toLocaleString('id-ID')}</h3>
+              <h3 className="text-2xl md:text-3xl font-black text-honey-700 break-words">Rp {isBalanceVisible ? Number(myTransactions.reduce((sum, transaction) => sum + transaction.total, 0)).toLocaleString('id-ID') : '••••••'}</h3>
          </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
-         <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          {isFamilyOverview && (
+            <section className="space-y-4">
+             <div className="flex flex-wrap items-end justify-between gap-2">
+              <div><h3 className="text-base font-black text-slate-900">Anak dalam keluarga</h3><p className="mt-1 text-sm text-slate-500">Pilih profil untuk melihat saldo dan aktivitasnya.</p></div>
+              <span className="text-sm font-semibold text-slate-500">{familyChildren.length} profil siswa</span>
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {familyChildren.map(child => (
+                <article key={child.id} className="min-w-0 bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-4">
+                 <div className="min-w-0">
+                  <h4 className="whitespace-normal break-words text-base font-bold leading-snug text-slate-900">{child.name}</h4>
+                  <p className="mt-1 break-words text-sm text-slate-500">{[child.className, child.nisn || child.nis].filter(Boolean).join(' · ')}</p>
+                 </div>
+                 <p className="text-sm font-semibold text-slate-600">Saldo siswa: <span className="font-black text-slate-900">Rp {isBalanceVisible ? Number(child.depositBalance).toLocaleString('id-ID') : '••••••'}</span></p>
+                 <div className="mt-auto flex flex-wrap gap-2">
+                  <button type="button" onClick={() => onSelectFamilyMember(child.id)} className="flex-1 min-w-[130px] px-3 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold">Lihat aktivitas</button>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => startDepositTransfer(child, 'to_child')} className="flex-1 min-w-[120px] px-3 py-2.5 rounded-lg bg-emerald-700 text-white text-xs font-bold">Transfer saldo</button>
+                    <button type="button" onClick={() => startDepositTransfer(child, 'to_parent')} className="flex-1 min-w-[120px] px-3 py-2.5 rounded-lg bg-slate-700 text-white text-xs font-bold">Tarik saldo</button>
+                  </div>
+                 </div>
+                </article>
+              ))}
+             </div>
+            </section>
+          )}
+
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50 flex flex-wrap justify-between items-center gap-3">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2">
-              <i className="fas fa-history text-honey-600"></i> Timeline Aktivitas Belanja & Saldo
+                <i className="fas fa-history text-honey-600"></i> Aktivitas {isFamilyOverview ? 'Keluarga' : activeProfile.name}
             </h3>
             <button 
-              onClick={() => exportMemberHistoryToExcel(me, myActivity)}
+                onClick={() => exportMemberHistoryToExcel(isFamilyOverview ? me : activeProfile, myActivity)}
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-emerald-100"
             >
               <i className="fas fa-file-excel"></i> Export Excel
@@ -367,6 +443,7 @@ const MemberDashboard: React.FC<{
                <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 tracking-widest">
                   <tr>
                      <th className="px-8 py-5">Waktu</th>
+                     <th className="px-8 py-5">Profil</th>
                      <th className="px-8 py-5">Rincian</th>
                      <th className="px-8 py-5 text-right">Nominal</th>
                      <th className="px-8 py-5 text-center">Status</th>
@@ -379,9 +456,10 @@ const MemberDashboard: React.FC<{
                           <p className="text-[10px] font-black text-slate-800">{new Date(act.timestamp).toLocaleDateString()}</p>
                           <p className="text-[8px] text-slate-400 font-bold">{new Date(act.timestamp).toLocaleTimeString()}</p>
                        </td>
+                        <td className="px-8 py-5"><p className="max-w-48 whitespace-normal break-words text-xs font-semibold text-slate-700">{act.memberName}</p></td>
                        <td className="px-8 py-5">
-                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase mb-1 inline-block ${act.type === 'TOPUP' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                             {act.type}
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase mb-1 inline-block ${act.type === 'TOPUP' || act.type === 'TRANSFER_IN' ? 'bg-emerald-100 text-emerald-700' : act.type === 'TRANSFER_OUT' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                            {act.type === 'TRANSFER_IN' ? 'TRANSFER MASUK' : act.type === 'TRANSFER_OUT' ? 'TRANSFER KELUAR' : act.type}
                           </span>
                           <p className="text-[10px] font-bold text-slate-600 italic line-clamp-1">{act.desc}</p>
                        </td>
@@ -406,8 +484,9 @@ const MemberDashboard: React.FC<{
                 <div className="flex justify-between items-start">
                   <div>
                     <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase ${act.type === 'TOPUP' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                      {act.type}
+                      {act.type === 'TRANSFER_IN' ? 'TRANSFER MASUK' : act.type === 'TRANSFER_OUT' ? 'TRANSFER KELUAR' : act.type}
                     </span>
+                    <p className="max-w-full whitespace-normal break-words text-xs font-bold text-slate-700">{act.memberName}</p>
                     <p className="text-[8px] text-slate-400 font-bold mt-1">{new Date(act.timestamp).toLocaleString()}</p>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${act.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' : act.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-600'}`}>
@@ -573,6 +652,33 @@ const MemberDashboard: React.FC<{
                 </div>
               )}
            </div>
+        </div>
+      )}
+      {transferTarget && (
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 md:p-7 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="text-lg font-black text-slate-900">{transferDirection === 'to_parent' ? 'Tarik Saldo dari Siswa' : 'Transfer Saldo ke Siswa'}</h3>
+                <p className="mt-1 whitespace-normal break-words text-sm text-slate-600">{transferDirection === 'to_parent' ? `Dari ${transferTarget.name} ke Akun Anda` : `Ke ${transferTarget.name}`}</p>
+              </div>
+              <button type="button" onClick={() => setTransferTarget(null)} className="w-10 h-10 shrink-0 rounded-lg bg-slate-100 text-slate-600" aria-label="Tutup transfer"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="mt-5 rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-500">Saldo sumber · {transferDirection === 'to_parent' ? transferTarget.name : me.name}</p>
+              <p className="mt-1 text-lg font-black text-slate-900">Rp {isBalanceVisible ? Number(transferDirection === 'to_parent' ? transferTarget.depositBalance : me.depositBalance).toLocaleString('id-ID') : '••••••'}</p>
+            </div>
+            <label className="mt-5 block text-xs font-bold text-slate-700" htmlFor="family-transfer-amount">Nominal {transferDirection === 'to_parent' ? 'penarikan' : 'transfer'}</label>
+            <div className="mt-2 flex items-center rounded-xl border border-slate-300 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
+              <span className="pl-4 text-sm font-bold text-slate-500">Rp</span>
+              <input id="family-transfer-amount" type="number" min="1" step="0.01" max={transferDirection === 'to_parent' ? transferTarget.depositBalance : me.depositBalance} inputMode="decimal" value={transferAmount} onChange={event => setTransferAmount(event.target.value)} className="w-full min-w-0 rounded-xl px-3 py-4 text-lg font-bold text-slate-900 outline-none" placeholder="0" />
+            </div>
+            <p className="mt-2 text-xs text-slate-500">{transferDirection === 'to_parent' ? 'Saldo anak akan berkurang dan saldo Anda akan bertambah sebesar nominal yang sama.' : 'Saldo anak akan bertambah sebesar nominal yang sama. Transfer dicatat di riwayat kedua profil.'}</p>
+            <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
+              <button type="button" onClick={() => setTransferTarget(null)} className="flex-1 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700">Batal</button>
+              <button type="button" onClick={submitDepositTransfer} disabled={isTransferring || Number(transferAmount) <= 0 || Number(transferAmount) > Number(transferDirection === 'to_parent' ? transferTarget.depositBalance : me.depositBalance)} className="flex-1 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">{isTransferring ? 'Memproses...' : (transferDirection === 'to_parent' ? 'Konfirmasi Tarik' : 'Konfirmasi transfer')}</button>
+            </div>
+          </div>
         </div>
       )}
        {/* Member Card Modal */}
