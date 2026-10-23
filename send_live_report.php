@@ -2,7 +2,8 @@
 // Jika parameter berupa keyword (seperti 'weekly' atau 'harian'), atur tanggal otomatis
 $arg1 = $argv[1] ?? 'harian';
 if ($arg1 === 'weekly' || $arg1 === 'mingguan') {
-    $startDate = date('Y-m-d', strtotime('-7 days'));
+    // Rekap laporan hari Senin sampai Jumat minggu berjalan (atau 4-5 hari kebelakang)
+    $startDate = date('Y-m-d', strtotime('monday this week'));
     $endDate = date('Y-m-d');
     $reportType = 'MINGGUAN';
 } elseif ($arg1 === 'harian' || $arg1 === 'daily') {
