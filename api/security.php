@@ -40,8 +40,8 @@ if (preg_match('/\.\.[\/\\\\]/', $requestUri) || preg_match('/%2e%2e[\/\\\\%]/i'
 $dangerousPatterns = [
     // PHP code injection
     '/(<\?php|<\?=)/i',
-    // Common RCE functions
-    '/\b(eval|assert|exec|system|passthru|shell_exec|popen|proc_open|pcntl_exec)\s*\(/i',
+    // Common RCE functions (hanya jika diikuti kurung buka, pastikan tidak trigger kata umum)
+    '/\b(eval|exec|system|passthru|shell_exec|popen|proc_open|pcntl_exec)\s*\(/i',
     // Backtick execution
     '/`[^`]*`/',
     // PHP wrapper/stream injection
