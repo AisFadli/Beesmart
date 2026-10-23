@@ -20,19 +20,19 @@ const MemberDashboard: React.FC<{
 }> = ({ state, onRefresh, selectedFamilyMemberId, onSelectFamilyMember, memberActionRequest, onMemberActionHandled }) => {
   const isMember = state.currentUser?.role === 'MEMBER';
   const me: Member = React.useMemo(() => {
-    if (state.members && state.members.length > 0 && state.currentUser) {
-      const cleanId = state.currentUser.id.replace('USER-', '');
-      const found = state.members.find(m => 
-        m.id === state.currentUser?.id || 
-        m.id === cleanId || 
-        m.email === state.currentUser?.email
-      );
-      if (found) return found;
-    }
-    if ((state as any).member_profile) {
-      return (state as any).member_profile;
-    }
     if (state.currentUser) {
+      if ((state as any).member_profile) {
+        return (state as any).member_profile;
+      }
+      if (state.members && state.members.length > 0) {
+        const cleanId = state.currentUser.id.replace('USER-', '');
+        const found = state.members.find(m =>
+          m.id === state.currentUser?.id ||
+          m.id === cleanId ||
+          m.email === state.currentUser?.email
+        );
+        if (found) return found;
+      }
       return {
         id: state.currentUser.id,
         barcode: 'MBR-' + state.currentUser.id,
@@ -53,9 +53,9 @@ const MemberDashboard: React.FC<{
       address: '',
       whatsapp: '',
       depositBalance: 0,
-      status: 'APPROVED',
-      registrationDate: new Date().toISOString()
-    } as Member;
+      status: 'PENDING',
+      registrationDate: ''
+    };
   }, [state.currentUser, state.members, (state as any).member_profile]);
 
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SHOPPING' | 'CHAT'>('OVERVIEW');
