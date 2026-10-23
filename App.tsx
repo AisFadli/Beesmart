@@ -82,18 +82,26 @@ const App: React.FC = () => {
     let { proposals, orders, messages, orderStatuses } = notifiedIdsRef.current;
     let updated = false;
 
-    // Helper to send browser notification
+    // Helper to send browser notification safely
     const triggerNotification = (title: string, body: string) => {
-      if ("Notification" in window) {
-        if (Notification.permission === "granted") {
-          new Notification(title, { body, icon: '/app/logo/beesmart-favicon.png' });
-        } else if (Notification.permission !== "denied") {
-          Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-              new Notification(title, { body, icon: '/app/logo/beesmart-favicon.png' });
+      try {
+        if ("Notification" in window) {
+          if (Notification.permission === "granted") {
+            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+              navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, { body, icon: '/app/logo/beesmart-favicon.png' });
+              }).catch(() => {
+                new (window as any).Notification(title, { body, icon: '/app/logo/beesmart-favicon.png' });
+              });
+            } else {
+              new (window as any).Notification(title, { body, icon: '/app/logo/beesmart-favicon.png' });
             }
-          });
+          } else if (Notification.permission !== "denied") {
+            Notification.requestPermission();
+          }
         }
+      } catch (e) {
+        console.warn("Notification error:", e);
       }
     };
 
