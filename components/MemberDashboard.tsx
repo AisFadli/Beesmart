@@ -164,7 +164,8 @@ const MemberDashboard: React.FC<{
     const selectedChild = familyChildren.find(child => child.id === selectedFamilyMemberId) || null;
     const isFamilyOverview = selectedFamilyMemberId === 'FAMILY' && familyChildren.length > 0;
     const activeProfile = selectedChild || me;
-    const visibleMemberIds = isFamilyOverview ? [me.id, ...familyChildren.map(child => child.id)] : [activeProfile.id];
+    const activeProfileId = activeProfile && typeof activeProfile === 'object' && 'id' in activeProfile ? (activeProfile as any).id : 'guest';
+    const visibleMemberIds = isFamilyOverview ? [me.id, ...familyChildren.map(child => child.id)] : [activeProfileId];
 
     const myTransactions = useMemo(() => {
      const visibleIds = new Set(visibleMemberIds);
