@@ -1,7 +1,19 @@
 <?php
-$startDate = $argv[1] ?? date('Y-m-d', strtotime('-1 day'));
-$endDate = $argv[2] ?? date('Y-m-d');
-$reportType = $argv[3] ?? 'HARIAN';
+// Jika parameter berupa keyword (seperti 'weekly' atau 'harian'), atur tanggal otomatis
+$arg1 = $argv[1] ?? 'harian';
+if ($arg1 === 'weekly' || $arg1 === 'mingguan') {
+    $startDate = date('Y-m-d', strtotime('-7 days'));
+    $endDate = date('Y-m-d');
+    $reportType = 'MINGGUAN';
+} elseif ($arg1 === 'harian' || $arg1 === 'daily') {
+    $startDate = date('Y-m-d', strtotime('-1 day'));
+    $endDate = date('Y-m-d');
+    $reportType = 'HARIAN';
+} else {
+    $startDate = $argv[1] ?? date('Y-m-d', strtotime('-1 day'));
+    $endDate = $argv[2] ?? date('Y-m-d');
+    $reportType = $argv[3] ?? 'HARIAN';
+}
 
 $output = shell_exec("php live_report_cli.php $startDate $endDate");
 $message = "📊 *OTOMATIS LAPORAN {$reportType} BEESMART*\n\n" . $output;
