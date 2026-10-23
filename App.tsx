@@ -349,13 +349,15 @@ const App: React.FC = () => {
     };
     initApp();
 
-    // Auto-refresh data every 20 seconds or when user focuses back on the PWA/app window
+    // Auto-refresh data only in background without overriding active state or form inputs
     const interval = setInterval(() => {
       const curUser = currentUserRef.current;
-      if (curUser) {
+      // Jangan auto-refresh jika sedang dalam modal aktif / input form agar tidak mereset state ketikan user
+      const isInputActive = document.querySelector('input:focus, textarea:focus, select:focus, [role="dialog"]');
+      if (curUser && !isInputActive) {
         refreshData(curUser.role, curUser.id);
       }
-    }, 20000);
+    }, 45000);
 
     const handleVisibilitySync = () => {
       if (document.visibilityState === 'visible') {
