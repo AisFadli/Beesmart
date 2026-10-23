@@ -320,7 +320,8 @@ const App: React.FC = () => {
           const cachedMembers = localStorage.getItem('beesmart_cached_members');
           const cachedOrders = localStorage.getItem('beesmart_cached_orders');
 
-          if (cachedProducts || cachedCategories) {
+          // Selalu set currentUser dan isLoading: false seketika jika savedUser ada, tanpa menunggu fetch network selesai
+          if (savedUser) {
             setState(prev => ({
               ...prev,
               currentUser: savedUser,
@@ -334,14 +335,14 @@ const App: React.FC = () => {
           }
         } catch (err) {}
 
-        // Fetch fresh data in background
-        await refreshData(savedUser?.role, savedUser?.id);
-        
-        setState(prev => ({ 
-          ...prev, 
-          currentUser: savedUser, 
-          isLoading: false 
-        }));
+        // Fetch fresh data in background (non-blocking)
+        refreshData(savedUser?.role, savedUser?.id).then(() => {
+          setState(prev => ({ 
+            ...prev, 
+            currentUser: savedUser, 
+            isLoading: false 
+          }));
+        });
       } catch (e) { 
         setState(prev => ({ ...prev, isLoading: false })); 
       }
