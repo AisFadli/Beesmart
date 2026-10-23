@@ -13,6 +13,7 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
   const [loading, setLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState<'CATERING' | 'TRANSPORT'>('CATERING');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -202,13 +203,21 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {cateringOfferings.map(item => (
             <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col group hover:shadow-2xl transition-all">
-              <div className="relative h-48 overflow-hidden bg-slate-100 dark:bg-slate-800">
+              <div 
+                onClick={() => setPreviewImage(item.image_url || '/app/logo/beesmart-logo.png')}
+                className="relative h-52 sm:h-56 overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
+              >
                 <img 
                   src={item.image_url || '/app/logo/beesmart-logo.png'} 
                   alt={item.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-white px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider">
+                <div className="absolute inset-0 bg-slate-950/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="px-3 py-1.5 bg-slate-900/80 backdrop-blur-md text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg">
+                    <i className="fas fa-search-plus"></i> Ketuk untuk Preview
+                  </span>
+                </div>
+                <div className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-white px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider shadow">
                   {item.vendor_or_fleet}
                 </div>
               </div>
@@ -247,12 +256,20 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {transportOfferings.map(item => (
             <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row group hover:shadow-2xl transition-all">
-              <div className="relative md:w-1/2 h-56 md:h-auto overflow-hidden bg-slate-100 dark:bg-slate-800">
+              <div 
+                onClick={() => setPreviewImage(item.image_url || '/app/logo/beesmart-logo.png')}
+                className="relative md:w-1/2 h-56 md:h-auto overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
+              >
                 <img 
                   src={item.image_url || '/app/logo/beesmart-logo.png'} 
                   alt={item.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                 />
+                <div className="absolute inset-0 bg-slate-950/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="px-3 py-1.5 bg-slate-900/80 backdrop-blur-md text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg">
+                    <i className="fas fa-search-plus"></i> Ketuk untuk Preview
+                  </span>
+                </div>
               </div>
               <div className="p-6 md:w-1/2 flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
@@ -282,6 +299,36 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
           ))}
         </div>
       </div>
+
+      {/* Fullscreen Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-fade-in" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-12 right-0 sm:right-4 w-11 h-11 rounded-full bg-slate-800 hover:bg-honey-600 text-white flex items-center justify-center font-black shadow-2xl transition-all z-10"
+              title="Tutup Preview"
+            >
+              <i className="fas fa-times text-lg"></i>
+            </button>
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 max-w-full max-h-[85vh] p-3">
+              <img 
+                src={previewImage} 
+                alt="Preview Detail" 
+                className="max-w-full max-h-[75vh] object-contain rounded-2xl mx-auto"
+              />
+              <div className="py-3 px-4 text-center">
+                <button
+                  onClick={() => setPreviewImage(null)}
+                  className="px-6 py-2.5 bg-slate-900 dark:bg-slate-800 hover:bg-honey-600 text-white rounded-xl text-xs font-black shadow"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Unified Registration Form Modal */}
       {isFormOpen && (

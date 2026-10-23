@@ -457,14 +457,78 @@ export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = (
               </div>
 
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">URL Foto / Gambar (Contoh: /app/logo/...)</label>
-                <input
-                  type="text"
-                  required
-                  value={offeringModal.image_url}
-                  onChange={e => setOfferingModal({ ...offeringModal, image_url: e.target.value })}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-2xl text-xs font-bold text-slate-900 dark:text-white"
-                />
+                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Foto Konten (URL atau Upload File)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={offeringModal.image_url}
+                    onChange={e => setOfferingModal({ ...offeringModal, image_url: e.target.value })}
+                    placeholder="uploads/... atau https://..."
+                    className="flex-1 p-3 bg-slate-50 dark:bg-slate-800 border rounded-2xl text-xs font-bold text-slate-900 dark:text-white"
+                  />
+                  <label className="px-4 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-honey-500 hover:text-white text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold cursor-pointer transition-all flex items-center justify-center shrink-0">
+                    <i className="fas fa-upload mr-1.5"></i> Pilih File
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        // Kompresi client-side menggunakan canvas sebelum upload
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const img = new Image();
+                          img.onload = async () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            const maxDim = 800; // Maksimal 800px agar ringan dan cepat
+                            if (width > height && width > maxDim) {
+                              height = Math.round((height * maxDim) / width);
+                              width = maxDim;
+                            } else if (height > maxDim) {
+                              width = Math.round((width * maxDim) / height);
+                              height = maxDim;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx?.drawImage(img, 0, 0, width, height);
+
+                            canvas.toBlob(async (blob) => {
+                              if (!blob) return;
+                              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + '.jpg', { type: 'image/jpeg' });
+                              const formData = new FormData();
+                              formData.append('file', compressedFile);
+
+                              try {
+                                const res = await apiService.uploadFile(compressedFile);
+                                if (res && res.url) {
+                                  setOfferingModal({ ...offeringModal, image_url: res.url });
+                                  alert('Foto berhasil diunggah & dikompresi!');
+                                } else {
+                                  alert('Gagal mengunggah foto.');
+                                }
+                              } catch (err: any) {
+                                alert('Error upload: ' + (err.message || 'Gagal'));
+                              }
+                            }, 'image/jpeg', 0.8);
+                          };
+                          img.src = event.target?.result as string;
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                </div>
+                {offeringModal.image_url && (
+                  <div className="mt-2 relative w-full h-32 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border">
+                    <img src={offeringModal.image_url.startsWith('http') || offeringModal.image_url.startsWith('/') ? offeringModal.image_url : `/app/${offeringModal.image_url}`} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               <div>
