@@ -160,45 +160,45 @@ const MemberDashboard: React.FC<{
     ).length;
   }, [state.messages, me]);
   
-    const familyChildren = state.familyChildren || [];
-    const selectedChild = familyChildren.find(child => child.id === selectedFamilyMemberId) || null;
-    const isFamilyOverview = selectedFamilyMemberId === 'FAMILY' && familyChildren.length > 0;
-    const activeProfile = selectedChild || me;
-    const activeProfileId = activeProfile && typeof activeProfile === 'object' && 'id' in activeProfile ? (activeProfile as any).id : 'guest';
-    const visibleMemberIds = isFamilyOverview ? [me.id, ...familyChildren.map(child => child.id)] : [activeProfileId];
+  const familyChildren = state.familyChildren || [];
+  const selectedChild = familyChildren.find(child => child.id === selectedFamilyMemberId) || null;
+  const isFamilyOverview = selectedFamilyMemberId === 'FAMILY' && familyChildren.length > 0;
+  const activeProfile = selectedChild || me;
+  const activeProfileId = activeProfile && typeof activeProfile === 'object' && 'id' in activeProfile ? (activeProfile as any).id : 'guest';
+  const visibleMemberIds = isFamilyOverview ? [me.id, ...familyChildren.map(child => child.id)] : [activeProfileId];
 
-    const myTransactions = useMemo(() => {
-     const visibleIds = new Set(visibleMemberIds);
-     return (state.transactions || [])
-      .filter(tx => tx.memberId && visibleIds.has(tx.memberId))
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    }, [state.transactions, visibleMemberIds.join('|')]);
+  const myTransactions = useMemo(() => {
+   const visibleIds = new Set(visibleMemberIds);
+   return (state.transactions || [])
+    .filter(tx => tx.memberId && visibleIds.has(tx.memberId))
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [state.transactions, visibleMemberIds.join('|')]);
 
-    const myActivity = useMemo(() => {
-      const visibleIds = new Set(visibleMemberIds);
-      const memberNames = new Map([[me.id, me.name], ...familyChildren.map(child => [child.id, child.name] as [string, string])]);
-      const purchases = myTransactions.map(transaction => ({
-        timestamp: transaction.timestamp,
-        type: 'PURCHASE',
-        desc: transaction.items.map(item => item.name).join(', '),
-        amount: -transaction.total,
-        method: transaction.paymentMethod,
-        status: transaction.orderStatus || (transaction.paymentStatus === 'PAID' ? 'APPROVED' : 'PENDING'),
-        memberName: memberNames.get(transaction.memberId || '') || me.name
+  const myActivity = useMemo(() => {
+    const visibleIds = new Set(visibleMemberIds);
+    const memberNames = new Map([[me.id, me.name], ...familyChildren.map(child => [child.id, child.name] as [string, string])]);
+    const purchases = myTransactions.map(transaction => ({
+      timestamp: transaction.timestamp,
+      type: 'PURCHASE',
+      desc: Array.isArray(transaction.items) ? transaction.items.map(item => item.name).join(', ') : '',
+      amount: -transaction.total,
+      method: transaction.paymentMethod,
+      status: transaction.orderStatus || (transaction.paymentStatus === 'PAID' ? 'APPROVED' : 'PENDING'),
+      memberName: memberNames.get(transaction.memberId || '') || me.name
+    }));
+    const logs = (state.memberLogs || [])
+        .filter(log => visibleIds.has(log.memberId) && log.type !== 'USAGE')
+      .map(log => ({
+        timestamp: log.timestamp,
+        type: log.type,
+        desc: log.notes,
+        amount: log.type === 'TOPUP' || log.type === 'TRANSFER_IN' ? Number(log.amount) : -Number(log.amount),
+        method: 'DEPOSIT',
+        status: log.status,
+        memberName: memberNames.get(log.memberId) || me.name
       }));
-      const logs = (state.memberLogs || [])
-          .filter(log => visibleIds.has(log.memberId) && log.type !== 'USAGE')
-        .map(log => ({
-          timestamp: log.timestamp,
-          type: log.type,
-          desc: log.notes,
-          amount: log.type === 'TOPUP' || log.type === 'TRANSFER_IN' ? Number(log.amount) : -Number(log.amount),
-          method: 'DEPOSIT',
-          status: log.status,
-          memberName: memberNames.get(log.memberId) || me.name
-        }));
-      return [...purchases, ...logs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    }, [myTransactions, state.memberLogs, me, familyChildren, visibleMemberIds.join('|')]);
+    return [...purchases, ...logs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [myTransactions, state.memberLogs, me, familyChildren, visibleMemberIds.join('|')]);
 
     const startDepositTransfer = (child: Member, direction: 'to_child' | 'to_parent' = 'to_child') => {
      setTransferTarget(child);

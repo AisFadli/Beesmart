@@ -17,6 +17,17 @@ interface MembershipProps {
   onOpenChat: (memberId: string) => void;
 }
 
+interface StudentGuardianImportRow {
+  studentName: string;
+  nis: string;
+  nisn: string;
+  className: string;
+  parentName: string;
+  parentEmail: string;
+  parentWhatsapp: string;
+  relationship: string;
+}
+
 const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, onRefreshData, onOpenChat }) => {
   const [activeTab, setActiveTab] = useState<'approved' | 'pending' | 'topup_approval'>('approved');
   const [search, setSearch] = useState('');
@@ -34,6 +45,12 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
   const [proofLightbox, setProofLightbox] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profilePhotoInputRef = useRef<HTMLInputElement>(null);
+  const studentImportInputRef = useRef<HTMLInputElement>(null);
+  const [isStudentImportOpen, setIsStudentImportOpen] = useState(false);
+  const [studentImportRows, setStudentImportRows] = useState<StudentGuardianImportRow[]>([]);
+  const [studentImportFileName, setStudentImportFileName] = useState('');
+  const [isStudentImporting, setIsStudentImporting] = useState(false);
+  const [studentImportError, setStudentImportError] = useState('');
 
   const isAdmin = state.currentUser?.role === UserRole.ADMIN;
   const isStaff = state.currentUser?.role === UserRole.STAFF;
@@ -66,6 +83,82 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
       attempts++;
     }
     return newBarcode;
+  };
+
+  const handleStudentImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setStudentImportError('');
+    setStudentImportRows([]);
+    if (file.size > 10 * 1024 * 1024) {
+      setStudentImportError('Ukuran file maksimal 10 MB.');
+      return;
+    }
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', raw: false });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: false });
+      const rows = rawRows.map(raw => {
+        const normalized = Object.fromEntries(Object.entries(raw).map(([key, value]) => [key.trim().toLowerCase().replace(/[\s-]+/g, '_'), String(value ?? '').trim()]));
+        const value = (...keys: string[]) => keys.map(key => normalized[key]).find(Boolean) || '';
+        return {
+          studentName: value('nama_siswa', 'student_name'),
+          nis: value('nis'),
+          nisn: value('nisn'),
+          className: value('kelas', 'class_name'),
+          parentName: value('nama_orang_tua', 'nama_wali', 'parent_name'),
+          parentEmail: value('email_orang_tua', 'email_wali', 'parent_email').toLowerCase(),
+          parentWhatsapp: value('no_whatsapp_orang_tua', 'whatsapp_orang_tua', 'no_hp_orang_tua', 'parent_whatsapp'),
+          relationship: value('hubungan', 'relationship') || 'PARENT'
+        };
+      }).filter(row => Object.values(row).some(Boolean));
+      if (rows.length === 0) throw new Error('Tidak ada baris data pada sheet pertama.');
+      if (rows.length > 1000) throw new Error('Maksimal 1000 baris per impor.');
+      setStudentImportRows(rows);
+      setStudentImportFileName(file.name);
+    } catch (error: any) {
+      setStudentImportError(error.message || 'File tidak dapat dibaca.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const downloadStudentImportTemplate = () => {
+    const headers = ['nama_siswa', 'NIS', 'NISN', 'kelas', 'nama_orang_tua', 'email_orang_tua', 'no_whatsapp_orang_tua', 'hubungan'];
+    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Siswa dan Wali');
+    XLSX.writeFile(workbook, 'Template_Impor_Siswa_dan_Wali.xlsx');
+  };
+
+  const submitStudentImport = async () => {
+    if (!studentImportRows.length || isStudentImporting) return;
+    setIsStudentImporting(true);
+    setStudentImportError('');
+    try {
+      const result = await apiService.importMembersWithGuardians(studentImportRows);
+      const inviteIds: string[] = result.inviteRequired || [];
+      let sent = 0;
+      let failed = 0;
+      for (let index = 0; index < inviteIds.length; index += 25) {
+        try {
+          const inviteResult = await apiService.sendMemberInvitations(inviteIds.slice(index, index + 25));
+          sent += (inviteResult.sent || []).length;
+          failed += (inviteResult.failed || []).length;
+        } catch {
+          failed += inviteIds.slice(index, index + 25).length;
+        }
+      }
+      await onRefreshData();
+      setIsStudentImportOpen(false);
+      setStudentImportRows([]);
+      setStudentImportFileName('');
+      alert(`Impor selesai: ${result.createdStudents} siswa baru, ${result.updatedStudents} siswa diperbarui, ${result.createdParents} orang tua baru, ${result.linkedRelationships} relasi wali baru. Undangan terkirim: ${sent}; gagal: ${failed}.`);
+    } catch (error: any) {
+      setStudentImportError(error.message || 'Impor gagal. Tidak ada perubahan yang disimpan.');
+    } finally {
+      setIsStudentImporting(false);
+    }
   };
 
   const handleAutoGenerateBarcodeClick = () => {
@@ -136,10 +229,29 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
       const isCorrectTab = activeTab === 'pending' ? m.status === 'PENDING' : (m.status === 'APPROVED' || m.status === 'SUSPENDED');
       const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || 
                            m.whatsapp.includes(search) || 
-                           m.email.toLowerCase().includes(search.toLowerCase());
+                           m.email.toLowerCase().includes(search.toLowerCase()) ||
+                           (m.nis || '').toLowerCase().includes(search.toLowerCase()) ||
+                           (m.nisn || '').toLowerCase().includes(search.toLowerCase()) ||
+                           (m.barcode || '').toLowerCase().includes(search.toLowerCase());
       return isCorrectTab && matchesSearch;
     });
   }, [state.members, search, activeTab]);
+
+  const sendParentInvitation = async (member: Member) => {
+    try {
+      const result = await apiService.sendMemberInvitations([member.id]);
+      alert(result.sent?.length ? `Undangan aktivasi terkirim ke ${member.email}.` : 'Undangan gagal dikirim. Periksa konfigurasi email dan coba lagi.');
+      await onRefreshData();
+    } catch (error: any) {
+      alert(error.message || 'Gagal mengirim undangan aktivasi.');
+    }
+  };
+
+  const memberNeedsInvitation = (member: Member) => {
+    if (!isAdmin || member.memberType === 'STUDENT' || !member.email) return false;
+    const account = (state.users || []).find(user => user.email?.toLowerCase() === member.email.toLowerCase());
+    return !account || account.status !== 'ACTIVE';
+  };
 
   const paginatedMembers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -185,7 +297,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
         id: t.id,
         timestamp: t.timestamp,
         type: 'PURCHASE',
-        description: t.items.map(i => i.name).join(', '),
+        description: Array.isArray(t.items) ? t.items.map(i => i.name).join(', ') : '',
         amount: -t.total,
         method: t.paymentMethod,
         status: 'APPROVED'
@@ -423,33 +535,38 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-3">
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+        <div className="space-y-4">
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
              <span className="p-3 bg-honey-600 text-white rounded-2xl shadow-xl shadow-honey-100"><i className="fas fa-id-card"></i></span>
              Management Membership & Deposit
           </h1>
           <div className="flex flex-wrap gap-2">
-             <button onClick={() => setActiveTab('approved')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${activeTab === 'approved' ? 'bg-honey-600 border-honey-600 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-honey-200'}`}>Member Aktif</button>
-             <button onClick={() => setActiveTab('pending')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all relative ${activeTab === 'pending' ? 'bg-amber-500 border-amber-500 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-amber-200'}`}>
+             <button onClick={() => setActiveTab('approved')} className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${activeTab === 'approved' ? 'bg-honey-600 border-honey-600 text-white shadow-lg' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-honey-200'}`}>Member Aktif</button>
+             <button onClick={() => setActiveTab('pending')} className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all relative ${activeTab === 'pending' ? 'bg-amber-500 border-amber-500 text-white shadow-lg' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-amber-200'}`}>
                 Persetujuan Member
                 {state.members.filter(m => m.status === 'PENDING').length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[7px] flex items-center justify-center rounded-full animate-pulse font-black border border-white">{state.members.filter(m => m.status === 'PENDING').length}</span>}
              </button>
              {canViewTopUp && (
-               <button onClick={() => setActiveTab('topup_approval')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all relative ${activeTab === 'topup_approval' ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}>
+               <button onClick={() => setActiveTab('topup_approval')} className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all relative ${activeTab === 'topup_approval' ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-emerald-200'}`}>
                   {isAdmin ? 'Persetujuan Top Up' : 'Top Up & Rekap'}
                   {pendingTopUps.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[7px] flex items-center justify-center rounded-full animate-pulse font-black border border-white">{pendingTopUps.length}</span>}
                </button>
              )}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {isAdmin && (
+            <button onClick={() => { setIsStudentImportOpen(true); setStudentImportError(''); }} className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
+              <i className="fas fa-file-import"></i> Impor Siswa &amp; Wali
+            </button>
+          )}
           <button
             onClick={() => {
               setTermsModalTab('terms');
               setShowTermsModal(true);
             }}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-200 flex items-center gap-2 transition-all"
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-200 flex items-center justify-center gap-2 transition-all shadow-sm"
           >
             <i className="fas fa-file-contract text-honey-600"></i> Syarat & Ketentuan Legal
           </button>
@@ -460,7 +577,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
               barcode: generateNewMemberBarcode()
             }); 
             setIsModalOpen(true); 
-          }} className="bg-honey-600 hover:bg-honey-700 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-honey-100 flex items-center gap-2 active:scale-95 transition-all">
+          }} className="bg-honey-600 hover:bg-honey-700 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-honey-100 flex items-center justify-center gap-2 active:scale-95 transition-all">
             <i className="fas fa-user-plus"></i> Tambah Member
           </button>
         </div>
@@ -771,7 +888,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
             <div className="p-8 border-b border-slate-100 bg-slate-50/40">
               <div className="relative group max-w-2xl">
                  <span className="absolute inset-y-0 left-0 pl-6 flex items-center text-slate-400 group-focus-within:text-honey-600 transition-colors"><Icons.Search /></span>
-                 <input type="text" placeholder="Cari Nama atau WhatsApp Member..." className="w-full pl-14 pr-8 py-3.5 rounded-2xl border border-transparent outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 font-bold transition-all bg-white shadow-inner" value={search} onChange={e => setSearch(e.target.value)} />
+                 <input type="text" placeholder="Cari nama, email, NIS, NISN, atau barcode..." className="w-full pl-14 pr-8 py-3.5 rounded-2xl border border-transparent outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 font-bold transition-all bg-white shadow-inner" value={search} onChange={e => setSearch(e.target.value)} />
               </div>
             </div>
             <div className="overflow-x-auto hidden md:block">
@@ -793,8 +910,9 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                                {m.name.slice(0, 2)}
                             </div>
                             <div className="min-w-0">
-                               <p className="font-black text-slate-900 text-sm leading-none mb-1 uppercase truncate">{m.name}</p>
-                               <p className="text-[10px] text-slate-400 font-bold">{m.whatsapp}</p>
+                               <p className="max-w-sm whitespace-normal break-words font-black text-slate-900 text-sm leading-snug mb-1 uppercase">{m.name}</p>
+                               <p className="whitespace-normal break-words text-xs text-slate-500">{m.memberType === 'STUDENT' ? `Siswa · ${[m.className, m.nisn || m.nis, m.guardianNames?.length ? `Wali: ${m.guardianNames.join(', ')}` : ''].filter(Boolean).join(' · ')}` : m.whatsapp || m.email}</p>
+                               {m.memberType !== 'STUDENT' && !!m.linkedChildren?.length && <p className="mt-1 whitespace-normal break-words text-xs text-emerald-700">Anak: {m.linkedChildren.join(', ')}</p>}
                             </div>
                          </div>
                       </td>
@@ -803,7 +921,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                            m.status === 'SUSPENDED' ? 'bg-red-100 text-red-600 font-bold' : 
                            m.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600 font-bold' : 'bg-yellow-100 text-yellow-700 font-bold'
                          }`}>
-                           {m.status}
+                           {m.memberType === 'STUDENT' ? 'SISWA' : m.status}
                          </span>
                       </td>
                       <td className="px-8 py-6 text-right">
@@ -828,6 +946,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                                  )}
                                  
                                  <button onClick={() => { setSelectedMember(m); setFormData({...m}); setIsModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-honey-600 hover:bg-honey-50 rounded-xl border border-slate-100" title="Edit"><i className="fas fa-edit"></i></button>
+                                 {memberNeedsInvitation(m) && <button onClick={() => sendParentInvitation(m)} className="p-2.5 text-emerald-700 hover:bg-emerald-50 rounded-xl border border-emerald-100" title="Kirim ulang undangan aktivasi"><i className="fas fa-paper-plane"></i></button>}
                                  <button onClick={() => onOpenChat(m.id)} className="p-2.5 text-slate-400 hover:text-honey-600 hover:bg-honey-50 rounded-xl border border-slate-100" title="Kirim Pesan (Chat)"><i className="fas fa-comments text-honey-500 shadow-sm"></i></button>
                                </>
                             )}
@@ -880,14 +999,15 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                       {m.name.slice(0, 2)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-black text-slate-900 text-sm uppercase truncate">{m.name}</p>
-                      <p className="text-[10px] text-slate-400 font-bold">{m.whatsapp}</p>
+                      <p className="whitespace-normal break-words font-black text-slate-900 text-sm leading-snug">{m.name}</p>
+                      <p className="whitespace-normal break-words text-xs text-slate-500">{m.memberType === 'STUDENT' ? `Siswa · ${[m.className, m.nisn || m.nis, m.guardianNames?.length ? `Wali: ${m.guardianNames.join(', ')}` : ''].filter(Boolean).join(' · ')}` : m.whatsapp || m.email}</p>
+                      {m.memberType !== 'STUDENT' && !!m.linkedChildren?.length && <p className="whitespace-normal break-words text-xs text-emerald-700">Anak: {m.linkedChildren.join(', ')}</p>}
                       <div className="mt-1">
                         <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
                           m.status === 'SUSPENDED' ? 'bg-red-100 text-red-600' : 
                           m.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-yellow-100 text-yellow-700'
                         }`}>
-                          {m.status}
+                          {m.memberType === 'STUDENT' ? 'SISWA' : m.status}
                         </span>
                       </div>
                     </div>
@@ -907,6 +1027,7 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
                           <i className="fas fa-id-card text-[10px]"></i> Kartu
                         </button>
                         <button onClick={() => { setSelectedMember(m); setIsHistoryModalOpen(true); }} className="flex-1 py-2 bg-slate-50 text-slate-600 rounded-xl font-black text-[9px] uppercase border border-slate-200">History</button>
+                        {memberNeedsInvitation(m) && <button onClick={() => sendParentInvitation(m)} className="flex-1 py-2 bg-emerald-50 text-emerald-700 rounded-xl font-black text-[9px] uppercase border border-emerald-200">Undang</button>}
                         <button onClick={() => { setSelectedMember(m); setFormData({...m}); setIsModalOpen(true); }} className="flex-1 py-2 bg-honey-50 text-honey-600 rounded-xl font-black text-[9px] uppercase border border-honey-200">Edit</button>
                         {isAdmin && (
                           <button onClick={() => handleToggleSuspend(m)} className={`flex-1 py-2 rounded-xl font-black text-[9px] uppercase border ${m.status === 'SUSPENDED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
@@ -1213,6 +1334,43 @@ const Membership: React.FC<MembershipProps> = ({ state, onSaveMember, onTopUp, o
         }}
         isLoading={isSavingMember}
       />
+
+      {isStudentImportOpen && isAdmin && (
+        <div className="fixed inset-0 z-[220] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 md:p-6">
+          <div className="w-full max-w-5xl max-h-[92vh] overflow-y-auto bg-white rounded-2xl shadow-2xl p-5 md:p-8 space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-lg font-black text-slate-900">Impor Siswa &amp; Orang Tua</h2>
+                <p className="text-sm text-slate-500 mt-1">Satu baris untuk satu relasi siswa-wali. Siswa dengan beberapa wali dapat muncul pada beberapa baris.</p>
+              </div>
+              <button type="button" onClick={() => setIsStudentImportOpen(false)} className="w-10 h-10 shrink-0 rounded-lg bg-slate-100 text-slate-600" aria-label="Tutup impor"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="flex flex-wrap gap-3 items-center">
+              <button type="button" onClick={downloadStudentImportTemplate} className="px-4 py-3 rounded-lg border border-slate-200 text-slate-700 font-bold text-sm flex items-center gap-2"><i className="fas fa-download"></i> Unduh template</button>
+              <button type="button" onClick={() => studentImportInputRef.current?.click()} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-bold text-sm flex items-center gap-2"><i className="fas fa-folder-open"></i> Pilih Excel / CSV</button>
+              <input ref={studentImportInputRef} type="file" accept=".xlsx,.xls,.csv" hidden onChange={handleStudentImportFile} />
+              {studentImportFileName && <span className="text-sm text-slate-600 break-all">{studentImportFileName} · {studentImportRows.length} baris</span>}
+            </div>
+            {studentImportError && <div role="alert" className="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-sm">{studentImportError}</div>}
+            {studentImportRows.length > 0 && (
+              <div className="border border-slate-200 rounded-lg overflow-hidden">
+                <div className="px-4 py-3 bg-slate-50 text-xs font-bold text-slate-600">Pratinjau {Math.min(studentImportRows.length, 8)} dari {studentImportRows.length} baris</div>
+                <div className="overflow-x-auto max-h-72">
+                  <table className="min-w-[900px] w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-white text-slate-500"><tr>{['Siswa', 'NIS', 'NISN', 'Kelas', 'Orang tua', 'Email wali'].map(label => <th key={label} className="p-3 border-b">{label}</th>)}</tr></thead>
+                    <tbody>{studentImportRows.slice(0, 8).map((row, index) => <tr key={`${row.nisn}-${row.nis}-${index}`} className="border-b last:border-0"><td className="p-3 whitespace-normal break-words">{row.studentName || '-'}</td><td className="p-3">{row.nis || '-'}</td><td className="p-3">{row.nisn || '-'}</td><td className="p-3">{row.className || '-'}</td><td className="p-3 whitespace-normal break-words">{row.parentName || '-'}</td><td className="p-3 break-all">{row.parentEmail || '-'}</td></tr>)}</tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-slate-500">NIS/NISN diperlakukan sebagai teks. Barcode siswa memakai NISN, atau NIS jika NISN kosong. Akun orang tua dibuat tanpa password dan diaktifkan melalui undangan email.</p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={() => setIsStudentImportOpen(false)} className="px-5 py-3 rounded-lg bg-slate-100 text-slate-700 font-bold text-sm">Batal</button>
+              <button type="button" disabled={!studentImportRows.length || isStudentImporting} onClick={submitStudentImport} className="px-5 py-3 rounded-lg bg-emerald-700 text-white font-bold text-sm disabled:opacity-50">{isStudentImporting ? 'Memproses...' : 'Validasi & Impor'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
