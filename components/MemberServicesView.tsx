@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import apiService from '../services/apiService';
+import apiService, { resolveMediaUrl } from '../services/apiService';
 
 interface MemberServicesViewProps {
   user: User;
@@ -209,11 +209,11 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
           {cateringOfferings.map(item => (
             <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col group hover:shadow-2xl transition-all">
               <div 
-                onClick={() => setPreviewImage(item.image_url || '/app/logo/beesmart-logo.png')}
+                onClick={() => setPreviewImage(resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png')}
                 className="relative h-52 sm:h-56 overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
               >
                 <img 
-                  src={item.image_url || '/app/logo/beesmart-logo.png'} 
+                  src={resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png'} 
                   alt={item.title} 
                   className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                 />
@@ -262,11 +262,11 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
           {transportOfferings.map(item => (
             <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row group hover:shadow-2xl transition-all">
               <div 
-                onClick={() => setPreviewImage(item.image_url || '/app/logo/beesmart-logo.png')}
+                onClick={() => setPreviewImage(resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png')}
                 className="relative md:w-1/2 h-56 md:h-auto overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
               >
                 <img 
-                  src={item.image_url || '/app/logo/beesmart-logo.png'} 
+                  src={resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png'} 
                   alt={item.title} 
                   className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                 />
@@ -316,12 +316,12 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
             >
               <i className="fas fa-times text-lg"></i>
             </button>
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 max-w-full max-h-[85vh] p-3">
-              <img 
-                src={previewImage} 
-                alt="Preview Detail" 
-                className="max-w-full max-h-[75vh] object-contain rounded-2xl mx-auto"
-              />
+              <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 max-w-full max-h-[85vh] p-3">
+                <img 
+                  src={resolveMediaUrl(previewImage)} 
+                  alt="Preview Detail" 
+                  className="max-w-full max-h-[75vh] object-contain rounded-2xl mx-auto"
+                />
               <div className="py-3 px-4 text-center">
                 <button
                   onClick={() => setPreviewImage(null)}
