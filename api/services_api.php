@@ -213,8 +213,8 @@ elseif ($action === 'get_bills') {
     $memberId = $_GET['member_id'] ?? '';
     try {
         if ($memberId) {
-            $stmt = $pdo->prepare("SELECT * FROM service_bills WHERE member_id = ? ORDER BY id DESC");
-            $stmt->execute([$memberId]);
+            $stmt = $pdo->prepare("SELECT * FROM service_bills WHERE member_id = ? OR member_id IN (SELECT childMemberId FROM member_guardians WHERE parentMemberId = ?) ORDER BY id DESC");
+            $stmt->execute([$memberId, $memberId]);
         } else {
             $stmt = $pdo->query("SELECT * FROM service_bills ORDER BY id DESC");
         }

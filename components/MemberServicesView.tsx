@@ -104,6 +104,11 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
+      {loading && offerings.length === 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl p-4 text-center text-amber-800 dark:text-amber-300 text-xs font-bold animate-pulse">
+          <i className="fas fa-spinner fa-spin mr-2"></i> Memuat data penawaran dan tagihan layanan...
+        </div>
+      )}
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 bottom-0 translate-x-6 translate-y-6 opacity-10 text-9xl">
