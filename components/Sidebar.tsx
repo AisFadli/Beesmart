@@ -49,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
         <h1 className="text-white dark:text-[#f1f5f9] font-black text-xl tracking-tighter italic flex items-center gap-2">
           <img src="/app/logo/beesmart-logo.png" alt="" className="w-9 h-9 object-contain bg-white dark:bg-slate-200 rounded-lg p-0.5" />
           Bee<span className="text-honey-500">Smart</span>
+          <i className="fas fa-spinner fa-spin text-honey-500 text-xs ml-1" title="Memuat data..."></i>
         </h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="text-white dark:text-[#f1f5f9] w-9 h-9 rounded-xl flex items-center justify-center active:scale-90 transition-transform" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
@@ -64,6 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
             <h1 className="text-white dark:text-[#f1f5f9] font-black text-2xl flex items-center gap-3 italic">
                <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-11 h-11 object-contain bg-white dark:bg-slate-200 rounded-2xl p-1.5 shadow-xl shadow-honey-500/20 not-italic transform -rotate-3" />
                BeeSmart
+               <i className="fas fa-spinner fa-spin text-honey-500 text-sm ml-1" title="Memuat data..."></i>
             </h1>
             <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="hidden md:flex w-10 h-10 rounded-2xl items-center justify-center text-lg text-slate-300 hover:bg-slate-800/60 dark:text-[#cbd3e0] dark:hover:bg-slate-100 transition-all active:scale-90" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
               <i className={`fas ${themeDark ? 'fa-sun' : 'fa-moon'}`}></i>
