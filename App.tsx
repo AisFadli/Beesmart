@@ -490,7 +490,7 @@ const App: React.FC = () => {
                  {activeTab === 'operational' && (state.currentUser.role === UserRole.ADMIN || state.currentUser.role === UserRole.STAFF || state.currentUser.role === UserRole.VISITOR) && <OperationalReport state={state} onRefreshData={refreshData} />}
                  {activeTab === 'reports' && <Reports transactions={state.transactions} products={state.products} members={state.members} settings={state.settings} userRole={state.currentUser.role} currentUser={state.currentUser} onDeleteTransaction={async id => { await apiService.deleteTransaction(id); refreshData(); }} onUpdateTransaction={async tx => { await apiService.updateTransaction(tx); refreshData(); }} />}
                  {activeTab === 'users' && <UserManagement categories={state.categories} userRole={state.currentUser.role} currentUser={state.currentUser} />}
-                 {activeTab === 'services' && (isMember ? <MemberServicesView user={state.currentUser} onRefreshData={refreshData} /> : <AdminServicesManagement user={state.currentUser} />)}
+                 {activeTab === 'services' && state.currentUser.role !== 'TENANT' && (isMember ? <MemberServicesView user={state.currentUser} onRefreshData={refreshData} /> : <AdminServicesManagement user={state.currentUser} />)}
                  {activeTab === 'settings' && <Settings settings={state.settings} userRole={state.currentUser.role} onSave={async s => { await apiService.saveSettings(s); refreshData(); }} onRefresh={refreshData} shippingRates={(state as any).shipping_rates || []} categories={state.categories} />}
                </>
             )}
