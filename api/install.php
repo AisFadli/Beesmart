@@ -24,13 +24,55 @@ try {
         CREATE TABLE IF NOT EXISTS members (
             id VARCHAR(50) PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) NOT NULL,
+            email VARCHAR(100) DEFAULT NULL,
             address TEXT,
             password VARCHAR(255),
-            whatsapp VARCHAR(20) NOT NULL,
+            whatsapp VARCHAR(20) DEFAULT NULL,
             registrationDate DATETIME NOT NULL,
             depositBalance DECIMAL(15,2) DEFAULT 0,
-            status VARCHAR(20) DEFAULT 'PENDING'
+            status VARCHAR(20) DEFAULT 'PENDING',
+            memberType VARCHAR(20) DEFAULT 'ADULT',
+            nis VARCHAR(50) DEFAULT NULL,
+            nisn VARCHAR(50) DEFAULT NULL,
+            className VARCHAR(100) DEFAULT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+        CREATE TABLE IF NOT EXISTS member_guardians (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            parentMemberId VARCHAR(50) NOT NULL,
+            childMemberId VARCHAR(50) NOT NULL,
+            relationship VARCHAR(30) DEFAULT 'PARENT',
+            status VARCHAR(20) DEFAULT 'ACTIVE',
+            createdBy VARCHAR(50) DEFAULT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_guardian_child (parentMemberId, childMemberId),
+            KEY idx_guardian_child (childMemberId),
+            FOREIGN KEY (parentMemberId) REFERENCES members(id) ON DELETE CASCADE,
+            FOREIGN KEY (childMemberId) REFERENCES members(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+        CREATE TABLE IF NOT EXISTS member_invitations (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            memberId VARCHAR(50) NOT NULL,
+            email VARCHAR(100) NOT NULL,
+            tokenHash CHAR(64) NOT NULL UNIQUE,
+            expiresAt DATETIME NOT NULL,
+            usedAt DATETIME DEFAULT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_invitation_member (memberId),
+            FOREIGN KEY (memberId) REFERENCES members(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+        CREATE TABLE IF NOT EXISTS deposit_transfers (
+            id VARCHAR(50) PRIMARY KEY,
+            fromMemberId VARCHAR(50) NOT NULL,
+            toMemberId VARCHAR(50) NOT NULL,
+            amount DECIMAL(15,2) NOT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_transfer_from (fromMemberId, createdAt),
+            KEY idx_transfer_to (toMemberId, createdAt),
+            FOREIGN KEY (fromMemberId) REFERENCES members(id),
+            FOREIGN KEY (toMemberId) REFERENCES members(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
         CREATE TABLE IF NOT EXISTS member_logs (
@@ -38,6 +80,7 @@ try {
             memberId VARCHAR(50),
             type VARCHAR(20),
             amount DECIMAL(15,2),
+            transferId VARCHAR(50) DEFAULT NULL,
             timestamp DATETIME,
             notes TEXT,
             status VARCHAR(20) DEFAULT 'APPROVED',
@@ -163,7 +206,71 @@ try {
             after_data LONGTEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        CREATE TABLE IF NOT EXISTS service_offerings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            service_type VARCHAR(50) NOT NULL,
+            vendor_or_fleet VARCHAR(100) NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            image_url VARCHAR(255),
+            menu_or_facilities TEXT,
+            status VARCHAR(20) DEFAULT 'ACTIVE',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+        CREATE TABLE IF NOT EXISTS service_tariffs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            service_type VARCHAR(50) NOT NULL,
+            category_key VARCHAR(100) NOT NULL,
+            sub_category VARCHAR(100) NOT NULL,
+            price DECIMAL(15,2) NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+        CREATE TABLE IF NOT EXISTS service_requests (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            member_id VARCHAR(50) NOT NULL,
+            member_name VARCHAR(255) NOT NULL,
+            class_name VARCHAR(100),
+            address TEXT NOT NULL,
+            phone VARCHAR(50) NOT NULL,
+            service_type VARCHAR(50) NOT NULL,
+            sub_category VARCHAR(100),
+            vendor_name VARCHAR(100),
+            target_month VARCHAR(50) NOT NULL,
+            status VARCHAR(30) DEFAULT 'PENDING',
+            assigned_wilayah VARCHAR(50),
+            effective_days INT DEFAULT 0,
+            final_amount DECIMAL(15,2) DEFAULT 0,
+            admin_notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+        CREATE TABLE IF NOT EXISTS service_bills (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            request_id INT,
+            member_id VARCHAR(50) NOT NULL,
+            month VARCHAR(50) NOT NULL,
+            service_type VARCHAR(50) NOT NULL,
+            details TEXT,
+            amount DECIMAL(15,2) NOT NULL,
+            status VARCHAR(30) DEFAULT 'UNPAID',
+            payment_proof VARCHAR(255),
+            payment_method VARCHAR(50),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+
+    // Seed default offering content if empty
+    $checkOfferings = $pdo->query("SELECT COUNT(*) FROM service_offerings")->fetchColumn();
+    if ($checkOfferings == 0) {
+        $pdo->exec("INSERT INTO service_offerings (service_type, vendor_or_fleet, title, description, image_url, menu_or_facilities) VALUES 
+        ('CATERING', 'Vendor Katering Pawon', 'Paket Kuliner Sehat & Bergizi Pawon', 'Menyediakan hidangan harian higienis dengan bahan-bahan pilihan berkualitas tinggi.', '/app/logo/catering-pawon.jpg', 'Menu Andalan: Ayam Teriyaki, Sop Buntut Sapi, Cah Broccoli Tahu, Buah Segar.'),
+        ('CATERING', 'Vendor Royal', 'Royal Catering - Cita Rasa Resto', 'Menu masakan nusantara dan western dengan porsi mengenyangkan dan rasa premium.', '/app/logo/catering-royal.jpg', 'Menu Andalan: Beef Blackpepper, Sup Asparagus, Capcay Seafood, Pudding.'),
+        ('CATERING', 'Vendor Dapoer Koperasi', 'Dapoer Koperasi - Selera Rumahan', 'Masakan rumahan autentik yang lezat, bersih, dan ramah di kantong siswa.', '/app/logo/catering-koperasi.jpg', 'Menu Andalan: Nasi Bakar Cakalang, Pecel Lele Sehat, Tumis Kangkung, Tempe Mendoan.'),
+        ('TRANSPORT', 'Armada Hiace / Elf Executive', 'Armada Jemputan AC Eksekutif', 'Kendaraan antar-jemput ber-AC dingin, kursi nyaman, sabuk pengaman, dan driver profesional berpengalaman.', '/app/logo/fleet-hiace.jpg', 'Fasilitas: Full AC, Seat Belt Individual, GPS Tracking, Driver Ramah & Tepat Waktu.')");
+    }
 
     // Check if admin exists before inserting
     $checkAdmin = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");

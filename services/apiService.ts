@@ -132,6 +132,30 @@ export class ApiService {
     });
   }
 
+  async importMembersWithGuardians(rows: Array<{ studentName: string; nis: string; nisn: string; className: string; parentName: string; parentEmail: string; parentWhatsapp: string; relationship: string }>) {
+    return this.request('/members_import.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows }),
+    });
+  }
+
+  async sendMemberInvitations(memberIds: string[]) {
+    return this.request('/member_activation.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'invite', memberIds }),
+    });
+  }
+
+  async transferMemberDeposit(childMemberId: string, amount: string, requestId: string) {
+    return this.request('/member_deposit_transfer.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ childMemberId, amount, requestId }),
+    });
+  }
+
   async registerMember(member: Member) {
     return this.request('/register.php', {
       method: 'POST',
@@ -262,6 +286,30 @@ export class ApiService {
       body: JSON.stringify({ action: 'reset', token, password, confirm_password: confirmPassword }),
     });
   }
+
+  async activateMember(token: string, password: string, confirmPassword: string) {
+    return this.request('/member_activation.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'activate', token, password, confirmPassword }),
+    });
+  }
+
+  // Service Offerings, Requests & Bills APIs
+  async getServiceOfferings() { return this.request('/services_api.php?action=get_offerings'); }
+  async saveServiceOffering(data: any) { return this.request('/services_api.php?action=save_offering', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); }
+  async deleteServiceOffering(id: number | string) { return this.request('/services_api.php?action=delete_offering', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); }
+  async getServiceTariffs() { return this.request('/services_api.php?action=get_tariffs'); }
+  async saveServiceTariff(data: any) { return this.request('/services_api.php?action=save_tariff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); }
+  async getServiceRequests() { return this.request('/services_api.php?action=get_requests'); }
+  async submitServiceRequest(data: any) { return this.request('/services_api.php?action=submit_request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); }
+  async approveServiceRequest(data: any) { return this.request('/services_api.php?action=approve_request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); }
+  async deleteServiceRequest(requestId: number | string) { return this.request('/services_api.php?action=delete_request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request_id: requestId }) }); }
+  async getServiceBills(memberId?: string) {
+    const q = memberId ? `?action=get_bills&member_id=${encodeURIComponent(memberId)}` : `?action=get_bills`;
+    return this.request(`/services_api.php${q}`);
+  }
+  async payServiceBill(data: any) { return this.request('/services_api.php?action=pay_bill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); }
 }
 
 export default new ApiService();
