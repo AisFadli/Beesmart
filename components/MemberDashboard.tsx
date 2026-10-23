@@ -174,6 +174,8 @@ const MemberDashboard: React.FC<{
     status: 'PENDING',
     registrationDate: ''
   };
+  const activeProfileDeposit = Number(activeProfile?.depositBalance || 0);
+  const meDeposit = Number(me?.depositBalance || 0);
   const activeProfileId = activeProfile && typeof activeProfile === 'object' && 'id' in activeProfile ? (activeProfile as any).id : 'guest';
   const visibleMemberIds = isFamilyOverview ? [me.id, ...familyChildren.map(child => child.id)] : [activeProfileId];
 
@@ -386,7 +388,7 @@ const MemberDashboard: React.FC<{
                   </button>
                   {activeProfile.status === 'SUSPENDED' && <span className="bg-white text-red-600 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest">SUSPENDED</span>}
                </div>
-                <h3 className="text-3xl md:text-4xl font-black mb-5 break-words">Rp {isBalanceVisible ? Number(activeProfile.depositBalance).toLocaleString('id-ID') : '••••••'}</h3>
+                <h3 className="text-3xl md:text-4xl font-black mb-5 break-words">Rp {isBalanceVisible ? activeProfileDeposit.toLocaleString('id-ID') : '••••••'}</h3>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="max-w-full break-all bg-white/20 px-2 py-1 rounded text-xs font-semibold">{selectedChild ? [activeProfile.className, activeProfile.nisn || activeProfile.nis].filter(Boolean).join(' · ') : `ID: ${activeProfile.id}`}</span>
                   {selectedChild && (
@@ -396,7 +398,7 @@ const MemberDashboard: React.FC<{
                    </div>
                  )}
                </div>
-                {selectedChild && <p className="mt-4 text-xs text-white/80">Saldo orang tua terpisah: Rp {isBalanceVisible ? Number(me.depositBalance).toLocaleString('id-ID') : '••••••'}</p>}
+                {selectedChild && <p className="mt-4 text-xs text-white/80">Saldo orang tua terpisah: Rp {isBalanceVisible ? meDeposit.toLocaleString('id-ID') : '••••••'}</p>}
             </div>
               <i className="fas fa-wallet absolute -right-4 -bottom-4 text-8xl opacity-10 rotate-12"></i>
          </div>
@@ -423,7 +425,7 @@ const MemberDashboard: React.FC<{
                   <h4 className="whitespace-normal break-words text-base font-bold leading-snug text-slate-900">{child.name}</h4>
                   <p className="mt-1 break-words text-sm text-slate-500">{[child.className, child.nisn || child.nis].filter(Boolean).join(' · ')}</p>
                  </div>
-                 <p className="text-sm font-semibold text-slate-600">Saldo siswa: <span className="font-black text-slate-900">Rp {isBalanceVisible ? Number(child.depositBalance).toLocaleString('id-ID') : '••••••'}</span></p>
+                 <p className="text-sm font-semibold text-slate-600">Saldo siswa: <span className="font-black text-slate-900">Rp {isBalanceVisible ? Number(child.depositBalance || 0).toLocaleString('id-ID') : '••••••'}</span></p>
                  <div className="mt-auto grid grid-cols-1 gap-2">
                   <div className="flex gap-2">
                     <button type="button" onClick={() => onSelectFamilyMember(child.id)} className="flex-1 px-3 py-2.5 rounded-lg bg-slate-900 text-white text-xs font-bold">Lihat aktivitas</button>
