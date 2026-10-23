@@ -163,7 +163,17 @@ const MemberDashboard: React.FC<{
   const familyChildren = state.familyChildren || [];
   const selectedChild = familyChildren.find(child => child.id === selectedFamilyMemberId) || null;
   const isFamilyOverview = selectedFamilyMemberId === 'FAMILY' && familyChildren.length > 0;
-  const activeProfile = selectedChild || me;
+  const activeProfile = selectedChild || me || {
+    id: 'guest',
+    barcode: 'MBR-GUEST',
+    name: 'Guest',
+    email: '',
+    address: '',
+    whatsapp: '',
+    depositBalance: 0,
+    status: 'PENDING',
+    registrationDate: ''
+  };
   const activeProfileId = activeProfile && typeof activeProfile === 'object' && 'id' in activeProfile ? (activeProfile as any).id : 'guest';
   const visibleMemberIds = isFamilyOverview ? [me.id, ...familyChildren.map(child => child.id)] : [activeProfileId];
 
