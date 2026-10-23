@@ -46,11 +46,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
     <>
       {/* Mobile Top Header - Increased height and shadow */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 dark:bg-[#0d1424] flex items-center justify-between px-6 z-[60] shadow-2xl border-b border-slate-800 dark:border-slate-800">
-        <h1 className="text-white dark:text-[#f1f5f9] font-black text-xl tracking-tighter italic flex items-center gap-2">
-          <img src="/app/logo/beesmart-logo.png" alt="" className="w-9 h-9 object-contain bg-white dark:bg-slate-200 rounded-lg p-0.5" />
-          Bee<span className="text-honey-500">Smart</span>
-          <i className="fas fa-spinner fa-spin text-honey-500 text-xs ml-1" title="Memuat data..."></i>
-        </h1>
+      <h1 className="text-white dark:text-[#f1f5f9] font-black text-xl tracking-tighter italic flex items-center gap-2">
+      <img src="/app/logo/beesmart-logo.png" alt="" className="w-9 h-9 object-contain bg-white dark:bg-slate-200 rounded-lg p-0.5" />
+      Bee<span className="text-honey-500">Smart</span>
+      </h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="text-white dark:text-[#f1f5f9] w-9 h-9 rounded-xl flex items-center justify-center active:scale-90 transition-transform" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
             <i className={`fas ${themeDark ? 'fa-sun' : 'fa-moon'}`}></i>
@@ -66,7 +65,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, us
               <img src="/app/logo/beesmart-logo.png" alt="BeeSmart" className="w-10 h-10 object-contain bg-white dark:bg-slate-200 rounded-2xl p-1.5 shadow-xl shadow-honey-500/25 shrink-0 transform -rotate-3" />
               <div className="flex items-center gap-1.5 min-w-0">
                 <h1 className="text-white dark:text-[#f1f5f9] font-black text-xl italic tracking-tight truncate">BeeSmart</h1>
-                <i className="fas fa-spinner fa-spin text-honey-500 text-xs shrink-0" title="Memuat data..."></i>
               </div>
             </div>
             <button onClick={() => setThemeDark(toggleTheme() === 'dark')} className="hidden md:flex w-9 h-9 rounded-xl items-center justify-center text-base text-slate-300 hover:bg-slate-800/60 dark:text-[#cbd3e0] transition-all active:scale-90 shrink-0" title={themeDark ? 'Mode Terang' : 'Mode Gelap'}>
