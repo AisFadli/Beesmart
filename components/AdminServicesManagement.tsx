@@ -260,19 +260,77 @@ export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = (
       {/* TARIFFS TAB */}
       {activeTab === 'TARIFFS' && (
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-100 dark:border-slate-800 space-y-4">
-          <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <i className="fas fa-tags text-honey-500"></i>
-            Pengaturan Tarif Wilayah &amp; Vendor
-          </h3>
-          <p className="text-xs text-slate-500">Tarif otomatis digunakan saat pengajuan disetujui (Admin dapat menyesuaikan saat approval).</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <i className="fas fa-tags text-honey-500"></i>
+                Pengaturan Tarif Wilayah &amp; Vendor Katering
+              </h3>
+              <p className="text-xs text-slate-500">Kelola dan ubah besaran tarif bulanan jemputan (Wilayah A-D) dan tarif harian katering per vendor.</p>
+            </div>
+            <button
+              onClick={() => {
+                const sType = prompt("Pilih Jenis Layanan (TRANSPORT atau CATERING):", "TRANSPORT");
+                if (!sType) return;
+                const cat = prompt("Kategori / Wilayah / Vendor (cth: Wilayah A atau Vendor Katering Pawon):", "Wilayah A");
+                if (!cat) return;
+                const sub = prompt("Sub Kategori (cth: Pulang Pergi (PP) atau Harian):", "Pulang Pergi (PP)");
+                if (!sub) return;
+                const price = prompt("Nominal Tarif (Rp):", "250000");
+                if (!price) return;
+
+                apiService.saveServiceTariff({
+                  service_type: sType.toUpperCase(),
+                  category_key: cat,
+                  sub_category: sub,
+                  price: parseFloat(price) || 0
+                }).then(res => {
+                  alert(res.message || 'Tarif berhasil disimpan.');
+                  loadAll();
+                }).catch(err => alert('Gagal menyimpan tarif: ' + err.message));
+              }}
+              className="px-4 py-2 bg-honey-600 hover:bg-honey-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5"
+            >
+              <i className="fas fa-plus"></i> Tambah / Edit Tarif
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {tariffs.map(t => (
-              <div key={t.id} className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700 space-y-1">
-                <span className="text-[9px] font-black uppercase tracking-wider text-honey-600">{t.service_type}</span>
-                <div className="text-xs font-black text-slate-900 dark:text-white">{t.category_key} - {t.sub_category}</div>
-                <div className="text-sm font-black text-emerald-600">Rp {Number(t.price).toLocaleString('id-ID')}</div>
+              <div key={t.id} className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700 flex justify-between items-center">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-honey-100 text-honey-800 dark:bg-honey-950 dark:text-honey-400 px-2 py-0.5 rounded">
+                    {t.service_type}
+                  </span>
+                  <div className="text-xs font-black text-slate-900 dark:text-white mt-1">{t.category_key} - {t.sub_category}</div>
+                  <div className="text-sm font-black text-emerald-600">Rp {Number(t.price).toLocaleString('id-ID')}</div>
+                </div>
+                <button
+                  onClick={() => {
+                    const newPrice = prompt(`Ubah Tarif untuk ${t.category_key} (${t.sub_category}):`, t.price);
+                    if (newPrice === null) return;
+                    apiService.saveServiceTariff({
+                      service_type: t.service_type,
+                      category_key: t.category_key,
+                      sub_category: t.sub_category,
+                      price: parseFloat(newPrice) || 0
+                    }).then(res => {
+                      alert(res.message || 'Tarif berhasil diperbarui.');
+                      loadAll();
+                    }).catch(err => alert('Gagal: ' + err.message));
+                  }}
+                  className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs hover:bg-honey-500 hover:text-white transition-all"
+                  title="Edit Tarif"
+                >
+                  <i className="fas fa-edit"></i>
+                </button>
               </div>
             ))}
+            {tariffs.length === 0 && (
+              <div className="col-span-full py-8 text-center text-slate-400 text-xs font-medium">
+                Belum ada data tarif diatur. Klik tombol "Tambah / Edit Tarif" di atas.
+              </div>
+            )}
           </div>
         </div>
       )}
