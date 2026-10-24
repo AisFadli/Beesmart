@@ -38,12 +38,20 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
     setLoading(true);
     try {
       const offRes = await apiService.getServiceOfferings();
-      if (offRes.status === 'success') setOfferings(offRes.offerings || []);
+      console.log("Service Offerings Response:", offRes);
+      if (offRes && offRes.status === 'success') {
+        setOfferings(offRes.offerings || []);
+      }
 
-      const billRes = await apiService.getServiceBills(user.id);
-      if (billRes.status === 'success') setBills(billRes.bills || []);
+      if (user && user.id) {
+        const billRes = await apiService.getServiceBills(user.id);
+        console.log("Service Bills Response:", billRes);
+        if (billRes && billRes.status === 'success') {
+          setBills(billRes.bills || []);
+        }
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load service data:", e);
     } finally {
       setLoading(false);
     }
