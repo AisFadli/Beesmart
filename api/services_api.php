@@ -22,7 +22,7 @@ function logServiceActivity($pdo, $staffName, $category, $actionType, $entityId,
 
 if ($action === 'get_offerings') {
     try {
-        $stmt = $pdo->query("SELECT * FROM service_offerings WHERE status != 'DELETED' ORDER BY service_type, id DESC");
+        $stmt = $pdo->query("SELECT * FROM service_offerings WHERE (status != 'DELETED' OR status IS NULL) ORDER BY service_type, id DESC");
         sendResponse(["status" => "success", "offerings" => $stmt->fetchAll()]);
     } catch (Exception $e) {
         sendResponse(["status" => "error", "message" => $e->getMessage()], 500);
