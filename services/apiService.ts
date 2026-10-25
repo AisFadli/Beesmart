@@ -3,15 +3,7 @@ import { Product, Category, Transaction, StoreSettings, User, Order, Member } fr
 
 const getApiBaseUrl = () => {
   const origin = window.location.origin;
-  const path = window.location.pathname;
-  
-  // Jika path berada di subfolder /app, gunakan subfolder tersebut
-  if (path === '/app' || path.startsWith('/app/')) {
-    return `${origin}/app/api`;
-  }
-  
-  // Default untuk environment ini adalah /api di root
-  return `${origin}/api`;
+  return `${origin}/app/api`;
 };
 
 const API_BASE_URL = getApiBaseUrl(); 
