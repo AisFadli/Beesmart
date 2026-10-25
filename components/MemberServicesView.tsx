@@ -111,8 +111,8 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
     }
   };
 
-  const cateringOfferings = offerings.filter(o => o.service_type === 'CATERING');
-  const transportOfferings = offerings.filter(o => o.service_type === 'TRANSPORT');
+  const cateringOfferings = Array.isArray(offerings) ? offerings.filter(o => o && o.service_type === 'CATERING') : [];
+  const transportOfferings = Array.isArray(offerings) ? offerings.filter(o => o && o.service_type === 'TRANSPORT') : [];
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -169,8 +169,8 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {bills.map(bill => (
-            <div key={bill.id} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700 space-y-3">
+          {Array.isArray(bills) && bills.map(bill => bill && (
+            <div key={bill.id || Math.random()} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700 space-y-3">
               <div className="flex justify-between items-start">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-honey-600 dark:text-honey-400 bg-honey-50 dark:bg-honey-950/50 px-2 py-0.5 rounded-md border border-honey-200">
