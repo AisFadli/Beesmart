@@ -2,21 +2,23 @@
 // Jika parameter berupa keyword (seperti 'weekly' atau 'harian'), atur tanggal otomatis
 $arg1 = $argv[1] ?? 'harian';
 if ($arg1 === 'weekly' || $arg1 === 'mingguan') {
-    // Rekap laporan hari Senin sampai Jumat minggu berjalan (atau 4-5 hari kebelakang)
+    // Rekap laporan hari Senin s/d Jumat minggu berjalan
     $startDate = date('Y-m-d', strtotime('monday this week'));
-    $endDate = date('Y-m-d');
+    $endDate = date('Y-m-d', strtotime('friday this week'));
     $reportType = 'MINGGUAN';
 } elseif ($arg1 === 'harian' || $arg1 === 'daily') {
-    $startDate = date('Y-m-d', strtotime('-1 day'));
-    $endDate = date('Y-m-d');
+    // Rekap laporan harian tepat 1 hari kemarin (startDate = endDate)
+    $targetDate = date('Y-m-d', strtotime('-1 day'));
+    $startDate = $targetDate;
+    $endDate = $targetDate;
     $reportType = 'HARIAN';
 } else {
     $startDate = $argv[1] ?? date('Y-m-d', strtotime('-1 day'));
-    $endDate = $argv[2] ?? date('Y-m-d');
+    $endDate = $argv[2] ?? $startDate;
     $reportType = $argv[3] ?? 'HARIAN';
 }
 
-$output = shell_exec("php live_report_cli.php $startDate $endDate");
+$output = shell_exec("php " . __DIR__ . "/live_report_cli.php $startDate $endDate");
 $message = "📊 *OTOMATIS LAPORAN {$reportType} BEESMART*\n\n" . $output;
 
 $url = 'http://localhost:3005/api/whatsapp/send';
