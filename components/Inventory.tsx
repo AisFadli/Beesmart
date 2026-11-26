@@ -29,8 +29,8 @@ interface InventoryProps {
   settings: StoreSettings;
 }
 
-const Inventory: React.FC<InventoryProps> = ({ 
-  products, members = [] as Member[], categories, productProposals, stockAdjustments, onSaveProduct, onDeleteProduct, 
+const Inventory: React.FC<InventoryProps> = ({
+  products, members = [] as Member[], categories, productProposals, stockAdjustments, onSaveProduct, onDeleteProduct,
   onSaveCategory, onDeleteCategory, onRefreshData, onViewAudit, onProcessProposal, onProposeProductChange, userRole, currentUser, settings
 }) => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'proposals'>('inventory');
@@ -41,7 +41,7 @@ const Inventory: React.FC<InventoryProps> = ({
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [newCatName, setNewCatName] = useState('');
   const [catWarning, setCatWarning] = useState('');
   const [suggestedCat, setSuggestedCat] = useState('');
@@ -84,7 +84,7 @@ const Inventory: React.FC<InventoryProps> = ({
     const currentCats = tenantUser.tenantCategories || [];
     const catUpper = categoryName.trim().toUpperCase();
     const exists = currentCats.some(c => c.trim().toUpperCase() === catUpper);
-    
+
     let updatedCats: string[];
     if (exists) {
       updatedCats = currentCats.filter(c => c.trim().toUpperCase() !== catUpper);
@@ -163,10 +163,10 @@ const Inventory: React.FC<InventoryProps> = ({
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
   const displayProposals = useMemo(() => {
-    const baseProposals = isAdmin 
+    const baseProposals = isAdmin
       ? productProposals.filter(p => p.status === 'PENDING')
       : productProposals.filter(p => p.staffId === currentUser?.name);
-      
+
     const adjProposals: ProductProposal[] = (stockAdjustments || [])
       .filter(adj => isAdmin ? adj.status === 'PENDING' : adj.staffId === currentUser?.name)
       .map(adj => {
@@ -175,9 +175,9 @@ const Inventory: React.FC<InventoryProps> = ({
           id: adj.id,
           productId: adj.productId,
           type: 'STOCK_REPORT' as const,
-          data: { 
-            name: product?.name || 'Produk Tidak Dikenal', 
-            stock: adj.quantity, 
+          data: {
+            name: product?.name || 'Produk Tidak Dikenal',
+            stock: adj.quantity,
             category: adj.type,
             price: product?.price || 0,
             costPrice: product?.costPrice || 0
@@ -225,7 +225,7 @@ const Inventory: React.FC<InventoryProps> = ({
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          
+
           const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
           resolve(dataUrl);
         };
@@ -249,8 +249,8 @@ const Inventory: React.FC<InventoryProps> = ({
 
   const handleOpenAdd = () => {
     setEditingProduct(null);
-    setFormData({ 
-      sku: '', barcode: '', name: '', category: categoriesList[0] || categories[0]?.name || 'General', 
+    setFormData({
+      sku: '', barcode: '', name: '', category: categoriesList[0] || categories[0]?.name || 'General',
       price: 0, costPrice: 0, stock: 0, initialStock: 0, minStock: 5, image: '',
       initialStockDate: new Date().toISOString().split('T')[0],
       discountValue: 0, discountType: 'FIXED', discountStart: '', discountEnd: '',
@@ -262,7 +262,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
   const handleOpenEdit = (product: Product) => {
     setEditingProduct(product);
-    setFormData({ 
+    setFormData({
       ...product,
       barcode: product.barcode || product.sku,
       initialStockDate: product.initialStockDate ? product.initialStockDate.split(' ')[0] : new Date().toISOString().split('T')[0]
@@ -275,8 +275,8 @@ const Inventory: React.FC<InventoryProps> = ({
     const prefix = "PRD";
     const random = Math.floor(1000 + Math.random() * 9000);
     const newSku = `${prefix}-${random}`;
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       sku: newSku,
       barcode: prev.barcode || newSku
     }));
@@ -302,7 +302,7 @@ const Inventory: React.FC<InventoryProps> = ({
   const handleSkuChange = (val: string) => {
     const sku = val.trim().toUpperCase();
     setFormData(prev => ({ ...prev, sku }));
-    
+
     if (!sku) {
       setSkuWarning('');
       setSuggestedSku('');
@@ -382,7 +382,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
         // Check if Barcode or SKU collides with any Member Barcode or Member ID
         if (members && members.length > 0) {
-          const memberConflict = members.find((m: Member) => 
+          const memberConflict = members.find((m: Member) =>
             (m.barcode && m.barcode.trim().toLowerCase() === barcode.toLowerCase()) ||
             m.id.trim().toLowerCase() === barcode.toLowerCase() ||
             (sku && m.barcode && m.barcode.trim().toLowerCase() === sku.toLowerCase()) ||
@@ -430,13 +430,13 @@ const Inventory: React.FC<InventoryProps> = ({
 
   const exportProductsToExcel = () => {
     const headers = [
-      'SKU', 
-      'Nama Produk', 
-      'Kategori', 
-      'HPP (Modal)', 
-      'Harga Jual', 
-      'Stok Saat Ini', 
-      'Stok Min', 
+      'SKU',
+      'Nama Produk',
+      'Kategori',
+      'HPP (Modal)',
+      'Harga Jual',
+      'Stok Saat Ini',
+      'Stok Min',
       'Rerata Jual/Bulan',
       'Nilai Diskon',
       'Tipe Diskon',
@@ -514,7 +514,7 @@ const Inventory: React.FC<InventoryProps> = ({
                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Detail Produk:</div>
                   <div className="font-bold text-slate-800 text-xs uppercase">{productToDelete.name}</div>
                   <div className="font-mono text-[10px] text-slate-500 uppercase mt-0.5">SKU: {productToDelete.sku}</div>
-                  
+
                   <div className="mt-4 p-3 bg-yellow-50 rounded-xl border border-yellow-200 flex items-start gap-2.5">
                      <i className="fas fa-info-circle text-yellow-600 text-xs mt-0.5"></i>
                      <p className="text-[9px] text-yellow-800 font-bold leading-normal uppercase tracking-wider">
@@ -524,13 +524,13 @@ const Inventory: React.FC<InventoryProps> = ({
                </div>
 
                <div className="grid grid-cols-2 gap-3">
-                  <button 
+                  <button
                     onClick={() => setProductToDelete(null)}
                     className="py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
                   >
                     Batal (Close)
                   </button>
-                  <button 
+                  <button
                     onClick={async () => {
                        await onDeleteProduct(productToDelete.id);
                        setProductToDelete(null);
@@ -543,49 +543,49 @@ const Inventory: React.FC<InventoryProps> = ({
             </div>
          </div>
        )}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-             <span className="p-2 bg-honey-600 text-white rounded-xl shadow-lg"><Icons.Inventory /></span>
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+             <span className="p-3 bg-honey-600 text-white rounded-2xl shadow-xl shadow-honey-100"><Icons.Inventory /></span>
              Katalog Inventory
           </h1>
-          <p className="text-slate-500 font-medium text-xs uppercase tracking-widest mt-1 ml-1">Manajemen Produk & Kategori</p>
+          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-1 ml-1">Manajemen Produk &amp; Kategori</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {activeTab === 'inventory' && isAdmin && (
             <button
               onClick={handleSyncStockAudit}
               disabled={isSyncingStock}
-              className="bg-amber-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-100 hover:bg-amber-700 transition-all disabled:opacity-60"
+              className="flex-1 sm:flex-initial bg-amber-600 text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-100 hover:bg-amber-700 transition-all disabled:opacity-60"
               title="Catat selisih stok aktual sebagai penyesuaian audit hari ini"
             >
-              <i className={`fas ${isSyncingStock ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'} mr-2`}></i>
-              {isSyncingStock ? 'Sinkronisasi...' : 'Sinkron Stok Audit'}
+              <i className={`fas ${isSyncingStock ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'} mr-1.5`}></i>
+              {isSyncingStock ? 'Sinkronisasi...' : 'Sinkron Stok'}
             </button>
           )}
           {activeTab === 'inventory' && (
-            <button 
+            <button
               onClick={exportProductsToExcel}
-              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all"
+              className="flex-1 sm:flex-initial bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5"
             >
-              <i className="fas fa-file-excel mr-2"></i> Export Data
+              <i className="fas fa-file-excel"></i> Export Data
             </button>
           )}
-          <button 
+          <button
             onClick={() => setActiveTab(activeTab === 'inventory' ? 'proposals' : 'inventory')}
-            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${activeTab === 'proposals' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 relative'}`}
+            className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all shadow-sm ${activeTab === 'proposals' ? 'bg-amber-600 text-white border-amber-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 relative'}`}
           >
-            <i className={`fas ${activeTab === 'proposals' ? 'fa-boxes' : 'fa-clipboard-check'} mr-2`}></i> 
-            {activeTab === 'proposals' ? (isAdmin ? 'Kelola Catalog' : 'Kembali Ke Catalog') : (isAdmin ? 'Pengajuan Perubahan' : 'Riwayat Pengajuan')}
+            <i className={`fas ${activeTab === 'proposals' ? 'fa-boxes' : 'fa-clipboard-check'} mr-1.5`}></i>
+            {activeTab === 'proposals' ? (isAdmin ? 'Kelola Catalog' : 'Kembali') : (isAdmin ? 'Pengajuan' : 'Riwayat')}
             {activeTab === 'inventory' && isAdmin && pendingCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[8px] animate-bounce">{pendingCount}</span>
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center text-[7px] animate-bounce">{pendingCount}</span>
             )}
           </button>
-          <button onClick={() => setIsCategoryModalOpen(true)} className="bg-white px-5 py-2.5 rounded-xl text-slate-700 text-[10px] font-black uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm">
-            <i className="fas fa-tags mr-2"></i> Kategori
+          <button onClick={() => setIsCategoryModalOpen(true)} className="flex-1 sm:flex-initial bg-slate-50 px-4 py-2.5 rounded-xl text-slate-700 text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:bg-slate-100 transition-all shadow-sm flex items-center justify-center gap-1.5">
+            <i className="fas fa-tags"></i> Kategori
           </button>
-          <button onClick={handleOpenAdd} className="bg-honey-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all">
-            <i className="fas fa-plus mr-2"></i> Tambah Produk
+          <button onClick={handleOpenAdd} className="w-full sm:w-auto bg-honey-600 text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl shadow-honey-100 hover:bg-honey-700 transition-all flex items-center justify-center gap-1.5">
+            <i className="fas fa-plus"></i> Tambah Produk
           </button>
         </div>
       </div>
@@ -615,7 +615,7 @@ const Inventory: React.FC<InventoryProps> = ({
               <input type="text" placeholder="Cari Berdasarkan SKU atau Nama Produk..." className="w-full pl-12 pr-6 py-4 rounded-2xl border border-transparent outline-none focus:bg-white focus:ring-4 focus:ring-honey-500/10 font-bold transition-all bg-slate-50 shadow-inner" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <div className="w-full md:w-64">
-              <select 
+              <select
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none shadow-inner text-slate-700"
                 value={selectedCategory}
                 onChange={e => setSelectedCategory(e.target.value)}
@@ -714,7 +714,7 @@ const Inventory: React.FC<InventoryProps> = ({
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="mt-8 flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200">
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-600 disabled:opacity-30 hover:bg-slate-50 rounded-lg transition-all"
@@ -727,7 +727,7 @@ const Inventory: React.FC<InventoryProps> = ({
                   .map((p, i, arr) => (
                     <React.Fragment key={p}>
                       {i > 0 && arr[i-1] !== p - 1 && <span className="text-slate-300">...</span>}
-                      <button 
+                      <button
                         onClick={() => setCurrentPage(p)}
                         className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${currentPage === p ? 'bg-honey-600 text-white shadow-md shadow-honey-200' : 'text-slate-500 hover:bg-slate-50'}`}
                       >
@@ -736,7 +736,7 @@ const Inventory: React.FC<InventoryProps> = ({
                     </React.Fragment>
                   ))}
               </div>
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-600 disabled:opacity-30 hover:bg-slate-50 rounded-lg transition-all"
@@ -763,16 +763,16 @@ const Inventory: React.FC<InventoryProps> = ({
                      <div className="flex items-start justify-between mb-4">
                         <div className="flex gap-2">
                           <span className={`px-2.5 py-1 text-[8px] font-black rounded-lg uppercase tracking-widest ${
-                            proposal.type === 'CREATE' ? 'bg-emerald-100 text-emerald-600' : 
+                            proposal.type === 'CREATE' ? 'bg-emerald-100 text-emerald-600' :
                             proposal.type === 'STOCK_REPORT' ? 'bg-rose-100 text-rose-600' :
                             'bg-honey-100 text-honey-600'
                           }`}>
-                            {proposal.type === 'CREATE' ? 'Produk Baru' : 
+                            {proposal.type === 'CREATE' ? 'Produk Baru' :
                              proposal.type === 'STOCK_REPORT' ? 'Masalah Stok' : 'Update Produk'}
                           </span>
                           {!isAdmin && (
                             <span className={`px-2.5 py-1 text-[8px] font-black rounded-lg uppercase tracking-widest ${
-                              proposal.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 
+                              proposal.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
                               proposal.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
                             }`}>
                               {proposal.status === 'PENDING' ? 'Menunggu' : proposal.status === 'APPROVED' ? 'Disetujui' : 'Ditolak'}
@@ -834,7 +834,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
                      {isAdmin && proposal.status === 'PENDING' && (
                        <div className="grid grid-cols-2 gap-3">
-                          <button 
+                          <button
                             onClick={() => {
                               const note = prompt("Berikan alasan penolakan (opsional):");
                               if (note !== null) onProcessProposal(proposal.id, 'DECLINED', note);
@@ -843,7 +843,7 @@ const Inventory: React.FC<InventoryProps> = ({
                           >
                             Tolak
                           </button>
-                          <button 
+                          <button
                             onClick={() => onProcessProposal(proposal.id, 'APPROVED', '')}
                             className="py-3 bg-honey-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-honey-100 hover:bg-honey-700 transition-all border border-transparent"
                           >
@@ -866,7 +866,7 @@ const Inventory: React.FC<InventoryProps> = ({
                 <h3 className="text-lg md:text-xl font-black text-slate-900 uppercase tracking-tight">Kelola Kategori</h3>
                 <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors"><i className="fas fa-times"></i></button>
               </div>
-              
+
               <div className="flex flex-col gap-2 mb-8">
                  <div className="flex gap-2">
                     <input type="text" placeholder="Nama Kategori Baru" className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-honey-500/10 font-bold text-sm shadow-inner" value={newCatName} onChange={e => handleCatNameChange(e.target.value)} />
@@ -878,7 +878,7 @@ const Inventory: React.FC<InventoryProps> = ({
                         <i className="fas fa-exclamation-triangle"></i> {catWarning}
                       </p>
                       {suggestedCat && (
-                        <button 
+                        <button
                           onClick={() => handleCatNameChange(suggestedCat)}
                           className="mt-1 text-[10px] font-black text-honey-600 uppercase hover:underline"
                         >
@@ -888,7 +888,7 @@ const Inventory: React.FC<InventoryProps> = ({
                    </div>
                  )}
               </div>
-              
+
               <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 {categories.map(c => (
                   <div key={c.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-honey-200 transition-all space-y-2.5">
@@ -896,7 +896,7 @@ const Inventory: React.FC<InventoryProps> = ({
                         {editingCatId === c.id ? (
                            <div className="flex-1 flex gap-2">
                               <input value={editingCatValue} onChange={e => setEditingCatValue(e.target.value)} className="flex-1 p-2 font-bold border rounded-xl outline-none focus:ring-2 focus:ring-honey-500/30 text-xs" autoFocus />
-                              <button onClick={async() => { 
+                              <button onClick={async() => {
                                  const name = editingCatValue.trim();
                                  if (!name) return;
                                  const exists = categories.find(cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== c.id);
@@ -904,8 +904,8 @@ const Inventory: React.FC<InventoryProps> = ({
                                    alert(`Gagal: Nama kategori "${name}" sudah digunakan.`);
                                    return;
                                  }
-                                 await onSaveCategory({id: c.id, name: name}); 
-                                 setEditingCatId(null); 
+                                 await onSaveCategory({id: c.id, name: name});
+                                 setEditingCatId(null);
                               }} className="text-emerald-500 px-2"><i className="fas fa-check"></i></button>
                            </div>
                         ) : (
@@ -939,8 +939,8 @@ const Inventory: React.FC<InventoryProps> = ({
                                    type="button"
                                    onClick={() => handleToggleCategoryForTenant(tu, c.name)}
                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border flex items-center gap-1.5 ${
-                                     isAssigned 
-                                       ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-sm' 
+                                     isAssigned
+                                       ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-sm'
                                        : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-100'
                                    }`}
                                    title={isAssigned ? `Klik untuk mencabut ${c.name} dari ${tu.name}` : `Klik untuk menetapkan ${c.name} ke ${tu.name}`}
@@ -972,7 +972,7 @@ const Inventory: React.FC<InventoryProps> = ({
                 </div>
                 {!isAdmin && <span className="bg-yellow-100 text-yellow-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Membutuhkan Persetujuan Admin</span>}
               </div>
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Left Column: Image & Basic Info */}
@@ -1032,25 +1032,25 @@ const Inventory: React.FC<InventoryProps> = ({
                             <span className="text-[9px] font-bold text-slate-400">Barcode Bawaan Pabrik / System</span>
                           </div>
                           <div className="flex gap-2">
-                            <input 
-                              placeholder="Barcode Produk (EAN-13/UPC/Custom)" 
-                              className="flex-1 p-3.5 bg-white border border-honey-200 rounded-xl font-mono text-xs font-bold outline-none shadow-sm text-slate-800" 
-                              value={formData.barcode || ''} 
-                              onChange={e => setFormData({...formData, barcode: e.target.value})} 
+                            <input
+                              placeholder="Barcode Produk (EAN-13/UPC/Custom)"
+                              className="flex-1 p-3.5 bg-white border border-honey-200 rounded-xl font-mono text-xs font-bold outline-none shadow-sm text-slate-800"
+                              value={formData.barcode || ''}
+                              onChange={e => setFormData({...formData, barcode: e.target.value})}
                             />
-                            <button 
-                              type="button" 
-                              onClick={() => setShowBarcodeScannerModal(true)} 
-                              className="px-3.5 py-2.5 bg-honey-600 text-white rounded-xl font-black text-[10px] uppercase flex items-center gap-1.5 hover:bg-honey-700 transition-all shadow-md" 
+                            <button
+                              type="button"
+                              onClick={() => setShowBarcodeScannerModal(true)}
+                              className="px-3.5 py-2.5 bg-honey-600 text-white rounded-xl font-black text-[10px] uppercase flex items-center gap-1.5 hover:bg-honey-700 transition-all shadow-md"
                               title="Scan Barcode Kemasan dengan Kamera HP"
                             >
                               <i className="fas fa-camera"></i>
                               <span className="hidden sm:inline">Scan Kamera</span>
                             </button>
-                            <button 
-                              type="button" 
-                              onClick={generateRandomBarcode} 
-                              className="px-3.5 py-2.5 bg-slate-800 text-white rounded-xl font-black text-[10px] uppercase flex items-center gap-1.5 hover:bg-black transition-all shadow-md" 
+                            <button
+                              type="button"
+                              onClick={generateRandomBarcode}
+                              className="px-3.5 py-2.5 bg-slate-800 text-white rounded-xl font-black text-[10px] uppercase flex items-center gap-1.5 hover:bg-black transition-all shadow-md"
                               title="Generate Barcode Otomatis"
                             >
                               <i className="fas fa-magic"></i>
@@ -1187,11 +1187,11 @@ const Inventory: React.FC<InventoryProps> = ({
                             ) : (
                               <div className="h-[42px]"></div> // Matched height of promo header
                             )}
-                            
+
                             <p className="text-xl font-black leading-none py-1">Rp {finalPrice.toLocaleString()}</p>
                             <p className="font-black uppercase break-words leading-tight text-[9px]">{previewProduct.name}</p>
                             <p className="text-[8px] uppercase tracking-tighter opacity-70 mt-1">{previewProduct.sku}</p>
-                            
+
                             <div className="pt-2 flex justify-center bg-white p-1 rounded">
                               <BarcodeDisplay value={previewProduct.barcode || previewProduct.sku} type="barcode" height={38} fontSize={9} width={1.8} displayValue={true} background="#ffffff" lineColor="#000000" margin={2} />
                             </div>
@@ -1211,13 +1211,13 @@ const Inventory: React.FC<InventoryProps> = ({
               </div>
 
               <div className="mt-8 grid grid-cols-2 gap-3">
-                 <button 
+                 <button
                    onClick={() => setIsPreviewPriceTagOpen(false)}
                    className="py-3 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
                  >
                    Tutup
                  </button>
-                 <button 
+                 <button
                    onClick={async () => {
                       await printService.printPriceTag(previewProduct, settings);
                       setIsPreviewPriceTagOpen(false);
@@ -1232,13 +1232,13 @@ const Inventory: React.FC<InventoryProps> = ({
       )}
 
       {/* Camera Barcode Scanner Modal for Product Registration */}
-      <CameraScannerModal 
-        isOpen={showBarcodeScannerModal} 
-        onClose={() => setShowBarcodeScannerModal(false)} 
+      <CameraScannerModal
+        isOpen={showBarcodeScannerModal}
+        onClose={() => setShowBarcodeScannerModal(false)}
         onScan={(scannedBarcode) => {
           setFormData(prev => ({ ...prev, barcode: scannedBarcode }));
           setShowBarcodeScannerModal(false);
-        }} 
+        }}
         title="Scan Barcode Kemasan Produk"
         description="Arahkan kamera ke barcode bawaan pabrik pada kemasan produk"
       />

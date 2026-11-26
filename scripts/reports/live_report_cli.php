@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/api/db.php';
-require_once __DIR__ . '/api/auth_guard.php';
+require_once dirname(__DIR__, 2) . '/api/db.php';
+require_once dirname(__DIR__, 2) . '/api/auth_guard.php';
 
 // Generate valid live token on the fly using local auth secret (matches beesmart.id)
 $stmtAdmin = $pdo->query("SELECT id, role, email FROM users WHERE role = 'ADMIN' LIMIT 1");
@@ -33,7 +33,7 @@ if ($httpCode === 200) {
 
 // Fallback ke database lokal jika hosting online belum mengembalikan data valid ATAU jika omzet 0 namun database lokal memiliki transaksi
 if (!$data || (float)($data['revenue'] ?? 0) <= 0) {
-    require_once __DIR__ . '/api/db.php';
+    require_once dirname(__DIR__, 2) . '/api/db.php';
     try {
         $stmt = $pdo->prepare("SELECT SUM(total) as totalRevenue FROM transactions WHERE paymentStatus = 'PAID' AND COALESCE(status, 'ACTIVE') NOT IN ('CANCELLED', 'INACTIVE') AND timestamp >= ? AND timestamp < DATE_ADD(?, INTERVAL 1 DAY)");
         $stmt->execute([$startDate, $endDate]);

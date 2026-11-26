@@ -1,31 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '../types';
+import { User, Member } from '../types';
 import apiService, { resolveMediaUrl } from '../services/apiService';
 
 interface MemberServicesViewProps {
   user: User;
+  familyChildren: Member[];
+  selectedFamilyMemberId: string;
   onRefreshData?: () => void;
 }
 
-export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, onRefreshData }) => {
+const FALLBACK_IMAGE = '/app/logo/beesmart-logo.png';
+
+export const MemberServicesView: React.FC<MemberServicesViewProps> = ({
+  user,
+  familyChildren,
+  selectedFamilyMemberId,
+  onRefreshData,
+}) => {
   const [offerings, setOfferings] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState<'CATERING' | 'TRANSPORT'>('CATERING');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  
-  // Form state
+
   const [formData, setFormData] = useState({
     member_id: user.id || '',
     member_name: user.name || '',
-    class_name: (user as any).className || '4A',
-    address: (user as any).address || 'Cluster Magnolia, Metland Cileungsi',
-    phone: (user as any).whatsapp || '081376924547',
+    class_name: '',
+    address: '',
+    phone: '',
     service_type: 'CATERING',
     sub_category: 'Pulang Pergi (PP)',
-    vendor_name: 'Vendor Katering Pawon',
-    target_month: 'November 2026'
+    vendor_name: '',
+    target_month: '',
   });
 
   const [agreedTerms, setAgreedTerms] = useState(false);
@@ -34,24 +43,71 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
   const [paymentMethod, setPaymentMethod] = useState<'DEPOSIT' | 'TRANSFER'>('DEPOSIT');
   const [paymentProof, setPaymentProof] = useState('');
 
+  // Saat orang tua memilih anak di sidebar, pengajuan & tagihan mengikuti anak tersebut.
+  const targetMember: any = (selectedFamilyMemberId && selectedFamilyMemberId !== 'FAMILY')
+    ? (familyChildren.find(child => child.id === selectedFamilyMemberId) || user)
+    : user;
+
+  const cateringOfferings = Array.isArray(offerings) ? offerings.filter(o => o && o.service_type === 'CATERING') : [];
+  const transportOfferings = Array.isArray(offerings) ? offerings.filter(o => o && o.service_type === 'TRANSPORT') : [];
+  const monthNow = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(new Date());
+  const defaultVendor = cateringOfferings[0]?.vendor_or_fleet || '';
+
+  const openForm = (type: 'CATERING' | 'TRANSPORT', vendorOverride?: string) => {
+    setSelectedServiceType(type);
+    setFormData({
+      member_id: targetMember.id || '',
+      member_name: targetMember.name || user.name || '',
+      class_name: (targetMember as any).className || '',
+      address: (targetMember as any).address || '',
+      phone: (targetMember as any).whatsapp || '',
+      service_type: type,
+      sub_category: 'Pulang Pergi (PP)',
+      vendor_name: vendorOverride || defaultVendor,
+      target_month: monthNow,
+    });
+    setAgreedTerms(false);
+    setIsFormOpen(true);
+  };
+
+  // Profil bisa berubah setelah refresh data; sinkronkan ulang field yang berasal dari profil.
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      member_id: targetMember.id || '',
+      member_name: targetMember.name || user.name || '',
+      class_name: (targetMember as any).className || '',
+      address: (targetMember as any).address || '',
+      phone: (targetMember as any).whatsapp || '',
+      vendor_name: prev.vendor_name || defaultVendor,
+      target_month: prev.target_month || monthNow,
+    }));
+  }, [targetMember.id, targetMember.name, (targetMember as any).className, (targetMember as any).address, (targetMember as any).whatsapp, selectedFamilyMemberId]);
+
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
       const offRes = await apiService.getServiceOfferings();
-      console.log("Service Offerings Response:", offRes);
       if (offRes && offRes.status === 'success') {
         setOfferings(offRes.offerings || []);
+      } else {
+        setError(offRes?.message || 'Gagal memuat penawaran layanan.');
       }
 
-      if (user && user.id) {
-        const billRes = await apiService.getServiceBills(user.id);
-        console.log("Service Bills Response:", billRes);
+      if (targetMember.id) {
+        const billRes = await apiService.getServiceBills(targetMember.id);
         if (billRes && billRes.status === 'success') {
           setBills(billRes.bills || []);
+        } else {
+          setBills([]);
+          setError(prev => prev || billRes?.message || 'Gagal memuat tagihan layanan.');
         }
+      } else {
+        setBills([]);
       }
-    } catch (e) {
-      console.error("Failed to load service data:", e);
+    } catch (e: any) {
+      setError('Gagal memuat data layanan: ' + (e?.message || ' Kesalahan jaringan.'));
     } finally {
       setLoading(false);
     }
@@ -59,11 +115,9 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => {
-      loadData();
-    }, 15000);
+    const interval = setInterval(() => { loadData(); }, 15000);
     return () => clearInterval(interval);
-  }, [user.id]);
+  }, [targetMember.id, selectedFamilyMemberId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +149,7 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
       const res = await apiService.payServiceBill({
         bill_id: payModalBill.id,
         payment_method: paymentMethod,
-        payment_proof: paymentProof
+        payment_proof: paymentProof,
       });
       if (res.status === 'success') {
         alert(res.message);
@@ -111,14 +165,21 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
     }
   };
 
-  const cateringOfferings = Array.isArray(offerings) ? offerings.filter(o => o && o.service_type === 'CATERING') : [];
-  const transportOfferings = Array.isArray(offerings) ? offerings.filter(o => o && o.service_type === 'TRANSPORT') : [];
+  const imageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const element = event.currentTarget;
+    if (!element.src.endsWith(FALLBACK_IMAGE)) element.src = FALLBACK_IMAGE;
+  };
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       {loading && offerings.length === 0 && (
         <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl p-4 text-center text-amber-800 dark:text-amber-300 text-xs font-bold animate-pulse">
           <i className="fas fa-spinner fa-spin mr-2"></i> Memuat data penawaran dan tagihan layanan...
+        </div>
+      )}
+      {error && (
+        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl p-4 text-rose-800 dark:text-rose-300 text-xs font-bold">
+          <i className="fas fa-circle-exclamation mr-2"></i> {error}
         </div>
       )}
       {/* Header Banner */}
@@ -134,16 +195,21 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
           <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
             Nikmati kemudahan antar-jemput aman dan pilihan menu katering sehat bergizi dari vendor terpercaya langsung untuk buah hati Anda di sekolah.
           </p>
+          {selectedFamilyMemberId !== 'FAMILY' && targetMember.id !== user.id && (
+            <p className="text-[11px] font-bold text-honey-400">
+              <i className="fas fa-child mr-1.5"></i> Pengajuan untuk: {targetMember.name}
+            </p>
+          )}
           <div className="pt-2 flex flex-wrap gap-3">
             <button
-              onClick={() => { setSelectedServiceType('CATERING'); setFormData(prev => ({ ...prev, service_type: 'CATERING' })); setIsFormOpen(true); }}
+              onClick={() => openForm('CATERING')}
               className="px-5 py-3 bg-honey-600 hover:bg-honey-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-honey-600/30 transition-all flex items-center gap-2"
             >
               <i className="fas fa-utensils"></i>
               <span>Daftar Katering</span>
             </button>
             <button
-              onClick={() => { setSelectedServiceType('TRANSPORT'); setFormData(prev => ({ ...prev, service_type: 'TRANSPORT' })); setIsFormOpen(true); }}
+              onClick={() => openForm('TRANSPORT')}
               className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl text-xs font-black backdrop-blur-md transition-all flex items-center gap-2"
             >
               <i className="fas fa-bus"></i>
@@ -169,39 +235,66 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.isArray(bills) && bills.map(bill => bill && (
-            <div key={bill.id || Math.random()} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-honey-600 dark:text-honey-400 bg-honey-50 dark:bg-honey-950/50 px-2 py-0.5 rounded-md border border-honey-200">
-                    Bulan: {bill.month}
+          {bills.map(bill => {
+            if (!bill) return null;
+            const ownerName = bill.member_id === user.id
+              ? null
+              : (familyChildren.find(child => child.id === bill.member_id)?.name || bill.member_id);
+            const status = String(bill.status || '').toUpperCase();
+            const canPay = status === 'UNPAID' || status === 'PENDING';
+            return (
+              <div key={bill.id || `${bill.member_id}-${bill.month}`} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-honey-600 dark:text-honey-400 bg-honey-50 dark:bg-honey-950/50 px-2 py-0.5 rounded-md border border-honey-200">
+                      Bulan: {bill.month}
+                    </span>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-1.5">{bill.details}</h4>
+                    {ownerName && (
+                      <p className="mt-0.5 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        <i className="fas fa-child mr-1"></i> Untuk: {ownerName}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                    status === 'PAID' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' :
+                    status === 'PENDING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400' :
+                    'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
+                  }`}>
+                    {status}
                   </span>
-                  <h4 className="text-sm font-black text-slate-900 dark:text-white mt-1.5">{bill.details}</h4>
                 </div>
-                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                  bill.status === 'PAID' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' :
-                  bill.status === 'PENDING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400' :
-                  'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
-                }`}>
-                  {bill.status}
-                </span>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200/60 dark:border-slate-700">
+                  <span className="text-xs font-bold text-slate-500">Total Tagihan:</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white">Rp {Number(bill.amount).toLocaleString('id-ID')}</span>
+                </div>
+                {status === 'PENDING' && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                    <i className="fas fa-clock mr-1"></i> Menunggu verifikasi staff. Anda dapat memperbarui referensi transfer.
+                  </p>
+                )}
+                {bill.admin_notes && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                    <i className="fas fa-note-sticky mr-1"></i> Catatan staff: {bill.admin_notes}
+                  </p>
+                )}
+                {canPay && (
+                  <button
+                    onClick={() => {
+                      setPayModalBill(bill);
+                      setPaymentMethod(String(bill.payment_method || 'DEPOSIT').toUpperCase() === 'TRANSFER' ? 'TRANSFER' : 'DEPOSIT');
+                      setPaymentProof(bill.payment_proof || '');
+                    }}
+                    className="w-full py-2.5 bg-honey-600 hover:bg-honey-700 text-white rounded-xl text-xs font-black shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    <i className="fas fa-credit-card"></i>
+                    <span>{status === 'PENDING' ? 'Perbarui Bukti Transfer' : 'Bayar / Konfirmasi Tagihan'}</span>
+                  </button>
+                )}
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-slate-200/60 dark:border-slate-700">
-                <span className="text-xs font-bold text-slate-500">Total Tagihan:</span>
-                <span className="text-base font-black text-slate-900 dark:text-white">Rp {Number(bill.amount).toLocaleString('id-ID')}</span>
-              </div>
-              {bill.status === 'UNPAID' && (
-                <button
-                  onClick={() => setPayModalBill(bill)}
-                  className="w-full py-2.5 bg-honey-600 hover:bg-honey-700 text-white rounded-xl text-xs font-black shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  <i className="fas fa-credit-card"></i>
-                  <span>Bayar / Konfirmasi Tagihan</span>
-                </button>
-              )}
-            </div>
-          ))}
-          {bills.length === 0 && (
+            );
+          })}
+          {bills.length === 0 && !error && (
             <div className="col-span-full py-8 text-center text-slate-400 text-xs font-medium">
               Belum ada tagihan layanan aktif saat ini.
             </div>
@@ -220,13 +313,14 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {cateringOfferings.map(item => (
             <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col group hover:shadow-2xl transition-all">
-              <div 
-                onClick={() => setPreviewImage(resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png')}
+              <div
+                onClick={() => setPreviewImage(resolveMediaUrl(item.image_url) || FALLBACK_IMAGE)}
                 className="relative h-52 sm:h-56 overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
               >
-                <img 
-                  src={resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png'} 
-                  alt={item.title} 
+                <img
+                  src={resolveMediaUrl(item.image_url) || FALLBACK_IMAGE}
+                  alt={item.title}
+                  onError={imageError}
                   className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-slate-950/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
@@ -248,11 +342,7 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    setSelectedServiceType('CATERING');
-                    setFormData(prev => ({ ...prev, service_type: 'CATERING', vendor_name: item.vendor_or_fleet }));
-                    setIsFormOpen(true);
-                  }}
+                  onClick={() => openForm('CATERING', item.vendor_or_fleet)}
                   className="w-full py-3 bg-slate-900 hover:bg-honey-600 text-white rounded-2xl text-xs font-black shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <span>Pilih Vendor Ini</span>
@@ -273,13 +363,14 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {transportOfferings.map(item => (
             <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row group hover:shadow-2xl transition-all">
-              <div 
-                onClick={() => setPreviewImage(resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png')}
+              <div
+                onClick={() => setPreviewImage(resolveMediaUrl(item.image_url) || FALLBACK_IMAGE)}
                 className="relative md:w-1/2 h-56 md:h-auto overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
               >
-                <img 
-                  src={resolveMediaUrl(item.image_url) || '/app/logo/beesmart-logo.png'} 
-                  alt={item.title} 
+                <img
+                  src={resolveMediaUrl(item.image_url) || FALLBACK_IMAGE}
+                  alt={item.title}
+                  onError={imageError}
                   className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-slate-950/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
@@ -301,11 +392,7 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    setSelectedServiceType('TRANSPORT');
-                    setFormData(prev => ({ ...prev, service_type: 'TRANSPORT' }));
-                    setIsFormOpen(true);
-                  }}
+                  onClick={() => openForm('TRANSPORT')}
                   className="w-full py-3 bg-honey-600 hover:bg-honey-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-honey-600/30 transition-all flex items-center justify-center gap-2"
                 >
                   <span>Daftar Jemputan Sekarang</span>
@@ -328,12 +415,13 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
             >
               <i className="fas fa-times text-lg"></i>
             </button>
-              <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 max-w-full max-h-[85vh] p-3">
-                <img 
-                  src={resolveMediaUrl(previewImage)} 
-                  alt="Preview Detail" 
-                  className="max-w-full max-h-[75vh] object-contain rounded-2xl mx-auto"
-                />
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 max-w-full max-h-[85vh] p-3">
+              <img
+                src={resolveMediaUrl(previewImage)}
+                alt="Preview Detail"
+                onError={imageError}
+                className="max-w-full max-h-[75vh] object-contain rounded-2xl mx-auto"
+              />
               <div className="py-3 px-4 text-center">
                 <button
                   onClick={() => setPreviewImage(null)}
@@ -365,7 +453,10 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
               <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
                 {selectedServiceType === 'CATERING' ? 'Pendaftaran Layanan Katering' : 'Pendaftaran Layanan Jemputan'}
               </h3>
-              <p className="text-xs text-slate-500 font-medium">Lengkapi data di bawah ini untuk pengajuan layanan sekolah</p>
+              <p className="text-xs text-slate-500 font-medium">
+                Lengkapi data di bawah ini untuk pengajuan layanan sekolah
+                {targetMember.id !== user.id ? ` — atas nama ${targetMember.name}` : ''}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -386,6 +477,7 @@ export const MemberServicesView: React.FC<MemberServicesViewProps> = ({ user, on
                   <input
                     type="text"
                     required
+                    placeholder="Contoh: 4A"
                     value={formData.class_name}
                     onChange={e => setFormData({ ...formData, class_name: e.target.value })}
                     className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-900 dark:text-white outline-none"

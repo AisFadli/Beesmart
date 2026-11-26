@@ -13,6 +13,7 @@ $path = parse_url($uri, PHP_URL_PATH) ?: '/';
 $blockedExact = [
     '/api/db.php',
     '/api/install.php',
+    '/api/app_url.php',
 ];
 
 if (in_array($path, $blockedExact, true)) {

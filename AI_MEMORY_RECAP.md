@@ -55,7 +55,7 @@
 
 ### C. WhatsApp Report Automation & Spam Prevention
 - **Skrip Laporan Live Hosting**:
-  - `live_report_cli.php` dan `send_live_report.php` dikonfigurasi untuk menarik rekapitulasi penjualan harian dan mingguan secara otomatis dari hosting online `beesmart.id/app`.
+  - `scripts/reports/live_report_cli.php` dan `scripts/reports/send_live_report.php` dikonfigurasi untuk menarik rekapitulasi penjualan harian dan mingguan secara otomatis dari hosting online `beesmart.id/app`.
 - **Penghentian Otomatisasi (Anti-Spam)**:
   - Atas permintaan pengguna untuk menghentikan spam laporan harian/mingguan di WhatsApp Group (**PENGURUS KARYAWAN KOPERASI 2025-2026**), seluruh cron job terkait laporan otomatis (`6351da985992` & `73dec362b98d`) telah dihapus secara permanen dari sistem penjadwalan.
 

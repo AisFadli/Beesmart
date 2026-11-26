@@ -13,7 +13,7 @@ export interface User {
   role: UserRole;
   name: string;
   tenantCategories?: string[];
-  status?: 'ACTIVE' | 'INACTIVE';
+  status?: 'ACTIVE' | 'INACTIVE' | 'INVITED' | 'SUSPENDED';
 }
 
 export interface StoreSettings {
@@ -60,6 +60,12 @@ export interface Category {
 export interface Member {
   id: string;
   barcode?: string;
+  memberType?: 'ADULT' | 'STUDENT';
+  nis?: string;
+  nisn?: string;
+  className?: string;
+  linkedChildren?: string[];
+  guardianNames?: string[];
   name: string;
   email: string;
   address: string;
@@ -131,10 +137,11 @@ export interface StockAdjustment {
 export interface MemberLog {
   id: number;
   memberId: string;
-  type: 'TOPUP' | 'USAGE';
+  type: 'TOPUP' | 'USAGE' | 'TRANSFER_IN' | 'TRANSFER_OUT';
   amount: number;
   timestamp: string;
   notes: string;
+  transferId?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   proof_image?: string;
   topupMethod?: 'CASH' | 'TRANSFER' | 'QRIS' | null;
@@ -220,6 +227,7 @@ export interface AppState {
   products: Product[];
   categories: Category[];
   members: Member[];
+  familyChildren?: Member[];
   transactions: Transaction[];
   memberLogs: MemberLog[];
   stockAdjustments: StockAdjustment[];
@@ -229,6 +237,7 @@ export interface AppState {
   messages: AppMessage[];
   users?: User[];
   chat_contacts?: Array<{ id: string; name: string; role: string }>;
+  shipping_rates?: ShippingRate[];
   settings: StoreSettings;
   isLoading: boolean;
 }

@@ -3,6 +3,7 @@
 if (php_sapi_name() !== 'cli') {
     require_once __DIR__ . '/security.php';
 }
+require_once __DIR__ . '/response.php';
 
 // KEAMANAN: Blokir akses langsung file ini via HTTP (db.php hanya boleh di-include oleh endpoint lain)
 if (isset($_SERVER['REQUEST_METHOD']) && ($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
@@ -77,7 +78,7 @@ try {
         $requestAuth = requireAuth();
     }
 
-    $schemaVersion = '2026-10-16-3';
+    $schemaVersion = '2026-11-25-1';
     $pdo->exec("CREATE TABLE IF NOT EXISTS app_schema_versions (
         version VARCHAR(32) PRIMARY KEY,
         appliedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -523,6 +524,11 @@ try {
         ],
         'messages' => [
             'imageUrl' => "VARCHAR(500) DEFAULT NULL"
+        ],
+        'service_bills' => [
+            'admin_notes' => "TEXT NULL AFTER payment_method",
+            'verified_by' => "VARCHAR(100) NULL AFTER admin_notes",
+            'verified_at' => "DATETIME NULL AFTER verified_by"
         ]
     ];
 
@@ -531,9 +537,13 @@ try {
             try {
                 $pdo->query("SELECT $col FROM $t LIMIT 1");
             } catch (Exception $e) {
-                $pdo->exec("ALTER TABLE $t ADD COLUMN $col $def");
-                if ($col === 'initialStock' && $t === 'products') {
-                    $pdo->exec("UPDATE products SET initialStock = stock");
+                try {
+                    $pdo->exec("ALTER TABLE $t ADD COLUMN $col $def");
+                    if ($col === 'initialStock' && $t === 'products') {
+                        $pdo->exec("UPDATE products SET initialStock = stock");
+                    }
+                } catch (Exception $e2) {
+                    // Tabel belum ada / kolom tidak bisa ditambahkan: lewati.
                 }
             }
         }

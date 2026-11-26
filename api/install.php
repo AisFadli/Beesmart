@@ -266,10 +266,10 @@ try {
     $checkOfferings = $pdo->query("SELECT COUNT(*) FROM service_offerings")->fetchColumn();
     if ($checkOfferings == 0) {
         $pdo->exec("INSERT INTO service_offerings (service_type, vendor_or_fleet, title, description, image_url, menu_or_facilities) VALUES 
-        ('CATERING', 'Vendor Katering Pawon', 'Paket Kuliner Sehat & Bergizi Pawon', 'Menyediakan hidangan harian higienis dengan bahan-bahan pilihan berkualitas tinggi.', '/app/logo/catering-pawon.jpg', 'Menu Andalan: Ayam Teriyaki, Sop Buntut Sapi, Cah Broccoli Tahu, Buah Segar.'),
-        ('CATERING', 'Vendor Royal', 'Royal Catering - Cita Rasa Resto', 'Menu masakan nusantara dan western dengan porsi mengenyangkan dan rasa premium.', '/app/logo/catering-royal.jpg', 'Menu Andalan: Beef Blackpepper, Sup Asparagus, Capcay Seafood, Pudding.'),
-        ('CATERING', 'Vendor Dapoer Koperasi', 'Dapoer Koperasi - Selera Rumahan', 'Masakan rumahan autentik yang lezat, bersih, dan ramah di kantong siswa.', '/app/logo/catering-koperasi.jpg', 'Menu Andalan: Nasi Bakar Cakalang, Pecel Lele Sehat, Tumis Kangkung, Tempe Mendoan.'),
-        ('TRANSPORT', 'Armada Hiace / Elf Executive', 'Armada Jemputan AC Eksekutif', 'Kendaraan antar-jemput ber-AC dingin, kursi nyaman, sabuk pengaman, dan driver profesional berpengalaman.', '/app/logo/fleet-hiace.jpg', 'Fasilitas: Full AC, Seat Belt Individual, GPS Tracking, Driver Ramah & Tepat Waktu.')");
+        ('CATERING', 'Vendor Katering Pawon', 'Paket Kuliner Sehat & Bergizi Pawon', 'Menyediakan hidangan harian higienis dengan bahan-bahan pilihan berkualitas tinggi.', '/app/logo/beesmart-logo.png', 'Menu Andalan: Ayam Teriyaki, Sop Buntut Sapi, Cah Broccoli Tahu, Buah Segar.'),
+        ('CATERING', 'Vendor Royal', 'Royal Catering - Cita Rasa Resto', 'Menu masakan nusantara dan western dengan porsi mengenyangkan dan rasa premium.', '/app/logo/beesmart-logo.png', 'Menu Andalan: Beef Blackpepper, Sup Asparagus, Capcay Seafood, Pudding.'),
+        ('CATERING', 'Vendor Dapoer Koperasi', 'Dapoer Koperasi - Selera Rumahan', 'Masakan rumahan autentik yang lezat, bersih, dan ramah di kantong siswa.', '/app/logo/beesmart-logo.png', 'Menu Andalan: Nasi Bakar Cakalang, Pecel Lele Sehat, Tumis Kangkung, Tempe Mendoan.'),
+        ('TRANSPORT', 'Armada Hiace / Elf Executive', 'Armada Jemputan AC Eksekutif', 'Kendaraan antar-jemput ber-AC dingin, kursi nyaman, sabuk pengaman, dan driver profesional berpengalaman.', '/app/logo/beesmart-logo.png', 'Fasilitas: Full AC, Seat Belt Individual, GPS Tracking, Driver Ramah & Tepat Waktu.')");
     }
 
     // Check if admin exists before inserting

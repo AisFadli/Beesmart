@@ -7,11 +7,14 @@ interface AdminServicesManagementProps {
 }
 
 export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = ({ user }) => {
-  const [activeTab, setActiveTab] = useState<'REQUESTS' | 'OFFERINGS' | 'TARIFFS'>('REQUESTS');
+  const [activeTab, setActiveTab] = useState<'REQUESTS' | 'BILLS' | 'OFFERINGS' | 'TARIFFS'>('REQUESTS');
   const [requests, setRequests] = useState<any[]>([]);
+  const [bills, setBills] = useState<any[]>([]);
   const [offerings, setOfferings] = useState<any[]>([]);
   const [tariffs, setTariffs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [verifyBill, setVerifyBill] = useState<any>(null);
+  const [verifyNotes, setVerifyNotes] = useState('');
 
   // Approval modal state
   const [approveModalReq, setApproveModalReq] = useState<any>(null);
@@ -31,6 +34,9 @@ export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = (
 
       const offRes = await apiService.getServiceOfferings();
       if (offRes.status === 'success') setOfferings(offRes.offerings || []);
+
+      const billRes = await apiService.getServiceBills();
+      if (billRes.status === 'success') setBills(billRes.bills || []);
 
       const tarRes = await apiService.getServiceTariffs();
       if (tarRes.status === 'success') setTariffs(tarRes.tariffs || []);
@@ -84,6 +90,23 @@ export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = (
     }
   };
 
+  const handleVerifyBill = async (decision: 'APPROVE' | 'REJECT') => {
+    if (!verifyBill) return;
+    try {
+      const res = await apiService.verifyServiceBill({
+        bill_id: verifyBill.id,
+        decision,
+        admin_notes: verifyNotes,
+      });
+      alert(res.message || 'Verifikasi berhasil.');
+      setVerifyBill(null);
+      setVerifyNotes('');
+      loadAll();
+    } catch (e: any) {
+      alert('Gagal memverifikasi tagihan: ' + e.message);
+    }
+  };
+
   const handleSaveOffering = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!offeringModal) return;
@@ -132,6 +155,12 @@ export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = (
             className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${activeTab === 'REQUESTS' ? 'bg-honey-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300'}`}
           >
             Pengajuan ({requests.filter(r => r.status === 'PENDING').length})
+          </button>
+          <button
+            onClick={() => setActiveTab('BILLS')}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${activeTab === 'BILLS' ? 'bg-honey-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300'}`}
+          >
+            Tagihan ({bills.filter(b => String(b.status).toUpperCase() === 'PENDING').length})
           </button>
           <button
             onClick={() => setActiveTab('OFFERINGS')}
@@ -208,6 +237,83 @@ export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = (
                 {requests.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-slate-400">Belum ada pengajuan layanan masuk.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* BILLS TAB */}
+      {activeTab === 'BILLS' && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-100 dark:border-slate-800 space-y-4">
+          <div>
+            <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-file-invoice-dollar text-honey-500"></i>
+              Tagihan Layanan &amp; Verifikasi Pembayaran
+            </h3>
+            <p className="text-xs text-slate-500">Tagihan transfer berstatus PENDING perlu diverifikasi di sini sebelum berstatus LUNAS.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-400 font-black uppercase tracking-wider">
+                  <th className="p-3 rounded-l-xl">Member</th>
+                  <th className="p-3">Bulan / Layanan</th>
+                  <th className="p-3">Nominal</th>
+                  <th className="p-3">Metode / Referensi</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3 rounded-r-xl text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold">
+                {bills.map(bill => {
+                  const status = String(bill.status || '').toUpperCase();
+                  return (
+                    <tr key={bill.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                      <td className="p-3">
+                        <div className="font-black text-slate-900 dark:text-white">{bill.member_id}</div>
+                        <div className="text-[11px] text-slate-400">ID tagihan #{bill.id}</div>
+                      </td>
+                      <td className="p-3">
+                        <div className="font-bold text-slate-700 dark:text-slate-300">{bill.month}</div>
+                        <div className="text-[11px] text-slate-500">{bill.details || bill.service_type}</div>
+                      </td>
+                      <td className="p-3 font-black text-emerald-600">Rp {Number(bill.amount).toLocaleString('id-ID')}</td>
+                      <td className="p-3">
+                        <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{bill.payment_method || '-'}</div>
+                        <div className="text-[11px] text-slate-400">{bill.payment_proof || '-'}</div>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                          status === 'PAID' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' :
+                          status === 'PENDING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400' :
+                          'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
+                        }`}>
+                          {status}
+                        </span>
+                        {bill.verified_by && <div className="mt-1 text-[10px] text-slate-400">oleh {bill.verified_by}</div>}
+                        {bill.admin_notes && <div className="mt-1 text-[10px] text-slate-400">{bill.admin_notes}</div>}
+                      </td>
+                      <td className="p-3 text-right">
+                        {status === 'PENDING' ? (
+                          <button
+                            onClick={() => { setVerifyBill(bill); setVerifyNotes(''); }}
+                            className="px-3 py-1.5 bg-honey-600 hover:bg-honey-700 text-white rounded-xl text-[10px] font-black shadow-md transition-all"
+                          >
+                            <i className="fas fa-check mr-1"></i> Verifikasi
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {bills.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400">Belum ada tagihan layanan.</td>
                   </tr>
                 )}
               </tbody>
@@ -559,6 +665,53 @@ export const AdminServicesManagement: React.FC<AdminServicesManagementProps> = (
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      {verifyBill && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 sm:p-6 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-4 border border-slate-100 dark:border-slate-800 relative">
+            <button onClick={() => setVerifyBill(null)} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold">
+              <i className="fas fa-times"></i>
+            </button>
+            <div>
+              <span className="bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+                Verifikasi Pembayaran
+              </span>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mt-1">Tagihan #{verifyBill.id} — {verifyBill.month}</h3>
+              <p className="text-xs text-slate-500">{verifyBill.details} · Rp {Number(verifyBill.amount).toLocaleString('id-ID')}</p>
+              <p className="mt-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                Referensi: {verifyBill.payment_proof || '-'} ({verifyBill.payment_method || '-'})
+              </p>
+            </div>
+            <div>
+              <label className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Catatan Verifikasi (opsional)</label>
+              <textarea
+                rows={2}
+                value={verifyNotes}
+                onChange={e => setVerifyNotes(e.target.value)}
+                placeholder="Contoh:Transfer sesuai, nama pengirim sesuai."
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-2xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => handleVerifyBill('REJECT')}
+                className="py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-black transition-all"
+              >
+                <i className="fas fa-xmark mr-1"></i> Tolak
+              </button>
+              <button
+                type="button"
+                onClick={() => handleVerifyBill('APPROVE')}
+                className="py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-lg transition-all"
+              >
+                <i className="fas fa-check mr-1"></i> Setujui Lunas
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

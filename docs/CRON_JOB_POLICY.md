@@ -24,7 +24,7 @@ Dokumen ini mendefinisikan standar, aturan, dan arsitektur pengelolaan *cron job
      4. Sistem/agen berhenti dan menunggu respon user (`reject` atau `approve`/`kirim`).
      5. Pengiriman ke WhatsApp Group hanya dieksekusi jika user memberikan instruksi/persetujuan secara langsung.
 
-3. **Standar Teknis Skrip Laporan (`live_report_cli.php` & `send_live_report.php`)**:
+3. **Standar Teknis Skrip Laporan (`scripts/reports/live_report_cli.php` & `scripts/reports/send_live_report.php`)**:
    - Skrip CLI harus menggunakan header autentikasi standar:
      ```php
      'Authorization: Bearer ' . $token

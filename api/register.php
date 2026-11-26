@@ -6,6 +6,7 @@
  */
 require_once 'db.php';
 require_once 'mail_sender.php';
+require_once 'app_url.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(["status" => "error", "message" => "Method not allowed"], 405);
@@ -66,7 +67,7 @@ try {
     // Email selamat datang + lampiran S&K / Kebijakan Privasi
     $to = $email;
     $subject = "Selamat Bergabung & Lampiran Syarat & Ketentuan - Koperasi Syariah AIS";
-    $loginLink = "https://beesmart.id/app/";
+    $loginLink = getAppBaseUrl() . '/';
 
     $termsText = "--------------------------------------------------\n" .
                  "LAMPIRAN DOKUMEN LEGAL & REGULASI DATA PRIBADI\n" .

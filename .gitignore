@@ -22,9 +22,15 @@ Data/
 
 # Backup database & uploads (data sensitif / runtime)
 BeeSmart_Data.sql
+*.zip
 uploads/
 api/error_log
 logs/
+
+# Arsip & script sekali pakai khusus mesin lokal (tidak ikut di-push)
+dokumentasi-report/
+scripts/_incomplete/
+scripts/operations/
 
 # Editor directories and files
 .vscode/*

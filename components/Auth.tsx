@@ -12,7 +12,7 @@ interface AuthProps {
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
-  const [view, setView] = useState<'login' | 'register' | 'forgot_password' | 'reset_password'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'forgot_password' | 'reset_password' | 'activate_account'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,8 +47,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const activationToken = params.get('activation_token');
     const token = params.get('reset_token');
-    if (token) {
+    if (activationToken) {
+      setResetToken(activationToken);
+      setView('activate_account');
+    } else if (token) {
       setResetToken(token);
       setView('reset_password');
     }
@@ -166,6 +170,35 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       }, 3000);
     } catch (err: any) {
       setError(err.message || "Gagal mengubah password.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleActivateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLoading) return;
+    if (resetPassword.length < 8 || resetPassword !== resetConfirmPassword) {
+      setError(resetPassword.length < 8 ? 'Password minimal 8 karakter.' : 'Password dan konfirmasi tidak cocok.');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await apiService.activateMember(resetToken, resetPassword, resetConfirmPassword);
+      setSuccess('Akun berhasil diaktifkan. Silakan masuk dengan email dan password yang baru dibuat.');
+      setResetPassword('');
+      setResetConfirmPassword('');
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('activation_token');
+        window.history.replaceState({}, '', url.pathname + url.search);
+        setView('login');
+        setSuccess(null);
+      }, 2500);
+    } catch (err: any) {
+      setError(err.message || 'Gagal mengaktifkan akun.');
     } finally {
       setIsLoading(false);
     }
@@ -349,6 +382,29 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
               <button type="submit" disabled={isLoading} className="w-full bg-honey-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest">
                 {isLoading ? 'Menyimpan...' : 'Konfirmasi & Hash Password'}
+              </button>
+            </form>
+          )}
+
+          {view === 'activate_account' && (
+            <form onSubmit={handleActivateMember} className="space-y-4">
+              <h3 className="text-center font-black text-slate-800 text-xs uppercase mb-4">Aktivasi Akun Orang Tua</h3>
+              <p className="text-xs text-slate-500 text-center leading-relaxed mb-6">Buat password untuk mengaktifkan akun keluarga BeeSmart Anda.</p>
+              <div>
+                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Password Baru</label>
+                <div className="relative">
+                  <input required minLength={8} type={showResetPassword ? 'text' : 'password'} placeholder="Minimal 8 karakter" className="w-full px-4 py-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs" value={resetPassword} onChange={e => setResetPassword(e.target.value)} />
+                  <button type="button" onClick={() => setShowResetPassword(!showResetPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 px-1 py-1" aria-label={showResetPassword ? 'Sembunyikan password' : 'Tampilkan password'}>
+                    <i className={`fas ${showResetPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Konfirmasi Password</label>
+                <input required minLength={8} type="password" placeholder="Masukkan ulang password" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs" value={resetConfirmPassword} onChange={e => setResetConfirmPassword(e.target.value)} />
+              </div>
+              <button type="submit" disabled={isLoading} className="w-full bg-honey-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-[10px] uppercase tracking-widest disabled:opacity-50">
+                {isLoading ? 'Mengaktifkan...' : 'Aktifkan Akun'}
               </button>
             </form>
           )}

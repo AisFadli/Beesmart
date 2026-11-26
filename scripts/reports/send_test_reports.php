@@ -1,9 +1,9 @@
 <?php
 // Generate daily report
-$dailyOutput = shell_exec('php live_report_cli.php 2026-10-15 2026-10-15');
+$dailyOutput = shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/live_report_cli.php') . ' 2026-10-15 2026-10-15');
 
 // Generate weekly report
-$weeklyOutput = shell_exec('php live_report_cli.php 2026-10-12 2026-10-16');
+$weeklyOutput = shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/live_report_cli.php') . ' 2026-10-12 2026-10-16');
 
 $target = '120363421424271082@g.us'; // PENGURUS KARYAWAN KOPERASI 2025-2026 JID
 

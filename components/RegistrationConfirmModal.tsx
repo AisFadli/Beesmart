@@ -30,18 +30,29 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
       <div className="bg-white rounded-[2.5rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-honey-100 text-left space-y-5 animate-in zoom-in duration-200">
         
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-honey-100 text-honey-600 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner">
-            <i className="fas fa-[#000] fa-user-check"></i>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-honey-100 text-honey-600 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner">
+              <i className="fas fa-user-check"></i>
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">
+                Konfirmasi Pendaftaran Member
+              </h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                Verifikasi Data & Persetujuan Layanan
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">
-              Konfirmasi Pendaftaran Member
-            </h3>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-              Verifikasi Data & Persetujuan Layanan
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+            className="w-10 h-10 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-full flex items-center justify-center transition-all shrink-0"
+            title="Tutup Modal"
+          >
+            <i className="fas fa-times text-sm"></i>
+          </button>
         </div>
 
         {/* Summary Card */}
@@ -107,14 +118,14 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
             )}
           </button>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
               className="py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all"
             >
-              <i className="fas fa-edit mr-1"></i> Ubah Data
+              <i className="fas fa-edit mr-1"></i> Edit
             </button>
             <button
               type="button"
@@ -122,7 +133,15 @@ export const RegistrationConfirmModal: React.FC<RegistrationConfirmModalProps> =
               disabled={isLoading}
               className="py-3 bg-honey-50 hover:bg-honey-100 text-honey-700 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all border border-honey-200/60"
             >
-              <i className="fas fa-file-alt mr-1"></i> Baca S&K
+              <i className="fas fa-file-alt mr-1"></i> S&amp;K
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all border border-rose-200"
+            >
+              <i className="fas fa-times mr-1"></i> Batal
             </button>
           </div>
         </div>

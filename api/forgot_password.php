@@ -1,6 +1,7 @@
 <?php
 require_once 'db.php';
 require_once 'mail_sender.php';
+require_once 'app_url.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -50,27 +51,9 @@ if ($method === 'POST') {
             $stmtReset = $pdo->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
             $stmtReset->execute([$email, $token, $expires_at]);
 
-            // Construct reset link. Gunakan base_url dari app_config.php jika tersedia,
-            // agar link email selalu mengarah ke domain publik (bukan localhost).
-            $appConfig = (file_exists(__DIR__ . '/app_config.php')) ? require __DIR__ . '/app_config.php' : [];
-            $link = null;
-
-            if (!empty($appConfig['base_url'])) {
-                $link = rtrim($appConfig['base_url'], '/') . "/?reset_token=$token";
-            } else {
-                $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
-                $host = $_SERVER['HTTP_HOST'] ?? 'localhost:3000';
-
-                // Extract subdirectory from REQUEST_URI if api is called in a subfolder
-                $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-                $api_pos = strpos($request_uri, '/api/');
-                $subfolder = '';
-                if ($api_pos !== false) {
-                    $subfolder = substr($request_uri, 0, $api_pos);
-                }
-
-                $link = "$protocol://$host" . $subfolder . "/?reset_token=$token";
-            }
+            // Link reset memakai helper base URL yang sama dengan email lain,
+            // sehingga selalu mengarah ke environment yang tepat (staging/produksi).
+            $link = getAppBaseUrl() . '/?reset_token=' . rawurlencode($token);
 
             // Send email
             $subject = "Permintaan Reset Password BeeSmart";

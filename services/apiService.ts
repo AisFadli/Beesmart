@@ -6,17 +6,20 @@ const getApiBaseUrl = () => {
   return `${origin}/app/api`;
 };
 
-const API_BASE_URL = getApiBaseUrl(); 
+const API_BASE_URL = getApiBaseUrl();
 
 // Path upload dari server bersifat relatif (contoh: "uploads/proof_x.jpg"),
 // sedangkan PWA bisa dilayani dari root atau subfolder /app.
 // Fungsi ini mengubahnya menjadi URL absolut agar foto selalu terlihat.
 export const resolveMediaUrl = (url?: string | null): string => {
   if (!url) return '';
-  const raw = String(url);
+  const raw = String(url).trim();
   if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
-  const prefix = window.location.pathname.startsWith('/app') ? '/app/' : '/';
-  return prefix + raw.replace(/^\/+/, '');
+  const base = window.location.pathname.startsWith('/app') ? '/app' : '';
+  // Beberapa konten lama sudah menyimpan path absolut /app/...; jangan tambah prefix lagi.
+  if (/^\/app(?:\/|$)/i.test(raw)) return raw;
+  if (raw.startsWith('/')) return base + raw;
+  return (base ? `${base}/` : '/') + raw.replace(/^\/+/, '');
 };
 
 // Deteksi nilai yang gagal disimpan (mis. objek API yang ter-stringify)
@@ -24,7 +27,7 @@ export const isValidMediaRef = (url?: string | null): boolean => {
   if (!url) return false;
   const raw = String(url).trim();
   return raw !== '' && raw !== '[object Object]' && raw.startsWith('uploads/');
-}; 
+};
 
 export class ApiService {
   private token: string = (() => {
@@ -50,20 +53,38 @@ export class ApiService {
     window.location.reload();
   }
 
+  private static readonly REQUEST_TIMEOUT_MS = 15000;
+
   // Changed from private to public so it can be accessed directly from components as needed
   public async request(endpoint: string, options: RequestInit = {}) {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${API_BASE_URL}${cleanEndpoint}`;
+    const method = (options.method || 'GET').toUpperCase();
 
     const headers: Record<string, string> = { 'Accept': 'application/json', ...(options.headers as Record<string, string> || {}) };
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
-      
+    const execute = async (): Promise<any> => {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), ApiService.REQUEST_TIMEOUT_MS);
+      if (options.signal) {
+        if (options.signal.aborted) controller.abort();
+        else options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+      }
+      let response: Response;
+
+      try {
+        response = await fetch(url, { ...options, headers, signal: controller.signal });
+      } catch (error: any) {
+        const err = error?.name === 'AbortError'
+          ? new Error('Server terlalu lama merespons. Silakan coba lagi.')
+          : error;
+        err.retryable = true;
+        throw err;
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+
       const text = await response.text();
       let data;
       try {
@@ -77,14 +98,28 @@ export class ApiService {
         this.handleUnauthorized();
         throw new Error(data.message || "Sesi berakhir. Silakan login kembali.");
       }
-      
+
       if (data.status === 'error') {
         const err: any = new Error(data.message);
         err.status = response.status;
         throw err;
       }
       return data;
+    };
+
+    try {
+      return await execute();
     } catch (error: any) {
+      // Hanya GET yang di-retry, dan hanya untuk error jaringan/timeout
+      // (bukan error HTTP/JSON/otorisasi).
+      if (error?.retryable && method === 'GET' && !options.signal) {
+        try {
+          return await execute();
+        } catch (retryError) {
+          console.error("API Request Error (retry failed):", retryError);
+          throw retryError;
+        }
+      }
       console.error("API Request Error:", error);
       throw error;
     }
@@ -101,9 +136,9 @@ export class ApiService {
     return user;
   }
 
-  async getAppData(role?: string, userId?: string) { 
+  async getAppData(role?: string, userId?: string) {
     const query = role ? `?role=${role}&userId=${encodeURIComponent(userId || '')}` : '';
-    return this.request(`/get_app_data.php${query}`); 
+    return this.request(`/get_app_data.php${query}`);
   }
 
   async saveProduct(product: Product) {
@@ -115,7 +150,7 @@ export class ApiService {
   }
 
   async deleteProduct(id: string) { return this.request('/products.php?id=' + id, { method: 'DELETE' }); }
-  
+
   async saveMember(member: Member) {
     return this.request('/members.php', {
       method: 'POST',
@@ -210,7 +245,7 @@ export class ApiService {
   }
 
   async deleteTransaction(id: string) { return this.request('/transactions.php?id=' + id, { method: 'DELETE' }); }
-  
+
   async uploadFile(file: File) {
     const formData = new FormData();
     formData.append('file', file);
@@ -302,6 +337,7 @@ export class ApiService {
     return this.request(`/services_api.php${q}`);
   }
   async payServiceBill(data: any) { return this.request('/services_api.php?action=pay_bill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); }
+  async verifyServiceBill(data: any) { return this.request('/services_api.php?action=verify_bill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); }
 }
 
 export default new ApiService();

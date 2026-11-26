@@ -1,15 +1,17 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Transaction, Product, StoreSettings, UserRole, User } from '../types';
+import { Transaction, Product, StoreSettings, UserRole, User, Member } from '../types';
 import { Icons } from '../constants';
 import printService from '../services/printService';
 import apiService from '../services/apiService';
+import { CameraScannerModal } from './CameraScannerModal';
 // @ts-ignore
 import * as XLSX from 'xlsx';
 
 interface ReportsProps {
   transactions: Transaction[]; // Still kept for initial/small data, but we'll fetch more
   products: Product[];
+  members: Member[];
   settings: StoreSettings;
   userRole: UserRole;
   currentUser?: User | null;
@@ -17,16 +19,16 @@ interface ReportsProps {
   onUpdateTransaction: (tx: Transaction) => void;
 }
 
-const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, products, settings, userRole, currentUser, onDeleteTransaction, onUpdateTransaction }) => {
+const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, products, members = [], settings, userRole, currentUser, onDeleteTransaction, onUpdateTransaction }) => {
   const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  
+
   const [selectedTxForPrint, setSelectedTxForPrint] = useState<Transaction | null>(null);
   const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
-  
+
   // Pagination & Server Data State
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [totalCount, setTotalCount] = useState(0);
@@ -39,13 +41,17 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
 
   // Confirm Payment Modal State
   const [txToConfirm, setTxToConfirm] = useState<Transaction | null>(null);
-  
+
   // Confirm Indent Fulfillment State
   const [txToFulfill, setTxToFulfill] = useState<Transaction | null>(null);
   const [fulfillmentDate, setFulfillmentDate] = useState(new Date().toISOString().split('T')[0]);
   const [confDate, setConfDate] = useState(new Date().toISOString().split('T')[0]);
-  const [confMethod, setConfMethod] = useState<'CASH' | 'DEBIT' | 'QRIS' | 'TRANSFER'>('CASH');
+  const [confMethod, setConfMethod] = useState<'CASH' | 'DEBIT' | 'QRIS' | 'TRANSFER' | 'DEPOSIT'>('CASH');
   const [confNotes, setConfNotes] = useState('');
+  const [confMemberId, setConfMemberId] = useState('');
+  const [showDepositConfirmDialog, setShowDepositConfirmDialog] = useState(false);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [showMemberScanner, setShowMemberScanner] = useState(false);
 
   const rawRole = (userRole || '').toString().toUpperCase();
   const isAdmin = rawRole === 'ADMIN';
@@ -103,7 +109,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
         let url = `/get_transactions.php?startDate=${startDate}&endDate=${endDate}&page=${currentPage}&limit=${limit}&search=${encodeURIComponent(searchTerm)}&paymentMethod=${encodeURIComponent(paymentMethod)}${userRoleParam}${userIdParam}`;
         if (filterType === 'INDENT') url += '&transactionType=INDENT';
         if (filterType === 'UNPAID') url += '&paymentStatus=UNPAID';
-        
+
         const txRes = await apiService.request(url);
         if (!active) return;
         if (txRes) {
@@ -147,24 +153,48 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
 
   const handleConfirmPaymentSubmit = async () => {
     if (!txToConfirm || !canConfirm) return;
+    if (confMethod === 'DEPOSIT') {
+      if (!confMemberId) {
+        alert("Silakan pilih ID Member untuk pelunasan menggunakan deposit.");
+        return;
+      }
+      setShowDepositConfirmDialog(true);
+      return;
+    }
+    await executePaymentSubmit();
+  };
+
+  const executePaymentSubmit = async () => {
+    if (!txToConfirm || !canConfirm) return;
     setIsUpdatingStatus(true);
     try {
+      let selectedMemberName = '';
+      if (confMethod === 'DEPOSIT' && confMemberId) {
+        const foundM = members.find(m => m.id === confMemberId);
+        selectedMemberName = foundM ? foundM.name : confMemberId;
+      }
+
+      const depositNoteTag = confMethod === 'DEPOSIT' && confMemberId ? ` [PELUNASAN DEPOSIT: ${confMemberId}/${selectedMemberName}]` : '';
       const updatedTx = {
         ...txToConfirm,
         paymentStatus: 'PAID' as const,
         paymentMethod: confMethod as any,
+        memberId: confMethod === 'DEPOSIT' && confMemberId ? confMemberId : txToConfirm.memberId,
+        customerName: confMethod === 'DEPOSIT' && selectedMemberName ? selectedMemberName : txToConfirm.customerName,
         timestamp: `${confDate}T${new Date().toLocaleTimeString('en-GB')}`,
-        notes: (txToConfirm.notes || '') + (confNotes ? ` | Pelunasan: ${confNotes}` : " [LUNAS DI KONFIRMASI]")
+        notes: (txToConfirm.notes || '') + (confNotes ? ` | Pelunasan: ${confNotes}` : " [LUNAS DI KONFIRMASI]") + depositNoteTag
       };
-      
+
       await apiService.updateTransaction(updatedTx);
       onUpdateTransaction(updatedTx);
-      
+
       // Update local state
       setTransactions(prev => prev.map(t => t.id === updatedTx.id ? updatedTx : t));
-      
+
       setTxToConfirm(null);
       setConfNotes('');
+      setConfMemberId('');
+      setShowDepositConfirmDialog(false);
       alert("Pelunasan berhasil disimpan!");
     } catch (e: any) { alert(e.message); }
     finally { setIsUpdatingStatus(false); }
@@ -179,10 +209,10 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
         receivedAt: `${fulfillmentDate}T${new Date().toLocaleTimeString('en-GB')}`,
         notes: (txToFulfill.notes || '') + ` [PESANAN DITERIMA: ${fulfillmentDate}]`
       };
-      
+
       await apiService.updateTransaction(updatedTx);
       onUpdateTransaction(updatedTx);
-      
+
       setTransactions(prev => prev.map(t => t.id === updatedTx.id ? updatedTx : t));
       setTxToFulfill(null);
       alert("Konfirmasi penerimaan barang berhasil!");
@@ -195,20 +225,20 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
     try {
       // Fetch all data for export from the server
       const exportData = await apiService.request(`/get_export_data.php?startDate=${startDate}&endDate=${endDate}&search=${encodeURIComponent(searchTerm)}&paymentMethod=${encodeURIComponent(paymentMethod)}`);
-      
+
       if (!exportData || !Array.isArray(exportData)) {
         throw new Error("Gagal mengambil data untuk export");
       }
 
       const headers = ['TANGGAL', 'ID TRANSAKSI', 'PELANGGAN', 'SKU', 'PRODUK', 'KATEGORI', 'QTY', 'HARGA JUAL', 'SUBTOTAL', 'HPP SATUAN', 'TOTAL HPP', 'PROFIT', 'STAFF', 'STATUS', 'METODE', 'CATATAN'];
-      
+
       const rows = exportData.map((row: any) => {
         const isCancelled = row.status === 'CANCELLED';
         const qty = isCancelled ? 0 : Number(row.quantity);
         const subtotal = isCancelled ? 0 : Number(row.subtotal);
         const totalHpp = isCancelled ? 0 : Number(row.totalHpp);
         const profit = isCancelled ? 0 : (subtotal - totalHpp);
-        
+
         return [
           row.timestamp,
           row.transactionId,
@@ -233,7 +263,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
       const ws = XLSX.utils.aoa_to_sheet(worksheetData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Laporan Penjualan");
-      
+
       // Save the file as .xlsx
       XLSX.writeFile(wb, `Laporan_Penjualan_${startDate}_sd_${endDate}.xlsx`);
     } catch (err: any) {
@@ -246,17 +276,19 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <span className="p-2 bg-honey-600 text-white rounded-xl shadow-lg"><Icons.Reports /></span>
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <span className="p-3 bg-honey-600 text-white rounded-2xl shadow-xl shadow-honey-100"><Icons.Reports /></span>
             Laporan & Profit
           </h1>
         </div>
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border shadow-sm">
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-xs font-bold" />
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-xs font-bold" />
-          <button onClick={exportToExcel} className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-emerald-50 active:scale-95 transition-all"><i className="fas fa-file-excel mr-2"></i> Export Excel</button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-sm">
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none" />
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none" />
+          <button onClick={exportToExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-2">
+            <i className="fas fa-file-excel"></i> Export Excel
+          </button>
         </div>
       </div>
 
@@ -273,8 +305,8 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
             <h2 className="font-black text-slate-800 text-[10px] uppercase tracking-[0.2em]">Riwayat Transaksi</h2>
             {isLoading && <i className="fas fa-spinner fa-spin text-honey-600 text-xs"></i>}
             {filterType !== 'ALL' && (
-              <button 
-                onClick={() => setFilterType('ALL')} 
+              <button
+                onClick={() => setFilterType('ALL')}
                 className="bg-slate-200 text-slate-500 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all"
               >
                 Clear Filter: {filterType} <i className="fas fa-times ml-1"></i>
@@ -283,18 +315,18 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
           </div>
           <div className="relative w-full md:w-96">
             <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i className="fas fa-search"></i></span>
-            <input 
-              type="text" 
-              placeholder="Cari ID, Nama Pelanggan, Produk, atau Kategori..." 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-              className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl outline-none font-bold text-xs bg-white focus:ring-4 focus:ring-honey-500/5 transition-all" 
+            <input
+              type="text"
+              placeholder="Cari ID, Nama Pelanggan, Produk, atau Kategori..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl outline-none font-bold text-xs bg-white focus:ring-4 focus:ring-honey-500/5 transition-all"
             />
           </div>
           <div className="w-full md:w-48">
-            <select 
-              value={paymentMethod} 
-              onChange={e => setPaymentMethod(e.target.value)} 
+            <select
+              value={paymentMethod}
+              onChange={e => setPaymentMethod(e.target.value)}
               className="w-full p-3 border border-slate-200 rounded-2xl outline-none font-bold text-[10px] uppercase tracking-widest bg-white focus:ring-4 focus:ring-honey-500/5 transition-all"
             >
               <option value="">Semua Metode</option>
@@ -407,8 +439,8 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
           <div className="p-8 bg-slate-50/50 border-t flex items-center justify-between">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Menampilkan {transactions.length} dari {totalCount} transaksi</p>
             <div className="flex items-center gap-2">
-              <button 
-                disabled={currentPage === 1 || isLoading} 
+              <button
+                disabled={currentPage === 1 || isLoading}
                 onClick={() => setCurrentPage(p => p - 1)}
                 className="w-10 h-10 flex items-center justify-center bg-white border rounded-xl text-slate-400 hover:text-honey-600 disabled:opacity-30 transition-all"
               >
@@ -416,8 +448,8 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
               </button>
               <div className="flex gap-1">
                 {[...Array(totalPages)].map((_, i) => (
-                  <button 
-                    key={i} 
+                  <button
+                    key={i}
                     onClick={() => setCurrentPage(i + 1)}
                     className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-honey-600 text-white shadow-lg shadow-honey-100' : 'bg-white border text-slate-500 hover:bg-slate-50'}`}
                   >
@@ -425,8 +457,8 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                   </button>
                 )).slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))}
               </div>
-              <button 
-                disabled={currentPage === totalPages || isLoading} 
+              <button
+                disabled={currentPage === totalPages || isLoading}
                 onClick={() => setCurrentPage(p => p + 1)}
                 className="w-10 h-10 flex items-center justify-center bg-white border rounded-xl text-slate-400 hover:text-honey-600 disabled:opacity-30 transition-all"
               >
@@ -473,7 +505,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300">
               <h3 className="text-lg md:text-xl font-black uppercase text-slate-900 mb-1 md:mb-2">Pelunasan Piutang</h3>
               <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 md:mb-8 border-b pb-4">ID Transaksi: #{txToConfirm.id.slice(-8).toUpperCase()}</p>
-              
+
               <div className="space-y-5">
                  <div>
                     <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block ml-2">Tanggal Bayar</label>
@@ -486,8 +518,78 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                        <option value="TRANSFER">Transfer Bank</option>
                        <option value="QRIS">QRIS</option>
                        <option value="DEBIT">Debit Card</option>
+                       <option value="DEPOSIT">Saldo Deposit Member</option>
                     </select>
                  </div>
+                 {confMethod === 'DEPOSIT' && (
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase text-slate-400 block ml-2">Cari / Scan Member</label>
+                       <div className="flex gap-2">
+                          <div className="relative flex-1">
+                             <input
+                                type="text"
+                                placeholder="Ketik nama / ID / barcode member..."
+                                className="w-full p-4 bg-honey-50 border border-honey-200 rounded-2xl font-bold text-xs text-honey-900 outline-none shadow-inner"
+                                value={memberSearchQuery}
+                                onChange={e => setMemberSearchQuery(e.target.value)}
+                             />
+                             {confMemberId && (
+                                <button type="button" onClick={() => { setConfMemberId(''); setMemberSearchQuery(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-rose-500 bg-rose-50 px-2 py-1 rounded-xl">Reset</button>
+                             )}
+                          </div>
+                          <button
+                             type="button"
+                             onClick={() => setShowMemberScanner(true)}
+                             className="px-5 bg-honey-600 text-white rounded-2xl font-black text-xs shadow-lg shadow-honey-100 flex items-center gap-2 hover:bg-honey-700 transition-all shrink-0"
+                             title="Scan Barcode / QR Member"
+                          >
+                             <i className="fas fa-barcode text-lg"></i>
+                             <span className="hidden md:inline">Scan</span>
+                          </button>
+                       </div>
+
+                       {memberSearchQuery.trim().length > 0 && !confMemberId && (
+                          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                             {members.filter(m => {
+                                const q = memberSearchQuery.toLowerCase();
+                                return (m.name || '').toLowerCase().includes(q) || (m.id || '').toLowerCase().includes(q) || (m.barcode || '').toLowerCase().includes(q) || (m.nis || '').toLowerCase().includes(q) || (m.nisn || '').toLowerCase().includes(q);
+                             }).length === 0 ? (
+                                <p className="text-center text-xs text-slate-400 py-3 font-bold">Member tidak ditemukan</p>
+                             ) : (
+                                members.filter(m => {
+                                   const q = memberSearchQuery.toLowerCase();
+                                   return (m.name || '').toLowerCase().includes(q) || (m.id || '').toLowerCase().includes(q) || (m.barcode || '').toLowerCase().includes(q) || (m.nis || '').toLowerCase().includes(q) || (m.nisn || '').toLowerCase().includes(q);
+                                }).map(m => (
+                                   <div
+                                      key={m.id}
+                                      onClick={() => {
+                                         setConfMemberId(m.id);
+                                         setMemberSearchQuery(`${m.name} (${m.id})`);
+                                      }}
+                                      className="p-3 hover:bg-honey-50 rounded-xl cursor-pointer flex justify-between items-center transition-all border-b border-slate-50 last:border-0"
+                                   >
+                                      <div>
+                                         <p className="font-black text-xs text-slate-800">{m.name}</p>
+                                         <p className="text-[9px] font-mono font-bold text-slate-400">ID: {m.id} {m.barcode ? `• Barcode: ${m.barcode}` : ''}</p>
+                                      </div>
+                                      <span className="text-[10px] font-black text-honey-600 bg-honey-100 px-2.5 py-1 rounded-lg">Rp {Number(m.depositBalance || 0).toLocaleString('id-ID')}</span>
+                                   </div>
+                                ))
+                             )}
+                          </div>
+                       )}
+
+                       {confMemberId && (
+                          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex justify-between items-center">
+                             <div>
+                                <p className="text-[10px] font-black uppercase text-emerald-700">Member Terpilih:</p>
+                                <p className="text-xs font-black text-emerald-900">{members.find(m => m.id === confMemberId)?.name || confMemberId} ({confMemberId})</p>
+                             </div>
+                             <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-xl">Saldo: Rp {Number(members.find(m => m.id === confMemberId)?.depositBalance || 0).toLocaleString('id-ID')}</span>
+                          </div>
+                       )}
+                    </div>
+                 )}
                  <div>
                     <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block ml-2">Catatan (Opsional)</label>
                     <textarea placeholder="Detail pelunasan..." className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold h-20 resize-none shadow-inner" value={confNotes} onChange={e => setConfNotes(e.target.value)} />
@@ -507,18 +609,18 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
         <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-2xl z-[150] flex items-center justify-center p-4">
            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300 flex flex-col max-h-[90vh]">
               <h3 className="text-center font-black uppercase text-slate-900 mb-4 md:mb-6 tracking-widest shrink-0">Reprint Struk</h3>
-              
+
               <div id="printable-area" className="p-6 bg-slate-50 border border-slate-200 rounded-[2rem] mb-6 font-mono text-[10px] text-slate-800 shadow-inner flex flex-col items-center overflow-y-auto custom-scrollbar flex-1">
                   <p className="font-black text-xs uppercase leading-tight mb-1 text-center">{settings.name}</p>
                   <p className="text-[8px] opacity-70 leading-tight text-center mb-4">{settings.address}</p>
-                  
+
                   <div className="w-full border-t border-dashed border-slate-300 my-2"></div>
                   <div className="w-full bg-slate-100 py-1 px-2 rounded-lg mb-2 flex justify-between uppercase font-black text-[9px]"><span>TGL/WAKTU:</span><span>{new Date(selectedTxForPrint.timestamp).toLocaleString('id-ID')}</span></div>
                   <div className="w-full flex justify-between uppercase"><span>ID:</span><span>#{selectedTxForPrint.id.slice(-8)}</span></div>
                   <div className="w-full flex justify-between uppercase"><span>STATUS:</span><span className="font-black">{selectedTxForPrint.status === 'CANCELLED' ? 'CANCELED' : (selectedTxForPrint.paymentStatus === 'PAID' ? 'TERBAYAR' : 'BELUM BAYAR')}</span></div>
                   <div className="w-full flex justify-between uppercase"><span>CUST:</span><span className="font-black truncate max-w-[100px]">{selectedTxForPrint.customerName || '-'}</span></div>
                   <div className="w-full flex justify-between uppercase mb-2"><span>METODE:</span><span>{selectedTxForPrint.paymentMethod}</span></div>
-                  
+
                   <div className="w-full border-t border-dashed border-slate-300 my-2"></div>
                   {selectedTxForPrint.items.map((i, idx) => {
                     const hasDiscount = i.originalPrice > i.price;
@@ -540,7 +642,7 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
                       </div>
                     );
                   })}
-                  
+
                   <div className="w-full border-t border-dashed border-slate-300 my-2"></div>
                   <div className="w-full border-t border-dashed pt-2 font-black text-xs uppercase flex justify-between">
                     <span>TOTAL AKHIR:</span>
@@ -562,12 +664,58 @@ const Reports: React.FC<ReportsProps> = ({ transactions: initialTransactions, pr
            </div>
         </div>
       )}
+
+      {/* Deposit Confirmation Dialog (Pop-up Konfirmasi Lanjut / Batal) */}
+      {showDepositConfirmDialog && txToConfirm && (
+        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-2xl z-[250] flex items-center justify-center p-4">
+           <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 text-center">
+              <div className="w-16 h-16 bg-honey-100 text-honey-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-honey-50">
+                 <i className="fas fa-wallet"></i>
+              </div>
+              <h3 className="text-xl font-black uppercase text-slate-900 mb-2">Konfirmasi Pelunasan Deposit</h3>
+              <p className="text-xs text-slate-500 mb-6 font-bold leading-relaxed">
+                 Anda akan melunasi piutang transaksi <span className="font-mono text-honey-600 font-black">#{txToConfirm.id.slice(-8).toUpperCase()}</span> (Rp {Number(txToConfirm.total).toLocaleString('id-ID')}) menggunakan saldo deposit member:
+              </p>
+
+              <div className="p-4 bg-honey-50 border border-honey-200 rounded-2xl mb-8 text-left space-y-2">
+                 <p className="text-xs font-black text-honey-900">ID Member: <span className="font-mono font-bold">{confMemberId}</span></p>
+                 <p className="text-xs font-black text-honey-900">Nama Member: <span className="font-bold">{members.find(m => m.id === confMemberId)?.name || confMemberId}</span></p>
+                 <p className="text-[10px] text-honey-700 font-bold italic mt-1">Nama pelanggan pada transaksi akan disesuaikan dan saldo deposit member akan dipotong secara otomatis.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <button onClick={() => setShowDepositConfirmDialog(false)} className="py-4 bg-slate-100 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500">Batal</button>
+                 <button onClick={executePaymentSubmit} disabled={isUpdatingStatus} className="py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-emerald-100">Lanjutkan</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Camera Barcode Scanner Modal for Member */}
+      {showMemberScanner && (
+        <CameraScannerModal
+           isOpen={showMemberScanner}
+           onClose={() => setShowMemberScanner(false)}
+           onScan={(code) => {
+              const matched = members.find(m => m.id === code || m.barcode === code || m.nis === code || m.nisn === code);
+              if (matched) {
+                 setConfMemberId(matched.id);
+                 setMemberSearchQuery(`${matched.name} (${matched.id})`);
+                 setShowMemberScanner(false);
+              } else {
+                 alert(`Member dengan barcode/ID "${code}" tidak ditemukan.`);
+              }
+           }}
+           title="Scan Barcode / QR Member"
+           description="Arahkan kamera ke kartu member atau QR code"
+        />
+      )}
     </div>
   );
 };
 
 const StatCard: React.FC<{ label: string, value: string, color: string, isProfit?: boolean, onClick?: () => void, active?: boolean }> = ({ label, value, color, isProfit, onClick, active }) => (
-  <div 
+  <div
     onClick={onClick}
     className={`p-8 rounded-[2.5rem] shadow-sm border transition-all cursor-pointer hover:shadow-lg relative overflow-hidden ${active ? 'ring-4 ring-honey-500 opacity-100' : 'opacity-90 hover:opacity-100'} ${isProfit ? 'bg-slate-900 text-white shadow-xl' : 'bg-white border-slate-200'}`}
   >

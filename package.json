@@ -4,10 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-  "dev": "php -S 127.0.0.1:8088 router.php & vite --port 3006 --host 0.0.0.0",
+    "dev": "php -S 127.0.0.1:8088 router.php & vite --mode staging --port 3006 --host 0.0.0.0",
     "build": "vite build",
+    "build:staging": "vite build --mode staging",
     "preview": "vite preview",
-    "lint": "tsc"
+    "lint": "tsc --noEmit",
+    "lint:php": "node scripts/checks/php_lint.mjs",
+    "check:build": "node scripts/checks/check_build_urls.mjs",
+    "verify": "npm run lint && npm run lint:php && npm run build && npm run check:build",
+    "verify:staging": "npm run lint && npm run lint:php && npm run build:staging && node scripts/checks/check_build_urls.mjs staging"
   },
   "dependencies": {
     "@google/genai": "1.3.0",
